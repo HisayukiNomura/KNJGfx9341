@@ -26,6 +26,8 @@
 #include <hardware/gpio.h>
 #include <hardware/structs/iobank0.h>
 #include <hardware/irq.h>
+#include "hardwarespi.h"
+using namespace arduino;
 #else
 #include <Arduino.h>
 #include <map>
@@ -34,6 +36,7 @@
 #include <hardware/structs/iobank0.h>
 #include <hardware/irq.h>
 #endif
+#include "hardwarespi.h"
 /**
     @brief Helper routined shared by SPI and SoftwareSPI
 */
@@ -48,7 +51,12 @@ public:
         @param _spis SPISettings to parse
         @returns SDK-defined CPOL value
     */
-    inline spi_cpol_t cpol(const SPISettings &_spis) {
+
+
+
+    inline spi_cpol_t
+    cpol(const SPISettings &_spis)
+    {
         switch (_spis.getDataMode()) {
         case SPI_MODE0:
             return SPI_CPOL_0;

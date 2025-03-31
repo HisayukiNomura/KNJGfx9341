@@ -1,3 +1,8 @@
 build
+_build
+Scopy_SPISettings.ini
+*_
 .vscode
-
+.clang-format
+*.bak
+.gitignore

@@ -22,6 +22,7 @@
 #include "../defines.h"
 
 #if defined(STD_SDK)
+#include <HardwareSPI.h>
 #include "SPIHelper.h"
 #else   
 #include <Arduino.h>
