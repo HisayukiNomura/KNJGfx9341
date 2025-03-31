@@ -19,3 +19,11 @@ class {
 	const uint16_t ORANGE = 0xFC00;       // オレンジ
 	const uint16_t PINK = 0xF81F;         // ピンク
 } STDCOLOR;
+
+class {
+   public:
+	const uint8_t NORMAL = 0;      // 接続端子を下
+	const uint8_t ROTATE_90 = 1;   // 時計回り９０度
+	const uint8_t ROTATE_180 = 2;  // １８０度
+	const uint8_t ROTATE_270 = 3;  // ２７０度
+} TFTROTATION;

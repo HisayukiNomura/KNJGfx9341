@@ -9,7 +9,9 @@
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans18pt7b.h"
 #include "lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.h"
+#include "lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.h"  // タッチパネル制御用ライブラリ
 #include "lib-9341/KNJGfx_struct.h"
+
 #include "pico/stdlib.h"
 #include "pins_arduino.h"
 /*
@@ -31,8 +33,12 @@ information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
 #define TFT_RST 21   // 液晶画面の RST
 #define TFT_CS 22    // 液晶画面の CS
 
+#define TOUCH_MISO 16  // タッチパネルの MISO
+#define TOUCH_CS 17    // タッチパネルの CS
+
 // ILI9341ディスプレイのインスタンスを作成
 Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);
+XPT2046_Touchscreen ts(TOUCH_CS);  // タッチパネルのインスタンスを作成
 
 // スプライト（メモリ描画領域から一括表示）をcanvasとして準備
 // 画面表示をtftではなくcanvasで指定して一括描画することでチラツキなく表示できる
@@ -62,9 +68,14 @@ int main() {
 	SPI.setSCK(TFT_SCK);  // SPI0のSCK
 
 	// TFT初期設定
-	tft.begin();            // TFTを初期化
-	tft.setRotation(3);     // TFTの回転を設定（0-3）
-	canvas.setTextSize(1);  // テキストサイズを設定
+	tft.begin();                              // TFTを初期化
+	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
+	canvas.setTextSize(1);                    // テキストサイズを設定
+
+	// タッチパネル初期設定
+	ts.begin();                              // タッチパネル初期化
+	ts.setRotation(TFTROTATION.ROTATE_270);  // タッチパネルの回転を設定（液晶画面と合わせる）
+
 	int cnt = 0;
 	long total = 0;
 	uint64_t time_1 = time_us_64();
@@ -75,26 +86,26 @@ int main() {
 		total = total + time_d;
 		time_1 = time_2;
 		cnt++;
+		if (ts.touched() == true) {                                    // タッチされていれば
+			TS_Point tPoint = ts.getPoint();                           // タッチ座標を取得
+			int16_t x = (tPoint.x - 400) * TFT_WIDTH / (4095 - 550);   // タッチx座標をTFT画面の座標に換算
+			int16_t y = (tPoint.y - 230) * TFT_HEIGHT / (4095 - 420);  // タッチy座標をTFT画面の座標に換算
 
-		canvas.fillScreen(0x0000);  // 背景色
-		// 文字表示
-		canvas.setCursor(48, 125);  // 表示座標指定
-		canvas.setTextColor(
-			STDCOLOR.WHITE);              // テキスト色（文字色、背景色）※背景色は省略可
-		canvas.setFont(&FreeSans18pt7b);  // フォント指定
-		canvas.println("Test");           // 表示内容
+			// 円の連続で線を描画
+			tft.fillCircle(x, y, 2, 0x0A08);  // タッチ座標に塗り潰し円を描画
+		} else {
+			canvas.fillScreen(0x0000);  // 背景色
+			// 文字表示
+			canvas.setCursor(48, 125);            // 表示座標指定
+			canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
+			canvas.setFont(&FreeSans18pt7b);      // フォント指定
+			canvas.println("Test");               // 表示内容
 
-		// 実行時間
-		canvas.setFont(&FreeSans12pt7b);  // フォント指定
-		canvas.setCursor(0, 22);          // 表示座標指定
-		canvas.print(time_d);             // 経過時間をms単位で表示
-		tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
-		for (int i = 0; i < 1000; i++) {
-			std::array<int, 4> resxywh;
-			resxywh = RandXYWH();
-			tft.drawRect(resxywh[0], resxywh[1], resxywh[2], resxywh[3], RANDCOLOR);
-			resxywh = RandXYWH();
-			tft.fillRect(resxywh[0], resxywh[1], resxywh[2], resxywh[3], RANDCOLOR);
+			// 実行時間
+			canvas.setFont(&FreeSans12pt7b);  // フォント指定
+			canvas.setCursor(0, 22);          // 表示座標指定
+			canvas.print(time_d);             // 経過時間をms単位で表示
+			tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
 		}
 	}
 }

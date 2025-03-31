@@ -1,4 +1,5 @@
 
- // Arduinoのmainなどで定義されたり行われる処理を代替するためのコード
- 
- volatile bool __freeRTOSinitted;
+// Arduinoのmainなどで定義されたり行われる処理を代替するためのコード
+
+volatile bool __freeRTOSinitted;
+volatile bool __isFreeRTOS = false;

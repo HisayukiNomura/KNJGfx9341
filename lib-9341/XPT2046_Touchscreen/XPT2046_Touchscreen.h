@@ -22,33 +22,43 @@
 
 #ifndef _XPT2046_Touchscreen_h_
 #define _XPT2046_Touchscreen_h_
-
+#include "defines.h"
 #include "Arduino.h"
 #include <SPI.h>
 
 #if defined(__IMXRT1062__)
-#if __has_include(<FlexIOSPI.h>)
-	#include <FlexIOSPI.h>
-#endif
+	#if __has_include(<FlexIOSPI.h>)
+		#include <FlexIOSPI.h>
+	#endif
 #endif
 
-#if ARDUINO < 10600
-#error "Arduino 1.6.0 or later (SPI library) is required"
+#ifdef STD_SDK
+#else
+	#if ARDUINO < 10600
+		#error "Arduino 1.6.0 or later (SPI library) is required"
+	#endif
 #endif
 
 class TS_Point {
-public:
-	TS_Point(void) : x(0), y(0), z(0) {}
-	TS_Point(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
+   public:
+	TS_Point(void) :
+		x(0),
+		y(0),
+		z(0) {}
+	TS_Point(int16_t x, int16_t y, int16_t z) :
+		x(x),
+		y(y),
+		z(z) {}
 	bool operator==(TS_Point p) { return ((p.x == x) && (p.y == y) && (p.z == z)); }
 	bool operator!=(TS_Point p) { return ((p.x != x) || (p.y != y) || (p.z != z)); }
 	int16_t x, y, z;
 };
 
 class XPT2046_Touchscreen {
-public:
-	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq=255)
-		: csPin(cspin), tirqPin(tirq) { }
+   public:
+	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255) :
+		csPin(cspin),
+		tirqPin(tirq) {}
 	bool begin(SPIClass &wspi = SPI);
 #if defined(_FLEXIO_SPI_H_)
 	bool begin(FlexIOSPI &wflexspi);
@@ -61,14 +71,14 @@ public:
 	bool bufferEmpty();
 	uint8_t bufferSize() { return 1; }
 	void setRotation(uint8_t n) { rotation = n % 4; }
-// protected:
-	volatile bool isrWake=true;
+	// protected:
+	volatile bool isrWake = true;
 
-private:
+   private:
 	void update();
-	uint8_t csPin, tirqPin, rotation=1;
-	int16_t xraw=0, yraw=0, zraw=0;
-	uint32_t msraw=0x80000000;
+	uint8_t csPin, tirqPin, rotation = 1;
+	int16_t xraw = 0, yraw = 0, zraw = 0;
+	uint32_t msraw = 0x80000000;
 	SPIClass *_pspi = nullptr;
 #if defined(_FLEXIO_SPI_H_)
 	FlexIOSPI *_pflexspi = nullptr;
@@ -76,14 +86,14 @@ private:
 };
 
 #ifndef ISR_PREFIX
-  #if defined(ESP8266)
-    #define ISR_PREFIX ICACHE_RAM_ATTR
-  #elif defined(ESP32)
-    // TODO: should this also be ICACHE_RAM_ATTR ??
-    #define ISR_PREFIX IRAM_ATTR
-  #else
-    #define ISR_PREFIX
-  #endif
+	#if defined(ESP8266)
+		#define ISR_PREFIX ICACHE_RAM_ATTR
+	#elif defined(ESP32)
+		// TODO: should this also be ICACHE_RAM_ATTR ??
+		#define ISR_PREFIX IRAM_ATTR
+	#else
+		#define ISR_PREFIX
+	#endif
 #endif
 
 #endif

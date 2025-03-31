@@ -53,11 +53,16 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
                             lib-9341/core/RP2040Support.cpp
                             lib-9341/core/Print.cpp
                             lib-9341/core/delay.cpp
+                            lib-9341/core/_freertos.cpp
+                            
+                            lib-9341/core/CoreMutex.cpp
                             lib-9341/core/wiring_private.cpp
                             lib-9341/core/wiring_digital.cpp
                             lib-9341/core/wiring_analog.cpp
                             lib-9341/core/cyw43_wrappers.cpp
- 
+
+                            lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.cpp
+
                             lib-9341/variants/rpipicow/digital.cpp
 )   
 
@@ -93,7 +98,7 @@ target_include_directories(KNJGfx9341 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/core
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/spi
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/variants
-        ${CMAKE_CURRENT_LIST_DIR}/XPT2046_Touchscreen       
+        ${CMAKE_CURRENT_LIST_DIR}/XPT2046_Touchscreen    
         ${PICO_SDK_PATH}/src/rp2_common/hardware_exception/include
         ${PICO_SDK_PATH}/src/rp2_common/pico_lwip/include
         ${PICO_SDK_PATH}/src/rp2_common/pico_cyw43_driver/include
