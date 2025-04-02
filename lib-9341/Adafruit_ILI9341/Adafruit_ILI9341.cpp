@@ -49,7 +49,7 @@
 
 #ifdef STD_SDK
 	#include "Adafruit_ILI9341.h"
-	#include "pins_arduino.h"
+	#include "../pins.h"
 	#ifndef pgm_read_byte
 		#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 	#endif

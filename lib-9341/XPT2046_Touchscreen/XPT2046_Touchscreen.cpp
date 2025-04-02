@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+#include "defines.h"
 #include "XPT2046_Touchscreen.h"
 
 #define Z_THRESHOLD     400
@@ -38,7 +39,12 @@ bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 	digitalWrite(csPin, HIGH);
 	if (255 != tirqPin) {
 		pinMode( tirqPin, INPUT );
+		#ifdef STD_SDK
+		// 意味がよくわからないマクロを使っているのでサクッと削除。おそらく、Raspiには関係ない。
+		attachInterrupt(tirqPin, isrPin, FALLING);
+		#else
 		attachInterrupt(digitalPinToInterrupt(tirqPin), isrPin, FALLING);
+		#endif
 		isrPinptr = this;
 	}
 	return true;

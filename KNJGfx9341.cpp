@@ -2,6 +2,7 @@
 // https://logikara.blog/pico-ili9341/
 #include <array>
 
+#include "defines.h"
 #include "Adafruit_GFX.h"
 #include "defines.h"
 #include "hardware/spi.h"
@@ -11,9 +12,10 @@
 #include "lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.h"  // タッチパネル制御用ライブラリ
 #include "lib-9341/KNJGfx_struct.h"
-
 #include "pico/stdlib.h"
-#include "pins_arduino.h"
+#include "wiring_analog.h"
+#include "WString.h"
+
 /*
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
@@ -36,9 +38,7 @@ information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
 #define TOUCH_MISO 16  // タッチパネルの MISO
 #define TOUCH_CS 17    // タッチパネルの CS
 
-// ILI9341ディスプレイのインスタンスを作成
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);
-XPT2046_Touchscreen ts(TOUCH_CS);  // タッチパネルのインスタンスを作成
+
 
 // スプライト（メモリ描画領域から一括表示）をcanvasとして準備
 // 画面表示をtftではなくcanvasで指定して一括描画することでチラツキなく表示できる
@@ -61,9 +61,26 @@ std::array<int, 4> RandXYWH() {
 
 	return {x, y, w, h};
 }
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+XPT2046_Touchscreen ts(TOUCH_CS);  // タッチパネルのインスタンスを作成
 
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 int main() {
+
+
+	long i = clockCyclesPerMicrosecond();
+
+
+	stdio_init_all();
+
+	String str = "Hello";
+	String str2 = "World";
+	String str3 = str + str2;
+
+	char buf[100];
+	itoa(123, buf, 10);
+	String str4 = buf;
+
 	SPI.setTX(TFT_MOSI);  // SPI0のTX(MOSI)
 	SPI.setSCK(TFT_SCK);  // SPI0のSCK
 
@@ -81,6 +98,8 @@ int main() {
 	uint64_t time_1 = time_us_64();
 
 	while (1) {
+		long clkcycle = clockCyclesPerMicrosecond();
+
 		uint64_t time_2 = time_us_64();
 		long time_d = (long)(time_2 - time_1);
 		total = total + time_d;
@@ -99,13 +118,20 @@ int main() {
 			canvas.setCursor(48, 125);            // 表示座標指定
 			canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
 			canvas.setFont(&FreeSans18pt7b);      // フォント指定
-			canvas.println("Test");               // 表示内容
+			float temp = analogReadTemp(3.3);  // 温度センサーの値を取得
+			char buf[100];
+			canvas.println(ltoa(clkcycle,buf,10));  // 表示内容
+			sprintf(buf, "temp:%f", temp);	
+			canvas.println(temp);          // 表示内容			
+
 
 			// 実行時間
 			canvas.setFont(&FreeSans12pt7b);  // フォント指定
 			canvas.setCursor(0, 22);          // 表示座標指定
 			canvas.print(time_d);             // 経過時間をms単位で表示
 			tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
+			DEBUGV("Tick:%d\r\n",time_d);
+
 		}
 	}
 }

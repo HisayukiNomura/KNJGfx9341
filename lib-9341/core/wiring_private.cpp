@@ -18,12 +18,26 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <Arduino.h>
-#include <CoreMutex.h>
-#include <hardware/gpio.h>
-#include <hardware/sync.h>
-#include "_freertos.h"
+#include "defines.h"
 
+#ifdef STD_SDK
+	#include <PortingCommon.h>
+	#include <CoreMutex.h>
+	#include <hardware/gpio.h>
+	#include <hardware/sync.h>
+	#include "_freertos.h"
+	#include "Common.h"
+	#include "wiring_common.h"
+
+#else
+	#include <Arduino.h>
+	#include <CoreMutex.h>
+	#include <hardware/gpio.h>
+	#include <hardware/sync.h>
+	#include "_freertos.h"
+	#include "Common.h"
+	#include "wiring_common.h"
+#endif
 
 // Support nested IRQ disable/re-enable
 #ifndef maxIRQs

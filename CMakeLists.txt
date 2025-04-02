@@ -32,6 +32,22 @@ endif()
 # ====================================================================================
 set(PICO_BOARD pico_w CACHE STRING "Board type")
 
+# プログラム内で処理を分けられるように、マクロ値としてコンパイラに渡す
+if(PICO_BOARD STREQUAL "pico")
+    set(PICO_BOARD_VALUE 1)
+elseif(PICO_BOARD STREQUAL "pico_w")
+    set(PICO_BOARD_VALUE 2)
+elseif(PICO_BOARD STREQUAL "pico2")
+    set(PICO_BOARD_VALUE 2)
+elseif(PICO_BOARD STREQUAL "pico2_w")
+    set(PICO_BOARD_VALUE 2)
+else()
+    set(PICO_BOARD_VALUE 0) # 未知のボード
+endif()
+add_compile_definitions(PICO_BOARD_VALUE=${PICO_BOARD_VALUE})
+
+
+
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -50,20 +66,22 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
 
                             lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.cpp
                             lib-9341/spi/spi.cpp
-                            lib-9341/core/RP2040Support.cpp
-                            lib-9341/core/Print.cpp
+                            
+                            lib-9341/core/cyw43_wrappers.cpp
                             lib-9341/core/delay.cpp
                             lib-9341/core/_freertos.cpp
-                            
                             lib-9341/core/CoreMutex.cpp
+                            lib-9341/core/Print.cpp
+                            lib-9341/core/RP2040Support.cpp
+                            lib-9341/core/stdlib_noniso.cpp
+                            lib-9341/core/WString.cpp
                             lib-9341/core/wiring_private.cpp
                             lib-9341/core/wiring_digital.cpp
                             lib-9341/core/wiring_analog.cpp
-                            lib-9341/core/cyw43_wrappers.cpp
 
                             lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.cpp
 
-                            lib-9341/variants/rpipicow/digital.cpp
+                            lib-9341/pins.cpp
 )   
 
 pico_set_program_name(KNJGfx9341 "KNJGfx9341")
@@ -77,15 +95,16 @@ pico_enable_stdio_uart(KNJGfx9341 1)
 pico_enable_stdio_usb(KNJGfx9341 0)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(KNJGfx9341 0)
-pico_enable_stdio_usb(KNJGfx9341 0)
+#pico_enable_stdio_uart(KNJGfx9341 0)
+#pico_enable_stdio_usb(KNJGfx9341 0)
 
 # Add the standard library to the build
 target_link_libraries(KNJGfx9341
         pico_stdlib
         pico_rand
         pico_unique_id
-        hardware_exception)
+        hardware_exception
+        )
 
 # Add the standard include files to the build
 target_include_directories(KNJGfx9341 PRIVATE
@@ -125,7 +144,8 @@ target_link_libraries(KNJGfx9341
         hardware_watchdog
         hardware_clocks
         hardware_exception
-        pico_cyw43_arch_none
+        hardware_adc
+#        pico_cyw43_arch_none
         )
 
 pico_add_extra_outputs(KNJGfx9341)

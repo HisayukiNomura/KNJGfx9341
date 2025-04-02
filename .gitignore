@@ -6,3 +6,4 @@ Scopy_SPISettings.ini
 .clang-format
 *.bak
 .gitignore
+go.bat

@@ -17,6 +17,12 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "defines.h"
+#ifdef STD_SDK
+#include "../pins.h"
+#else
+
+#endif
+
 
 #if defined(PICO_CYW43_SUPPORTED)
 

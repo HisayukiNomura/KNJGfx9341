@@ -23,9 +23,13 @@
 #ifndef _XPT2046_Touchscreen_h_
 #define _XPT2046_Touchscreen_h_
 #include "defines.h"
+#ifdef STD_SDK
+	#include "PortingCommon.h"
+	#include <SPI.h>
+#else
 #include "Arduino.h"
 #include <SPI.h>
-
+#endif
 #if defined(__IMXRT1062__)
 	#if __has_include(<FlexIOSPI.h>)
 		#include <FlexIOSPI.h>

@@ -21,17 +21,24 @@
  */
 #include "defines.h"
 #ifdef STD_SDK
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <math.h>
+	#include "PortingCommon.h"
+
+	#include "Print.h"
 
 #else
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <math.h>
+	#include "Arduino.h"
+
+	#include "Print.h"
 
 #endif
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include "Arduino.h"
-
-#include "Print.h"
 
 // Public Methods //////////////////////////////////////////////////////////////
 

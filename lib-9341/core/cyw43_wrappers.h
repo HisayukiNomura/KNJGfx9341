@@ -18,10 +18,16 @@
 */
 
 #pragma once
+#include "defines.h"
 
+#ifdef STD_SDK
+	#include <PortingCommon.h>
+	#include <pico/cyw43_driver.h>
+    #include "Common.h"
+#else
 #include <Arduino.h>
 #include <pico/cyw43_driver.h>
-
+#endif
 extern bool __isPicoW;
 #ifdef __cplusplus
 extern "C" {

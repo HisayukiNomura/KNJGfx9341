@@ -39,8 +39,8 @@
 
 #ifdef STD_SDK
 #include "Adafruit_GFX.h"
-#include "Arduino.h"
-#include "Print.h"
+#include "PortingCommon.h"
+#include "Print.h"                        
 #include <Adafruit_SPITFT.h>
 #include <SPI.h>
 #else
