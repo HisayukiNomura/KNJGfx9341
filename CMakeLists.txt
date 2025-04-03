@@ -36,11 +36,11 @@ set(PICO_BOARD pico_w CACHE STRING "Board type")
 if(PICO_BOARD STREQUAL "pico")
     set(PICO_BOARD_VALUE 1)
 elseif(PICO_BOARD STREQUAL "pico_w")
-    set(PICO_BOARD_VALUE 2)
+    set(PICO_BOARD_VALUE 3)
 elseif(PICO_BOARD STREQUAL "pico2")
     set(PICO_BOARD_VALUE 2)
 elseif(PICO_BOARD STREQUAL "pico2_w")
-    set(PICO_BOARD_VALUE 2)
+    set(PICO_BOARD_VALUE 4)
 else()
     set(PICO_BOARD_VALUE 0) # 未知のボード
 endif()
@@ -67,6 +67,7 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
                             lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.cpp
                             lib-9341/spi/spi.cpp
                             
+                            lib-9341/core/PIOProgram.cpp
                             lib-9341/core/cyw43_wrappers.cpp
                             lib-9341/core/delay.cpp
                             lib-9341/core/_freertos.cpp
@@ -145,7 +146,8 @@ target_link_libraries(KNJGfx9341
         hardware_clocks
         hardware_exception
         hardware_adc
-#        pico_cyw43_arch_none
+#picoW の場合、cyw43の使用モードを設定する必要がある。使わない場合でも、noneを指定する。        
+        pico_cyw43_arch_none
         )
 
 pico_add_extra_outputs(KNJGfx9341)

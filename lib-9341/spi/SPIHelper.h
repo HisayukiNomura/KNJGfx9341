@@ -29,7 +29,7 @@
 	#include "hardwarespi.h"
 	#include "../debug.h"
 	#include "wiring_private.h"
-using namespace arduino;
+	using namespace ardPort::core;
 #else
 	#include <Arduino.h>
 	#include <map>
@@ -39,9 +39,15 @@ using namespace arduino;
 	#include <hardware/irq.h>
 #endif
 #include "hardwarespi.h"
+
+#ifdef STD_SDK
+namespace ardPort::spi {
+#endif 
+
 /**
 	@brief Helper routined shared by SPI and SoftwareSPI
 */
+
 class SPIHelper {
    public:
 	SPIHelper() { /* noop */ }
@@ -193,3 +199,6 @@ class SPIHelper {
    private:
 	std::map<int, int> _usingIRQs;
 };
+#ifdef STD_SDK
+}
+#endif 

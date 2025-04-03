@@ -38,7 +38,8 @@ information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
 #define TOUCH_MISO 16  // タッチパネルの MISO
 #define TOUCH_CS 17    // タッチパネルの CS
 
-
+using namespace ardPort;
+using namespace ardPort::spi;
 
 // スプライト（メモリ描画領域から一括表示）をcanvasとして準備
 // 画面表示をtftではなくcanvasで指定して一括描画することでチラツキなく表示できる
@@ -61,17 +62,20 @@ std::array<int, 4> RandXYWH() {
 
 	return {x, y, w, h};
 }
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-XPT2046_Touchscreen ts(TOUCH_CS);  // タッチパネルのインスタンスを作成
+
+
+#include "Adafruit_SPITFT.h"
 
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
-int main() {
-
-
+int main() 
+{
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);                                        // タッチパネルのインスタンスを作成
+	
 	long i = clockCyclesPerMicrosecond();
 
-
 	stdio_init_all();
+	
 
 	String str = "Hello";
 	String str2 = "World";
@@ -80,7 +84,7 @@ int main() {
 	char buf[100];
 	itoa(123, buf, 10);
 	String str4 = buf;
-
+	
 	SPI.setTX(TFT_MOSI);  // SPI0のTX(MOSI)
 	SPI.setSCK(TFT_SCK);  // SPI0のSCK
 
@@ -118,20 +122,18 @@ int main() {
 			canvas.setCursor(48, 125);            // 表示座標指定
 			canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
 			canvas.setFont(&FreeSans18pt7b);      // フォント指定
-			float temp = analogReadTemp(3.3);  // 温度センサーの値を取得
+			float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
 			char buf[100];
-			canvas.println(ltoa(clkcycle,buf,10));  // 表示内容
-			sprintf(buf, "temp:%f", temp);	
-			canvas.println(temp);          // 表示内容			
-
+			canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
+			sprintf(buf, "temp:%f", temp);
+			canvas.println(temp);  // 表示内容
 
 			// 実行時間
 			canvas.setFont(&FreeSans12pt7b);  // フォント指定
 			canvas.setCursor(0, 22);          // 表示座標指定
 			canvas.print(time_d);             // 経過時間をms単位で表示
 			tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
-			DEBUGV("Tick:%d\r\n",time_d);
-
+			DEBUGV("Tick:%d\r\n", time_d);
 		}
 	}
 }

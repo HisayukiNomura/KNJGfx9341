@@ -29,18 +29,47 @@
 
 #include "defines.h"
 #include "PortingCommon.h"
-#include <cyw43_wrappers.h>
+
+
 
 #ifdef STD_SDK
+#include "core/cyw43_wrappers.h"
 #include "core/wiring_digital.h"
 
-/// @brief cy43の有無で、使用する関数を分ける
-/// @param pin
-/// @param mode
-/// @details この処理は元のコードが凝っていて、弱い参照を使用している。
-/// もともとは、このメソッドがあると（選択コンパイルでコンパイルされると）、wiringdigitalの中の pinMode定義は
-/// 弱い参照なので無効になり、cy43_XXXX関数が使われるようになる。
-/// 少し複雑なので、その難しい処理はやめることにする。
+
+// extern "C" void hoge();
+/**
+ @brief cy43の有無で、使用する関数を分ける
+ @param pin
+ @param mode
+ @details この処理は元のコードが凝っていて、弱い参照を使用している。
+ もともとは、このメソッドがあると（選択コンパイルでコンパイルされると）、wiringdigitalの中の pinMode定義は
+ 弱い参照なので無効になり、cy43_XXXX関数が使われるようになる。
+ 少し複雑なので、その難しい処理はやめることにする。
+ 
+ その代わり、コンパイル時に渡されるマクロで条件コンパイルすることにした。
+ PICO_BOARD_VALUEは、CMakeLists.txtの中で次のように設定される。
+   set(PICO_BOARD pico_w CACHE STRING "Board type")
+   
+   if(PICO_BOARD STREQUAL "pico")
+    set(PICO_BOARD_VALUE 1)
+   elseif(PICO_BOARD STREQUAL "pico_w")
+    set(PICO_BOARD_VALUE 3)
+   elseif(PICO_BOARD STREQUAL "pico2")
+    set(PICO_BOARD_VALUE 2)
+   elseif(PICO_BOARD STREQUAL "pico2_w")
+    set(PICO_BOARD_VALUE 4)
+   else()
+    set(PICO_BOARD_VALUE 0) # 未知のボード
+   endif()
+   add_compile_definitions(PICO_BOARD_VALUE=${PICO_BOARD_VALUE})
+   この値を見て、cyw43側のコード呼ぶか、wiring_digitalのコードを呼ぶかを決める。
+   @note
+   ボードのネットワーク使用を切り替える場合、cmakelist.txtのtarget_link_librariesの中で、
+    pico_cyw43_arch_XXXXを追加する必要がある。（そうしないと、cyw43_XXXXでビルドエラーが出る）
+    
+*/
+
 extern "C" void pinMode(pin_size_t pin, PinMode mode) {
 	#if PICO_BOARD_VALUE == 1 || PICO_BOARD_VALUE == 2  // PICO/PICO2
 	__pinMode(pin, mode);
@@ -74,7 +103,10 @@ extern "C" void initVariant() {
 }
 
 #else
-	extern "C" void pinMode(pin_size_t pin, PinMode mode) {
+#include "core/cyw43_wrappers.h"
+
+
+extern "C" void pinMode(pin_size_t pin, PinMode mode) {
 		cyw43_pinMode(pin, mode);
 }
 

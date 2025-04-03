@@ -26,6 +26,7 @@
 #ifdef STD_SDK
 	#include "../pins.h"
 	#include "../debug.h"
+	using namespace ardPort::core;
 #endif
 
 CoreMutex::CoreMutex(mutex_t *mutex, uint8_t option) {

@@ -2,27 +2,33 @@
 #define _ADAFRUIT_GFX_H
 #include "../defines.h"
 
-#if not defined(STD_SDK)
+#ifdef STD_SDK
+// #include "../core/Arduino.h"
+#include "../core/Print.h"
+#include "gfxfont.h"
+#else
   #if ARDUINO >= 100
   #include "Arduino.h"
   #include "Print.h"
   #else
   #include "WProgram.h"
   #endif
-#else
-// #include "../core/Arduino.h"
-#include "../core/Print.h"
-#include "gfxfont.h"
 #endif
 
-#if not defined(STD_SDK)
+#ifdef STD_SDK
+
+#else 
   #include <Adafruit_I2CDevice.h>
   #include <Adafruit_SPIDevice.h>
 #endif
 /// A generic graphics superclass that can handle all sorts of drawing. At a
 /// minimum you can subclass and provide drawPixel(). At a maximum you can do a
 /// ton of overriding to optimize. Used for any/all Adafruit displays!
-class Adafruit_GFX : public Print {
+
+#ifdef STD_SDK
+namespace ardPort {
+#endif 
+class Adafruit_GFX : public core::Print {
 
 public:
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
@@ -412,5 +418,9 @@ protected:
   bool buffer_owned; ///< If true, destructor will free buffer, else it will do
                      ///< nothing
 };
+#ifdef STD_SDK
+}
+#endif 
 
 #endif // _ADAFRUIT_GFX_H
+

@@ -59,6 +59,7 @@
 	#ifndef pgm_read_dword
 		#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
 	#endif
+	using namespace ardPort;
 #else
 	#include "Adafruit_ILI9341.h"
 	#ifndef ARDUINO_STM32_FEATHER

@@ -51,6 +51,14 @@
 #include <SPI.h>
 #endif
 
+
+
+#include "../defines.h"
+
+#ifdef STD_SDK
+namespace ardPort {
+#endif
+
 #define ILI9341_TFTWIDTH 240  ///< ILI9341 max TFT width
 #define ILI9341_TFTHEIGHT 320 ///< ILI9341 max TFT height
 
@@ -163,5 +171,8 @@ public:
 
   uint8_t readcommand8(uint8_t reg, uint8_t index = 0);
 };
+#ifdef STD_SDK
+}
+#endif 
 
 #endif // _ADAFRUIT_ILI9341H_

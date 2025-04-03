@@ -32,6 +32,7 @@
 	#include "wiring_common.h"
 	#include "../pins.h"
 	#include "../debug.h"
+using namespace ardPort::core;
 #else
 	#include <Arduino.h>
 	#include <CoreMutex.h>

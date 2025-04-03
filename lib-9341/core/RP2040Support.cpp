@@ -23,6 +23,7 @@
 	#include "PortingCommon.h"
 	#include <pico/runtime.h>
     #include "RP2040Support.h"
+	using namespace ardPort::core;
 #else
 	#include <Arduino.h>
 	#include <pico/runtime.h>

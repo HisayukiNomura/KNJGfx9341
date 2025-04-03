@@ -84,6 +84,9 @@ extern "C" {
 	extern void _writeProfile(profileWriteCB writeCB);
 #endif
 }
+#ifdef STD_SDK
+namespace ardPort::core {
+#endif 
 
 class _MFIFO {
    public:
@@ -719,3 +722,6 @@ class RP2040 {
 	PIOProgram *_ccountPgm;
 	int memcpyDMAChannel = -1;
 };
+#ifdef STD_SDK
+}
+#endif 

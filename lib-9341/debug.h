@@ -26,6 +26,7 @@
 #include "defines.h"
 
 #ifdef STD_SDK
+	namespace ardPort {
 // clang-format off
 	#ifdef ENABLE_DEBUG_PRINTF
 		#define DEBUGV(fmt, ...) {printf("%s:%d - ", __FILE__, __LINE__);printf(fmt, ##__VA_ARGS__);}
@@ -53,6 +54,7 @@
 		#define DEBUGCORE(fmt, ...) {};
 		#define DEBUGSPI(fmt, ...) {};
 	#endif
+	}
 // clang-format on	
 
 #else

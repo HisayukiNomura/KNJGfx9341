@@ -19,9 +19,14 @@
 */
 
 #pragma once
+#include "defines.h"
 
+#include "../defines.h"
 #include <hardware/pio.h>
 
+#ifdef STD_SDK
+namespace ardPort::core {
+#endif
 // Wrapper class for PIO programs, abstracting common operations out
 class PIOProgram {
 public:
@@ -35,3 +40,6 @@ private:
     PIO _pio;
     int _sm;
 };
+#ifdef STD_SDK
+}
+#endif

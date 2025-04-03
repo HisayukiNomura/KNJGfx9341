@@ -31,10 +31,19 @@
 #include "SPIHelper.h"
 #endif
 
+#ifdef STD_SDK
+namespace ardPort::spi {
+#endif
+
+
 /**
     @brief Implements a hardware-based SPI interface using the Pico's SPI blocks
 */
+#ifdef STD_SDK
+class SPIClassRP2040 : public HardwareSPI {
+#else
 class SPIClassRP2040 : public arduino::HardwareSPI {
+#endif
 public:
     /**
             @brief Create a PIO-based SPI instance, pins can be changed before begin() call
@@ -265,5 +274,9 @@ private:
     SPIHelper _helper;
 };
 
-extern SPIClassRP2040 SPI;
-extern SPIClassRP2040 SPI1;
+
+#ifdef STD_SDK
+}
+#endif
+extern ardPort::spi::SPIClassRP2040 SPI;
+extern ardPort::spi::SPIClassRP2040 SPI1;

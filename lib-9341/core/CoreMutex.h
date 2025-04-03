@@ -22,10 +22,16 @@
 */
 
 #pragma once
+#include "defines.h"
+
+
 
 #include <pico/mutex.h>
 #include "_freertos.h"
 
+#ifdef STD_SDK
+namespace ardPort::core {
+#endif
 enum {
     DebugEnable = 1
 };
@@ -45,3 +51,6 @@ private:
     uint8_t _option;
     BaseType_t _pxHigherPriorityTaskWoken;
 };
+#ifdef STD_SDK
+}
+#endif

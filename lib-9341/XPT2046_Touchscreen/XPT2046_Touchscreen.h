@@ -20,12 +20,14 @@
  * THE SOFTWARE.
  */
 
-#ifndef _XPT2046_Touchscreen_h_
-#define _XPT2046_Touchscreen_h_
+#pragma once
 #include "defines.h"
 #ifdef STD_SDK
 	#include "PortingCommon.h"
 	#include <SPI.h>
+
+	using namespace ardPort::core;
+	using namespace ardPort::spi;
 #else
 #include "Arduino.h"
 #include <SPI.h>
@@ -43,6 +45,9 @@
 	#endif
 #endif
 
+#ifdef STD_SDK
+namespace ardPort {
+#endif 
 class TS_Point {
    public:
 	TS_Point(void) :
@@ -99,5 +104,7 @@ class XPT2046_Touchscreen {
 		#define ISR_PREFIX
 	#endif
 #endif
+#ifdef STD_SDK
+}
+#endif 
 
-#endif

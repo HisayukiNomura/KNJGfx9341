@@ -17,10 +17,15 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef Printable_h
-#define Printable_h
+#pragma once 
+
+#include "defines.h"
 
 #include <stdlib.h>
+
+#ifdef STD_SDK
+namespace ardPort::core {
+#endif
 
 class Print;
 
@@ -36,5 +41,8 @@ class Printable
     virtual size_t printTo(Print& p) const = 0;
 };
 
+#ifdef STD_SDK
+}
 #endif
+
 

@@ -17,10 +17,7 @@
  * BSD license, all text here must be included in any redistribution.
  */
 
-#ifndef _ADAFRUIT_SPITFT_H_
-#define _ADAFRUIT_SPITFT_H_
-#include "../defines.h"
-
+#pragma once
 
 
 // Not for ATtiny, at all
@@ -28,11 +25,19 @@
 
 #include "Adafruit_GFX.h"
 
-#if not defined(STD_SDK)
-#include <SPI.h>
-#else
+#ifdef STD_SDK
 #include "SPI.h"
+#else 
+#include <SPI.h>
 #endif
+
+#include "../defines.h"
+
+#ifdef STD_SDK
+namespace ardPort {
+#endif 
+
+
 // HARDWARE CONFIG ---------------------------------------------------------
 
 #if defined(__AVR__)
@@ -534,5 +539,9 @@ protected:
   uint32_t _freq = 0; ///< Dummy var to keep subclasses happy
 };
 
+#ifdef STD_SDK
+}
+#endif 
+
 #endif // end __AVR_ATtiny85__ __AVR_ATtiny84__
-#endif // end _ADAFRUIT_SPITFT_H_
+

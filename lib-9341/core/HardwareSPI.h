@@ -19,13 +19,23 @@
 
 #pragma once
 
+#include "defines.h"
+#include "Common.h"
+#include <inttypes.h>
+#ifdef STD_SDK
+#else
 #include "Common.h"
 #include <inttypes.h>
 #include "Stream.h"
+#endif
+
 
 #define SPI_HAS_TRANSACTION
-
+#ifdef STD_SDK
+namespace ardPort::core {
+#else
 namespace arduino {
+#endif
 
 typedef enum {
   SPI_MODE0 = 0,
@@ -131,4 +141,9 @@ class HardwareSPI
 // Alias SPIClass to HardwareSPI since it's already the defacto standard for SPI class name
 typedef HardwareSPI SPIClass;
 
+
+#ifdef STD_SDK
 }
+#else
+}
+#endif

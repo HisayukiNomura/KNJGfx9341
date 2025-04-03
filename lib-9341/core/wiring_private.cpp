@@ -28,7 +28,7 @@
 	#include "_freertos.h"
 	#include "Common.h"
 	#include "wiring_common.h"
-
+using namespace ardPort::core;
 #else
 	#include <Arduino.h>
 	#include <CoreMutex.h>

@@ -27,6 +27,7 @@
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
 	#include "../pins.h"
+	using namespace ardPort::spi;
 #else
 	#include "SPI.h"
 	#include <hardware/dma.h>
@@ -441,6 +442,16 @@ void SPIClassRP2040::setClockDivider(uint8_t uc_div) {
 	#define __SPI1_DEVICE spi1
 #endif
 
+#ifdef STD_SDK
+#ifdef PIN_SPI0_MISO
+ardPort::spi::SPIClassRP2040 SPI(__SPI0_DEVICE, PIN_SPI0_MISO, PIN_SPI0_SS, PIN_SPI0_SCK, PIN_SPI0_MOSI);
+#endif
+
+#ifdef PIN_SPI1_MISO
+ardPort::spi::SPIClassRP2040 SPI1(__SPI1_DEVICE, PIN_SPI1_MISO, PIN_SPI1_SS, PIN_SPI1_SCK, PIN_SPI1_MOSI);
+#endif
+
+#else
 #ifdef PIN_SPI0_MISO
 SPIClassRP2040 SPI(__SPI0_DEVICE, PIN_SPI0_MISO, PIN_SPI0_SS, PIN_SPI0_SCK, PIN_SPI0_MOSI);
 #endif
@@ -448,3 +459,4 @@ SPIClassRP2040 SPI(__SPI0_DEVICE, PIN_SPI0_MISO, PIN_SPI0_SS, PIN_SPI0_SCK, PIN_
 #ifdef PIN_SPI1_MISO
 SPIClassRP2040 SPI1(__SPI1_DEVICE, PIN_SPI1_MISO, PIN_SPI1_SS, PIN_SPI1_SCK, PIN_SPI1_MOSI);
 #endif
+#endif 

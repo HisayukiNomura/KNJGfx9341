@@ -30,9 +30,15 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
+#include "defines.h"
 
 #include "Adafruit_GFX.h"
 #include "glcdfont.c"
+
+#ifdef STD_SDK
+using namespace ardPort;
+#endif
+
 #ifdef __AVR__
 	#include <avr/pgmspace.h>
 #elif defined(ESP8266) || defined(ESP32)
