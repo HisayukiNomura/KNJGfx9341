@@ -127,6 +127,8 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	gfxFont = NULL;
 }
 
+#pragma region 設定関連
+
 /**************************************************************************/
 /*!
 	@brief      Set rotation setting for display
@@ -148,7 +150,7 @@ void Adafruit_GFX::setRotation(uint8_t x) {
 			break;
 	}
 }
-
+#pragma endregion
 /**************************************************************************/
 /*!
 	@brief      Invert the display (ideally using built-in hardware command)
@@ -159,6 +161,7 @@ void Adafruit_GFX::invertDisplay(bool i) {
 	// Do nothing, must be subclassed if supported by hardware
 	(void)i;  // disable -Wunused-parameter warning
 }
+
 
 #pragma region 描画機能
 /**************************************************************************/
