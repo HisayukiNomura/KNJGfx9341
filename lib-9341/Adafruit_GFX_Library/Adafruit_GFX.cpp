@@ -129,6 +129,40 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 
 /**************************************************************************/
 /*!
+	@brief      Set rotation setting for display
+	@param  x   0 thru 3 corresponding to 4 cardinal rotations
+*/
+/**************************************************************************/
+void Adafruit_GFX::setRotation(uint8_t x) {
+	rotation = (x & 3);
+	switch (rotation) {
+		case 0:
+		case 2:
+			_width = WIDTH;
+			_height = HEIGHT;
+			break;
+		case 1:
+		case 3:
+			_width = HEIGHT;
+			_height = WIDTH;
+			break;
+	}
+}
+
+/**************************************************************************/
+/*!
+	@brief      Invert the display (ideally using built-in hardware command)
+	@param   i  True if you want to invert, false to make 'normal'
+*/
+/**************************************************************************/
+void Adafruit_GFX::invertDisplay(bool i) {
+	// Do nothing, must be subclassed if supported by hardware
+	(void)i;  // disable -Wunused-parameter warning
+}
+
+#pragma region 描画機能
+/**************************************************************************/
+/*!
    @brief    Write a line.  Bresenham's algorithm - thx wikpedia
 	@param    x0  Start point x coordinate
 	@param    y0  Start point y coordinate
@@ -324,6 +358,9 @@ void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 void Adafruit_GFX::fillScreen(uint16_t color) {
 	fillRect(0, 0, _width, _height, color);
 }
+
+
+
 
 /**************************************************************************/
 /*!
@@ -705,6 +742,9 @@ void Adafruit_GFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	}
 	endWrite();
 }
+#pragma endregion
+
+#pragma region ビットマップ機能
 
 // BITMAP / XBITMAP / GRAYSCALE / RGB BITMAP FUNCTIONS ---------------------
 
@@ -1097,7 +1137,9 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
 	}
 	endWrite();
 }
+#pragma endregion
 
+#pragma region 文字描画機能
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
 // Draw a character
@@ -1309,27 +1351,8 @@ void Adafruit_GFX::setTextSize(uint8_t s_x, uint8_t s_y) {
 	textsize_y = (s_y > 0) ? s_y : 1;
 }
 
-/**************************************************************************/
-/*!
-	@brief      Set rotation setting for display
-	@param  x   0 thru 3 corresponding to 4 cardinal rotations
-*/
-/**************************************************************************/
-void Adafruit_GFX::setRotation(uint8_t x) {
-	rotation = (x & 3);
-	switch (rotation) {
-		case 0:
-		case 2:
-			_width = WIDTH;
-			_height = HEIGHT;
-			break;
-		case 1:
-		case 3:
-			_width = HEIGHT;
-			_height = WIDTH;
-			break;
-	}
-}
+
+
 
 /**************************************************************************/
 /*!
@@ -1529,20 +1552,10 @@ void Adafruit_GFX::getTextBounds(const __FlashStringHelper *str, int16_t x,
 		*h = maxy - miny + 1;
 	}
 }
-
-/**************************************************************************/
-/*!
-	@brief      Invert the display (ideally using built-in hardware command)
-	@param   i  True if you want to invert, false to make 'normal'
-*/
-/**************************************************************************/
-void Adafruit_GFX::invertDisplay(bool i) {
-	// Do nothing, must be subclassed if supported by hardware
-	(void)i;  // disable -Wunused-parameter warning
-}
+#pragma endregion
 
 /***************************************************************************/
-
+#pragma region ボタン描画機能 - Adafruit_GFX_Button
 /**************************************************************************/
 /*!
    @brief    Create a simple drawn button UI element
@@ -1731,7 +1744,10 @@ bool Adafruit_GFX_Button::justReleased() {
 	return (!currstate && laststate);
 }
 
+#pragma endregion
 // -------------------------------------------------------------------------
+
+#pragma region キャンバス機能 - GFXcanvas1, GFXcanvas8, GFXcanvas16
 
 // GFXcanvas1, GFXcanvas8 and GFXcanvas16 (currently a WIP, don't get too
 // comfy with the implementation) provide 1-, 8- and 16-bit offscreen
@@ -1749,7 +1765,7 @@ bool Adafruit_GFX_Button::justReleased() {
 // per pixel (no scanline pad), and GFXcanvas16 uses 2 bytes per pixel (no
 // scanline pad).
 // NOT EXTENSIVELY TESTED YET.  MAY CONTAIN WORST BUGS KNOWN TO HUMANKIND.
-
+#pragma region 白黒キャンバス機能 -  GFXcanvas1
 #ifdef __AVR__
 // Bitmask tables of 0x80>>X and ~(0x80>>X), because X>>Y is slow on AVR
 const uint8_t PROGMEM GFXcanvas1::GFXsetBit[] = {0x80, 0x40, 0x20, 0x10,
@@ -2119,7 +2135,10 @@ void GFXcanvas1::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 		}
 	}
 }
+#pragma endregion
 
+
+#pragma region ８ビット色キャンバス機能 -  GFXcanvas8
 /**************************************************************************/
 /*!
    @brief    Instatiate a GFX 8-bit canvas context for graphics
@@ -2395,6 +2414,9 @@ void GFXcanvas8::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 	// x & y already in raw (rotation 0) coordinates, no need to transform.
 	memset(buffer + y * WIDTH + x, color, w);
 }
+#pragma endregion
+
+#pragma region １６ビット色キャンバス機能 -  GFXcanvas16
 
 /**************************************************************************/
 /*!
@@ -2699,3 +2721,6 @@ void GFXcanvas16::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 		buffer[i] = color;
 	}
 }
+#pragma endregion
+
+#pragma endregion

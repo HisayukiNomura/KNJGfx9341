@@ -63,14 +63,15 @@ std::array<int, 4> RandXYWH() {
 	return {x, y, w, h};
 }
 
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);                                        // タッチパネルのインスタンスを作成
 
+	
 #include "Adafruit_SPITFT.h"
 
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 int main() 
 {
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);                                        // タッチパネルのインスタンスを作成
 	
 	long i = clockCyclesPerMicrosecond();
 
@@ -127,6 +128,7 @@ int main()
 			canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
 			sprintf(buf, "temp:%f", temp);
 			canvas.println(temp);  // 表示内容
+			
 
 			// 実行時間
 			canvas.setFont(&FreeSans12pt7b);  // フォント指定
