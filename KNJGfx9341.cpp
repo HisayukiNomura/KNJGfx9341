@@ -15,6 +15,7 @@
 #include "pico/stdlib.h"
 #include "wiring_analog.h"
 #include "WString.h"
+#include "time.h"
 
 /*
 // SPI Defines
@@ -63,21 +64,17 @@ std::array<int, 4> RandXYWH() {
 	return {x, y, w, h};
 }
 
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);                                        // タッチパネルのインスタンスを作成
-
-	
 #include "Adafruit_SPITFT.h"
 
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
-int main() 
-{
-	
+int main() {  // タッチパネルのインスタンスを作成
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);
 	long i = clockCyclesPerMicrosecond();
 
 	stdio_init_all();
-	
 
+	/*
 	String str = "Hello";
 	String str2 = "World";
 	String str3 = str + str2;
@@ -85,7 +82,8 @@ int main()
 	char buf[100];
 	itoa(123, buf, 10);
 	String str4 = buf;
-	
+	*/
+
 	SPI.setTX(TFT_MOSI);  // SPI0のTX(MOSI)
 	SPI.setSCK(TFT_SCK);  // SPI0のSCK
 
@@ -118,17 +116,61 @@ int main()
 			// 円の連続で線を描画
 			tft.fillCircle(x, y, 2, 0x0A08);  // タッチ座標に塗り潰し円を描画
 		} else {
+			tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+			tft.setFont(&FreeSans12pt7b);    // フォント指定
+			tft.setKanjiFont(true);
+			tft.setCursor(10, 10);
+			tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);  // テキスト色（文字色、背景色）※背景色は省略可
+
+			tft.useWindowMode(false);
+			tft.setTextSize(1, 1);
+
+			tft.write("こんにちは");
+			/*
+			{
+				tft.setTextSize(1, 1);
+				clock_t start_time = clock();
+				for (int j = 0; j < 100; j++) {
+					tft.setCursor(0, 0);
+					for (int i = 0; i < 100; i++) {
+						tft.write((uint32_t)0xe38182);  // UTF-8で「あ」を表示
+					}
+				}
+				clock_t end_time = clock();
+				double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+				printf("標準モード経過時間: %.3f 秒\n", elapsed_time);
+			}
+			{
+				tft.setTextSize(1, 1);
+				tft.useWindowMode(true);
+				clock_t start_time = clock();
+				for (int j = 0; j < 100; j++) {
+					tft.setCursor(0, 0);
+					for (int i = 0; i < 100; i++) {
+						tft.write((uint32_t)0xe38182);  // UTF-8で「あ」を表示
+					}
+				}
+				clock_t end_time = clock();
+				double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+				printf("高速モード経過時間: %.3f 秒\n", elapsed_time);
+			}
+			*/
+			tft.setTextSize(2, 2);
+			tft.write((uint32_t)0xe38184);  // UTF-8で「あ」を表示
+
+			/*
 			canvas.fillScreen(0x0000);  // 背景色
 			// 文字表示
 			canvas.setCursor(48, 125);            // 表示座標指定
 			canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
 			canvas.setFont(&FreeSans18pt7b);      // フォント指定
+
 			float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
 			char buf[100];
 			canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
-			sprintf(buf, "temp:%f", temp);
+			sprintf(buf, "こんにちは:%f", temp);
 			canvas.println(temp);  // 表示内容
-			
+
 
 			// 実行時間
 			canvas.setFont(&FreeSans12pt7b);  // フォント指定
@@ -136,6 +178,7 @@ int main()
 			canvas.print(time_d);             // 経過時間をms単位で表示
 			tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
 			DEBUGV("Tick:%d\r\n", time_d);
+			*/
 		}
 	}
 }

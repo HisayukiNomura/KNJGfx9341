@@ -45,4 +45,8 @@ constexpr uint64_t __bitset(const int (&a)[N], size_t i = 0U) {
 	return i < N ? (1LL << a[i]) | __bitset(a, i + 1) : 0;
 }
 
+
+/// 漢字関連のシンボル
+#define 	TFT_FORCE_HANKANA				// Unicodeの半角カナ文字を強制的に１バイトカナとして扱う
+
 #pragma GCC optimize("O0")

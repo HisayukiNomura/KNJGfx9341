@@ -56,7 +56,13 @@ class Print
     void clearWriteError() { setWriteError(0); }
   
     virtual size_t write(uint8_t) = 0;
-    size_t write(const char *str) {
+    virtual size_t write(uint32_t) = 0;
+
+    
+    /// @brief 文字列を表示する
+    /// @param str 表示する文字列。ゼロ終了。
+    /// @return 文字数。
+        size_t write(const char *str) {
       if (str == NULL) return 0;
       return write((const uint8_t *)str, strlen(str));
     }

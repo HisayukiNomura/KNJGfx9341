@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "Adafruit_GFX.h"
 #include "glcdfont.c"
+#include "Kanji/KanjiHelper.h"
 
 #ifdef STD_SDK
 using namespace ardPort;
@@ -105,6 +106,7 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
 		}
 #endif
 
+#pragma region コンストラクタ
 /**************************************************************************/
 /*!
    @brief    Instatiate a GFX context for graphics! Can only be done by a
@@ -125,7 +127,9 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	wrap = true;
 	_cp437 = false;
 	gfxFont = NULL;
+	isKanji = false;  // デフォルトは漢字フォントを使用しない
 }
+#pragma endregion
 
 #pragma region 設定関連
 
@@ -150,7 +154,39 @@ void Adafruit_GFX::setRotation(uint8_t x) {
 			break;
 	}
 }
+/**************************************************************************/
+/*!
+	@brief Set the font to display when print()ing, either custom or default
+	@param  f  The GFXfont object, if NULL use built in 6x8 font
+*/
+/**************************************************************************/
+void Adafruit_GFX::setFont(const GFXfont *f) {
+	if (f) {             // Font struct pointer passed in?
+		if (!gfxFont) {  // And no current font struct?
+			// Switching from classic to new font behavior.
+			// Move cursor pos down 6 pixels so it's on baseline.
+			cursor_y += 6;
+		}
+	} else if (gfxFont == NULL) {  // NULL passed.  Current font struct defined?
+		// Switching from new to classic font behavior.
+		// Move cursor pos up 6 pixels so it's at top-left of char.
+		cursor_y -= 6;
+	}
+	gfxFont = (GFXfont *)f;
+}
+
+/**
+ * @brief 漢字フォントを指定する。
+ * @brief この設定が行われると、今までのsetFont設定(gfxFont)を無視して、漢字フォントを使用する。
+ * @param a_isEnable true:漢字フォントを使用する。false:通常フォントを使用する。
+ */
+void Adafruit_GFX::setKanjiFont(bool a_isEnable) {
+	isKanji = a_isEnable;
+}
+
 #pragma endregion
+
+#pragma region 特殊画面操作
 /**************************************************************************/
 /*!
 	@brief      Invert the display (ideally using built-in hardware command)
@@ -161,7 +197,7 @@ void Adafruit_GFX::invertDisplay(bool i) {
 	// Do nothing, must be subclassed if supported by hardware
 	(void)i;  // disable -Wunused-parameter warning
 }
-
+#pragma endregion
 
 #pragma region 描画機能
 /**************************************************************************/
@@ -361,9 +397,6 @@ void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 void Adafruit_GFX::fillScreen(uint16_t color) {
 	fillRect(0, 0, _width, _height, color);
 }
-
-
-
 
 /**************************************************************************/
 /*!
@@ -1278,10 +1311,83 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 
 	}  // End classic vs custom font
 }
+
+/// @brief 画面に漢字を１文字表示する。仮想関数なので、Adafruit_GFXを継承したクラスでオーバーロードされる可能性がある。
+/// @param   x   描画開始位置の左上座標
+/// @param   y   描画開始位置の左上座標
+/// @param   w   描画するフォントビットマップの横ドット数
+/// @param   h   描画するフォントビットマップの縦ドット数
+/// @param   bmpData  描画するフォントビットマップデータ
+/// @param   color 文字の前景色（565カラー）
+/// @param   bg 文字の背景色（565カラー）　前景色と同じ色が指定されたら、透過表示とみなす。
+/// @param   size_x 文字の横方向の拡大率
+/// @param   size_y 文字の縦方向の拡大率
+/// @details ここで定義されるのは、最も汎用的になると思われる実装。例えば、ILI9341の場合（おそらくTFT7735も）、描画ウインドウを指定することでより高速に表示できる。
+/// 必要に応じて、このクラスを継承するクラスでは、より効率的な実装を行うべき。
+void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
+	// 表示するデータの上下左右が、表示可能領域を超えていたら何もしない。クリッピング処理
+	// 元々の判断そのままだが、すこしオカシイ気がする。
+	// たとえば、表示領域を左にはみ出さないかの判断を、 x > _width　としているが、これだと描画開始地点（文字の左）が横幅を超えるかの判断しかしていない。
+	// 本来、表示領域の左側と、表示する文字の右側を比較する必要があるのでは？ x > _width ではなく、 (x+w) >= _width と判断すべきでは？
+	if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
+
+	uint8_t w_bytes = (w + 8 - 1) / 8;   // 横方向のバイト数
+	uint8_t h_bytes = h;                 // 縦方向のバイト数
+	uint16_t bmpIdx = 0;                 // ビットマップ情報には、bmp + yy*w_bytes + xx でアクセスできるが、順番に並んでいるので最初から順に読むほうが速いのでは？
+	bool isByteMultiple = (w % 8 == 0);  // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
+
+	startWrite();
+
+	for (int8_t yy = 0; yy < h_bytes; yy++) {
+		for (int8_t xx = 0; xx < w_bytes; xx++) {
+			uint8_t bitCnt;
+			if (isByteMultiple) {
+				bitCnt = 8;
+			} else {
+				bitCnt = (xx != (w_bytes - 1)) ? 8 : (w % 8);
+			}
+			uint8_t bits = bmpData[bmpIdx];
+			for (int8_t bb = 0; bb < bitCnt; bb++) {
+				if (bits & 0x80) {
+					if (size_x == 1 && size_y == 1)
+						writePixel(x + xx * 8 + bb, y + yy, color);
+					else
+						writeFillRect(x + (xx * 8 + bb) * size_x, y + yy * size_y, size_x, size_y, color);
+				} else {
+					if (color != bg) {				// 前景色と背景色が同じときは、透過色として背景色は描画しない。
+						if (size_x == 1 && size_y == 1)
+							writePixel(x + xx * 8 + bb, y + yy, bg);
+						else
+							writeFillRect(x + (xx * 8 + bb) * size_x, y + yy * size_y, size_x, size_y, bg);
+					}
+				}
+
+				bits <<= 1;
+			}
+			bmpIdx++;
+		}
+	}
+	if (bg != color) {  // If opaque, draw vertical line for last column
+		if (size_x == 1 && size_y == 1)
+			writeFastVLine(x + 5, y, 8, bg);
+		else
+			writeFillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
+	}
+	endWrite();
+}
+
 /**************************************************************************/
 /*!
 	@brief  Print one byte/character of data, used to support print()
 	@param  c  The 8-bit ascii character to write
+
+	文字表示の流れとしては、
+	Print::printlnなど
+	print::write(char*)
+	print::write(char *,len)
+	print::write(char)　Virtual　⇒　Adafruit_GFX::write
+	となっている。
+	まずは、この部分でUTF8文字を正しく表示させる。
 */
 /**************************************************************************/
 size_t Adafruit_GFX::write(uint8_t c) {
@@ -1329,7 +1435,48 @@ size_t Adafruit_GFX::write(uint8_t c) {
 	}
 	return 1;
 }
-
+/// @brief 32bitで渡された文字（UTF)を表示する。
+/// @param utf8Code 表示するUTF-8文字
+/// @return
+size_t Adafruit_GFX::write(uint32_t utf8Code) {
+	if (utf8Code == 0x0000000A) {
+		cursor_x = 0;
+		cursor_y += (int16_t)textsize_y * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+	} else if (utf8Code != 0x0000000D) {
+		const uint8_t *bmpData;
+		uint8_t w;
+		uint8_t h;
+		if (utf8Code <= 0xFF) {  // １バイト文字
+			const AsciiFont *pFont = KanjiHelper::FindAscii(utf8Code);
+			if (pFont == NULL) {
+				cursor_x = cursor_x + AFont[0].width;
+				return 1;
+			}
+			bmpData = pFont->bmpData;
+			w = pFont->width;
+			h = pFont->height;
+		} else {
+			const KanjiFont *pFont = KanjiHelper::FindKanji(utf8Code);
+			if (pFont == NULL) {
+				cursor_x = cursor_x + KFont[0].width;
+				return 1;
+			}
+			bmpData = pFont->bmpData;
+			w = pFont->width;
+			h = pFont->height;
+		}
+		if (wrap) {
+			if ((cursor_x + w) > _width) {
+				cursor_x = 0;
+				cursor_y = cursor_y + h;
+			}
+		}
+		drawChar(cursor_x, cursor_y, w, h, bmpData, textcolor, textbgcolor, textsize_x, textsize_y);
+		cursor_x = cursor_x + w;
+		return 1;
+	}
+	return 0;
+}
 /**************************************************************************/
 /*!
 	@brief   Set text 'magnification' size. Each increase in s makes 1 pixel
@@ -1352,30 +1499,6 @@ void Adafruit_GFX::setTextSize(uint8_t s) {
 void Adafruit_GFX::setTextSize(uint8_t s_x, uint8_t s_y) {
 	textsize_x = (s_x > 0) ? s_x : 1;
 	textsize_y = (s_y > 0) ? s_y : 1;
-}
-
-
-
-
-/**************************************************************************/
-/*!
-	@brief Set the font to display when print()ing, either custom or default
-	@param  f  The GFXfont object, if NULL use built in 6x8 font
-*/
-/**************************************************************************/
-void Adafruit_GFX::setFont(const GFXfont *f) {
-	if (f) {             // Font struct pointer passed in?
-		if (!gfxFont) {  // And no current font struct?
-			// Switching from classic to new font behavior.
-			// Move cursor pos down 6 pixels so it's on baseline.
-			cursor_y += 6;
-		}
-	} else if (gfxFont) {  // NULL passed.  Current font struct defined?
-		// Switching from new to classic font behavior.
-		// Move cursor pos up 6 pixels so it's at top-left of char.
-		cursor_y -= 6;
-	}
-	gfxFont = (GFXfont *)f;
 }
 
 /**************************************************************************/
@@ -2139,7 +2262,6 @@ void GFXcanvas1::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 	}
 }
 #pragma endregion
-
 
 #pragma region ８ビット色キャンバス機能 -  GFXcanvas8
 /**************************************************************************/

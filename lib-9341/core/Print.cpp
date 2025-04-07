@@ -44,8 +44,49 @@ using namespace ardPort::core;
 
 
 /* default implementation: may be overridden */
+/// @brief  文字列描画の仮想関数。必要に応じてオーバーロードする。
+/// @param buffer 描画する文字列
+/// @param size 描画する文字列のサイズ
+/// @return 描画した文字数
+/// @details 日本語対応のために拡張。
 size_t  Print::write(const uint8_t *buffer, size_t size)
 {
+	int charCount = 0;
+	int i = 0;
+	while (i < size) {
+		uint32_t utf8codes = 0;
+		uint8_t step = 0;
+		if ((buffer[i] & 0x80) == 0x00) {
+			step = 1;  			// 1バイト文字 (ASCII)
+			utf8codes = buffer[i];
+		} else if ((buffer[i] & 0xE0) == 0xC0) {
+			step = 2;  // 2バイト文字
+			utf8codes = (buffer[i] << 8) | buffer[i + 1];
+		} else if ((buffer[i] & 0xF0) == 0xE0) {
+			step =  3;  // 3バイト文字
+			utf8codes = (buffer[i] << 16) | (buffer[i + 1] << 8) | buffer[i+2];
+		} else if ((buffer[i] & 0xF8) == 0xF0) {
+			utf8codes = (buffer[i] << 24) | (buffer[i + 1] << 16) | (buffer[i +2] << 8) | buffer[i + 3];
+			step = 4;  // 4バイト文字
+		} else {
+			return 0;  // 不正なUTF-8バイト
+		}
+		
+
+		#ifdef TFT_FORCE_HANKANA					// 半角カナを1バイト文字として処理
+		uint16_t top2bytes = (uint16_t)(utf8codes >> 8);
+		if (top2bytes == 0xefbd)  {
+			utf8codes = utf8codes & 0x000000FF;
+		} else if (top2bytes == 0xefbe) {
+			utf8codes = (utf8codes & 0x000000FF) + 0x40;
+		}
+		#endif
+		charCount++;
+		write(utf8codes);  // 文字列描画
+		i += step;
+	}
+	return charCount;
+	/*
 	size_t n = 0;
 		while (size--) {
 			if (write(*buffer++))
@@ -53,7 +94,8 @@ size_t  Print::write(const uint8_t *buffer, size_t size)
 			else
 				break;
 		}
-	return n;
+	*/
+	// return n;
 }
 
 size_t Print::print(const __FlashStringHelper *ifsh)
@@ -83,7 +125,7 @@ size_t Print::print(const char str[])
 
 size_t Print::print(char c)
 {
-	return write(c);
+	return write((uint8_t)c);
 }
 
 size_t Print::print(unsigned char b, int base)
@@ -104,7 +146,7 @@ size_t Print::print(unsigned int n, int base)
 size_t Print::print(long n, int base)
 {
 		if (base == 0) {
-			return write(n);
+			return write((uint8_t)n);
 		} else if (base == 10) {
 				if (n < 0) {
 					int t = print('-');

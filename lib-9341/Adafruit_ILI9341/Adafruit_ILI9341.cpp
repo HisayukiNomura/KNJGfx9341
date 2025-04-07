@@ -59,7 +59,7 @@
 	#ifndef pgm_read_dword
 		#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
 	#endif
-	using namespace ardPort;
+using namespace ardPort;
 #else
 	#include "Adafruit_ILI9341.h"
 	#ifndef ARDUINO_STM32_FEATHER
@@ -109,10 +109,10 @@
 	@param    miso  SPI MISO pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi,
-								   int8_t sclk, int8_t rst, int8_t miso) :
-	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, mosi, sclk,
-					rst, miso) {}
+Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi, int8_t sclk, int8_t rst, int8_t miso) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, mosi, sclk, rst, miso) {
+	bUseWindow = false;
+}
 
 /**************************************************************************/
 /*!
@@ -124,7 +124,9 @@ Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi,
 */
 /**************************************************************************/
 Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) :
-	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, rst) {}
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, rst) {
+	bUseWindow = false;
+}
 
 #if !defined(ESP8266)
 /**************************************************************************/
@@ -138,10 +140,10 @@ Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) :
 	@param  rst       Reset pin # (optional, pass -1 if unused).
 */
 /**************************************************************************/
-Adafruit_ILI9341::Adafruit_ILI9341(SPIClass *spiClass, int8_t dc, int8_t cs,
-								   int8_t rst) :
-	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, spiClass, cs, dc,
-					rst) {}
+Adafruit_ILI9341::Adafruit_ILI9341(SPIClass *spiClass, int8_t dc, int8_t cs, int8_t rst) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, spiClass, cs, dc, rst) {
+	bUseWindow = false;
+}
 #endif  // end !ESP8266
 
 /**************************************************************************/
@@ -201,26 +203,25 @@ static const uint8_t PROGMEM initcmd[] = {
 	@param    freq  Desired SPI clock frequency
 */
 /**************************************************************************/
-void Adafruit_ILI9341::begin(uint32_t freq)
-{
+void Adafruit_ILI9341::begin(uint32_t freq) {
 	if (!freq)
 		freq = SPI_DEFAULT_FREQ;
 	initSPI(freq);
-		if (_rst < 0) {                    // If no hardware reset pin...
-			sendCommand(ILI9341_SWRESET);  // Engage software reset
-			delay(150);
+	if (_rst < 0) {                    // If no hardware reset pin...
+		sendCommand(ILI9341_SWRESET);  // Engage software reset
+		delay(150);
 	}
 
 	uint8_t cmd, x, numArgs;
 	const uint8_t *addr = initcmd;
-		while ((cmd = pgm_read_byte(addr++)) > 0) {
-			x = pgm_read_byte(addr++);
-			numArgs = x & 0x7F;
-			sendCommand(cmd, addr, numArgs);
-			addr += numArgs;
-			if (x & 0x80)
-				delay(150);
-		}
+	while ((cmd = pgm_read_byte(addr++)) > 0) {
+		x = pgm_read_byte(addr++);
+		numArgs = x & 0x7F;
+		sendCommand(cmd, addr, numArgs);
+		addr += numArgs;
+		if (x & 0x80)
+			delay(150);
+	}
 
 	_width = ILI9341_TFTWIDTH;
 	_height = ILI9341_TFTHEIGHT;
@@ -232,31 +233,30 @@ void Adafruit_ILI9341::begin(uint32_t freq)
 	@param   m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void Adafruit_ILI9341::setRotation(uint8_t m)
-{
+void Adafruit_ILI9341::setRotation(uint8_t m) {
 	rotation = m % 4;  // can't be higher than 3
-		switch (rotation) {
-			case 0:
-				m = (MADCTL_MX | MADCTL_BGR);
-				_width = ILI9341_TFTWIDTH;
-				_height = ILI9341_TFTHEIGHT;
-				break;
-			case 1:
-				m = (MADCTL_MV | MADCTL_BGR);
-				_width = ILI9341_TFTHEIGHT;
-				_height = ILI9341_TFTWIDTH;
-				break;
-			case 2:
-				m = (MADCTL_MY | MADCTL_BGR);
-				_width = ILI9341_TFTWIDTH;
-				_height = ILI9341_TFTHEIGHT;
-				break;
-			case 3:
-				m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-				_width = ILI9341_TFTHEIGHT;
-				_height = ILI9341_TFTWIDTH;
-				break;
-		}
+	switch (rotation) {
+		case 0:
+			m = (MADCTL_MX | MADCTL_BGR);
+			_width = ILI9341_TFTWIDTH;
+			_height = ILI9341_TFTHEIGHT;
+			break;
+		case 1:
+			m = (MADCTL_MV | MADCTL_BGR);
+			_width = ILI9341_TFTHEIGHT;
+			_height = ILI9341_TFTWIDTH;
+			break;
+		case 2:
+			m = (MADCTL_MY | MADCTL_BGR);
+			_width = ILI9341_TFTWIDTH;
+			_height = ILI9341_TFTHEIGHT;
+			break;
+		case 3:
+			m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+			_width = ILI9341_TFTHEIGHT;
+			_height = ILI9341_TFTWIDTH;
+			break;
+	}
 
 	sendCommand(ILI9341_MADCTL, &m, 1);
 }
@@ -267,8 +267,7 @@ void Adafruit_ILI9341::setRotation(uint8_t m)
 	@param   invert True to invert, False to have normal color
 */
 /**************************************************************************/
-void Adafruit_ILI9341::invertDisplay(bool invert)
-{
+void Adafruit_ILI9341::invertDisplay(bool invert) {
 	sendCommand(invert ? ILI9341_INVON : ILI9341_INVOFF);
 }
 
@@ -278,8 +277,7 @@ void Adafruit_ILI9341::invertDisplay(bool invert)
 	@param   y How many pixels to scroll display by
 */
 /**************************************************************************/
-void Adafruit_ILI9341::scrollTo(uint16_t y)
-{
+void Adafruit_ILI9341::scrollTo(uint16_t y) {
 	uint8_t data[2];
 	data[0] = y >> 8;
 	data[1] = y & 0xff;
@@ -293,19 +291,18 @@ void Adafruit_ILI9341::scrollTo(uint16_t y)
 	@param   bottom The height of the Bottom scroll margin
  */
 /**************************************************************************/
-void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom)
-{
-		// TFA+VSA+BFA must equal 320
-		if (top + bottom <= ILI9341_TFTHEIGHT) {
-			uint16_t middle = ILI9341_TFTHEIGHT - (top + bottom);
-			uint8_t data[6];
-			data[0] = top >> 8;
-			data[1] = top & 0xff;
-			data[2] = middle >> 8;
-			data[3] = middle & 0xff;
-			data[4] = bottom >> 8;
-			data[5] = bottom & 0xff;
-			sendCommand(ILI9341_VSCRDEF, (uint8_t *)data, 6);
+void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom) {
+	// TFA+VSA+BFA must equal 320
+	if (top + bottom <= ILI9341_TFTHEIGHT) {
+		uint16_t middle = ILI9341_TFTHEIGHT - (top + bottom);
+		uint8_t data[6];
+		data[0] = top >> 8;
+		data[1] = top & 0xff;
+		data[2] = middle >> 8;
+		data[3] = middle & 0xff;
+		data[4] = bottom >> 8;
+		data[5] = bottom & 0xff;
+		sendCommand(ILI9341_VSCRDEF, (uint8_t *)data, 6);
 	}
 }
 
@@ -321,25 +318,24 @@ void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom)
 */
 /**************************************************************************/
 void Adafruit_ILI9341::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t w,
-									 uint16_t h)
-{
+									 uint16_t h) {
 	static uint16_t old_x1 = 0xffff, old_x2 = 0xffff;
 	static uint16_t old_y1 = 0xffff, old_y2 = 0xffff;
 
 	uint16_t x2 = (x1 + w - 1), y2 = (y1 + h - 1);
-		if (x1 != old_x1 || x2 != old_x2) {
-			writeCommand(ILI9341_CASET);  // Column address set
-			SPI_WRITE16(x1);
-			SPI_WRITE16(x2);
-			old_x1 = x1;
-			old_x2 = x2;
+	if (x1 != old_x1 || x2 != old_x2) {
+		writeCommand(ILI9341_CASET);  // Column address set
+		SPI_WRITE16(x1);
+		SPI_WRITE16(x2);
+		old_x1 = x1;
+		old_x2 = x2;
 	}
-		if (y1 != old_y1 || y2 != old_y2) {
-			writeCommand(ILI9341_PASET);  // Row address set
-			SPI_WRITE16(y1);
-			SPI_WRITE16(y2);
-			old_y1 = y1;
-			old_y2 = y2;
+	if (y1 != old_y1 || y2 != old_y2) {
+		writeCommand(ILI9341_PASET);  // Row address set
+		SPI_WRITE16(y1);
+		SPI_WRITE16(y2);
+		old_y1 = y1;
+		old_y2 = y2;
 	}
 	writeCommand(ILI9341_RAMWR);  // Write to RAM
 }
@@ -354,9 +350,61 @@ void Adafruit_ILI9341::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t w,
 	@return   Unsigned 8-bit data read from ILI9341 register
  */
 /**************************************************************************/
-uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index)
-{
+uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index) {
 	uint8_t data = 0x10 + index;
 	sendCommand(0xD9, &data, 1);  // Set Index Register
 	return Adafruit_SPITFT::readcommand8(commandByte);
+}
+/**
+ * @brief   サイズが１倍で、背景色が無く、ILI9341を使っているときは、文字の描画にウインドウを使用して高速に処理する
+ * @param   x   描画開始位置の左上座標
+ * @param   y   描画開始位置の左上座標
+ * @param   w   描画するフォントビットマップの横ドット数
+ * @param   h   描画するフォントビットマップの縦ドット数
+ * @param   bmpData  描画するフォントビットマップデータ
+ * @param   color 文字の前景色（565カラー）
+ * @param   bg 文字の背景色（565カラー）　前景色と同じ色が指定されたら、透過表示とみなす。
+ * @param   size_x 文字の横方向の拡大率
+ * @param   size_y 文字の縦方向の拡大率
+ * @return  None
+ * @details このメソッドは、Adafruit_GFXの仮想関数をオーバーロードする。ILI9341の場合、ウインドウを指定してそこに画像の色を連続的に
+ * 送ることで、毎回の座標指定をせずに描画できる。Adafruit_GFXの文字表示では、XY座標を指定し、毎回点を打っているのでそれを避けるために
+ * ここでオーバーライドしている。
+ * 実測で PICO_Wを使って１万文字表示で、Adafruitオリジナルで32秒、このルーチンで15秒と改善していると思われる。
+ */
+void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
+	if (bUseWindow == true &&  size_x == 1 && size_y == 1 && color != bg) {
+		if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
+
+		uint8_t w_bytes = (w + 8 - 1) / 8;   // 横方向のバイト数
+		uint8_t h_bytes = h;                 // 縦方向のバイト数
+		uint16_t bmpIdx = 0;                 // ビットマップ情報には、bmp + yy*w_bytes + xx でアクセスできるが、順番に並んでいるので最初から順に読むほうが速いのでは？
+		bool isByteMultiple = (w % 8 == 0);  // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
+
+		startWrite();
+		setAddrWindow(x, w, w, h);
+		for (int8_t yy = 0; yy < h_bytes; yy++) {
+			for (int8_t xx = 0; xx < w_bytes; xx++) {
+				uint8_t bitCnt;
+				if (isByteMultiple) {
+					bitCnt = 8;
+				} else {
+					bitCnt = (xx != (w_bytes - 1)) ? 8 : (w % 8);
+				}
+				uint8_t bits = bmpData[bmpIdx];
+				for (int8_t bb = 0; bb < bitCnt; bb++) {
+					if (bits & 0x80) {
+						pushColor(color);
+					} else {
+						pushColor(bg);
+					}
+					bits <<= 1;
+				}
+				bmpIdx++;
+			}
+		}
+	} else {
+		/// 拡大フォントや背景色が透過の場合にはウインドウでの描画は使用できないので基底クラスのdrawCharを呼び出す
+		Adafruit_GFX::drawChar(x, y, w, h, bmpData, color, bg, size_x, size_y);
+	}
 }

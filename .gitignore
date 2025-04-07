@@ -7,3 +7,4 @@ Scopy_SPISettings.ini
 *.bak
 .gitignore
 go.bat
+*.pdf
