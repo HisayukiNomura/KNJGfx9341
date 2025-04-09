@@ -20,9 +20,10 @@
 #pragma once
 
 #include "../defines.h"
-
+#include <type_traits>
+#include <string>
 #include <inttypes.h>
-#include <stdio.h> // for size_t
+#include <stdio.h>  // for size_t
 
 #include "WString.h"
 #include "Printable.h"
@@ -30,79 +31,114 @@
 #define DEC 10
 #define HEX 16
 #define OCT 8
-#ifdef BIN // Prevent warnings if BIN is previously defined in "iotnx4.h" or similar
-#undef BIN
+#ifdef BIN  // Prevent warnings if BIN is previously defined in "iotnx4.h" or similar
+	#undef BIN
 #endif
 #define BIN 2
-
 
 #ifdef STD_SDK
 namespace ardPort::core {
 
-#endif 
+#endif
 
-class Print
-{
-  private:
-    int write_error;
-    size_t printNumber(unsigned long, uint8_t);
-    size_t printFloat(double, uint8_t);
-  protected:
-    void setWriteError(int err = 1) { write_error = err; }
-  public:
-    Print() : write_error(0) {}
-  
-    int getWriteError() { return write_error; }
-    void clearWriteError() { setWriteError(0); }
-  
-    virtual size_t write(uint8_t) = 0;
-    virtual size_t write(uint32_t) = 0;
+	class Print {
+	   protected:
+		bool isKanji;  // 漢字フォントを使用するかのフラグ
 
-    
-    /// @brief 文字列を表示する
-    /// @param str 表示する文字列。ゼロ終了。
-    /// @return 文字数。
-        size_t write(const char *str) {
-      if (str == NULL) return 0;
-      return write((const uint8_t *)str, strlen(str));
-    }
-    virtual size_t write(const uint8_t *buffer, size_t size);
-    size_t write(const char *buffer, size_t size) {
-      return write((const uint8_t *)buffer, size);
-    }
+	   private:
+		int write_error;
+		size_t printNumber(unsigned long, uint8_t);
+		size_t printFloat(double, uint8_t);
 
-    // default to zero, meaning "a single write may block"
-    // should be overridden by subclasses with buffering
-    virtual int availableForWrite() { return 0; }
+	   protected:
+		void setWriteError(int err = 1) { write_error = err; }
 
-    size_t print(const __FlashStringHelper *);
-    size_t print(const String &);
-    size_t print(const char[]);
-    size_t print(char);
-    size_t print(unsigned char, int = DEC);
-    size_t print(int, int = DEC);
-    size_t print(unsigned int, int = DEC);
-    size_t print(long, int = DEC);
-    size_t print(unsigned long, int = DEC);
-    size_t print(double, int = 2);
-    size_t print(const Printable&);
+	   public:
+		Print() :
+			write_error(0) {
+			isKanji = false;
+		}
+		void setKanjiFont(bool a_isKanji);  // 漢字フォントを使用するかを指定する
 
-    size_t println(const __FlashStringHelper *);
-    size_t println(const String &s);
-    size_t println(const char[]);
-    size_t println(char);
-    size_t println(unsigned char, int = DEC);
-    size_t println(int, int = DEC);
-    size_t println(unsigned int, int = DEC);
-    size_t println(long, int = DEC);
-    size_t println(unsigned long, int = DEC);
-    size_t println(double, int = 2);
-    size_t println(const Printable&);
-    size_t println(void);
+		int getWriteError() { return write_error; }
+		void clearWriteError() { setWriteError(0); }
 
-    virtual void flush() { /* Empty implementation for backward compatibility */ }
-};
+		virtual size_t write(uint8_t) = 0;
+		virtual size_t write(uint32_t) = 0;
+
+		/// @brief 文字列を表示する
+		/// @param str 表示する文字列。ゼロ終了。
+		/// @return 文字数。
+		size_t write(const char *str) {
+			if (str == NULL) return 0;
+			return write((const uint8_t *)str, strlen(str));
+		}
+		virtual size_t write(const uint8_t *buffer, size_t size);
+		size_t write(const char *buffer, size_t size) {
+			return write((const uint8_t *)buffer, size);
+		}
+
+		// default to zero, meaning "a single write may block"
+		// should be overridden by subclasses with buffering
+		virtual int availableForWrite() { return 0; }
+
+#ifdef STD_SDK
+#else
+	size_t print(const __FlashStringHelper *);
+#endif
+		/*
+		size_t print(const String &);
+		size_t print(const char[]);
+		size_t print(char);
+		size_t print(unsigned char, int = DEC);
+		size_t print(int, int = DEC);
+		size_t print(unsigned int, int = DEC);
+		size_t print(long, int = DEC);
+		size_t print(unsigned long, int = DEC);
+		size_t print(double, int = 2);
+		*/
+		size_t print(const Printable &);
+// std::is_same<T, std::string>::value
+		template <typename T>
+		constexpr static int DefaultOption() {
+			if constexpr (std::is_floating_point<T>::value) {
+				return 2;  // 浮動小数点型のデフォルト桁数
+			} else if constexpr (std::is_same<T,long>::value) {
+				return 10;  // 整数型のデフォルト進数
+			} else if constexpr (std::is_integral<T>::value) {
+				return 10;  // 整数型のデフォルト進数
+			} else {
+				return 0;  // その他の型は0
+			}
+		}
+
+		template <typename T>	size_t print(T value, int option = DefaultOption<T>());
+
+#ifdef STD_SDK
+#else
+	size_t
+	println(const __FlashStringHelper *);
+#endif
+		/*
+		size_t println(const String &s);
+		size_t println(const char[]);
+		size_t println(char);
+		size_t println(unsigned char, int = DEC);
+		size_t println(int, int = DEC);
+		size_t println(unsigned int, int = DEC);
+		size_t println(long, int = DEC);
+		size_t println(unsigned long, int = DEC);
+		size_t println(double, int = 2);
+		*/
+
+		size_t println(const Printable &);
+		size_t println(void);
+		template <typename T> size_t println(T value, int option = DefaultOption<T>());
+
+		size_t printf(const char *format, ...);
+		virtual void flush() { /* Empty implementation for backward compatibility */ }
+	};
 
 #ifdef STD_SDK
 }
-#endif 
+#endif
