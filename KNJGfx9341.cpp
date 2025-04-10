@@ -6,8 +6,8 @@
 #include "Adafruit_GFX.h"
 #include "defines.h"
 #include "hardware/spi.h"
-#include  <string>
-#include  "lib-9341/core/WString.h"
+#include <string>
+#include "lib-9341/core/WString.h"
 #include "lib-9341/Adafruit_GFX_Library/Adafruit_GFX.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans18pt7b.h"
@@ -44,11 +44,6 @@ information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
 using namespace ardPort;
 using namespace ardPort::spi;
 
-// スプライト（メモリ描画領域から一括表示）をcanvasとして準備
-// 画面表示をtftではなくcanvasで指定して一括描画することでチラツキなく表示できる
-GFXcanvas16 canvas(
-	TFT_WIDTH, TFT_HEIGHT);  // 16bitカラースプライト（オフスクリーンバッファ）
-
 #define RANDCOLOR (rand() % 0xFFFF)
 
 std::array<int, 4> RandXYWH() {
@@ -66,12 +61,20 @@ std::array<int, 4> RandXYWH() {
 	return {x, y, w, h};
 }
 
+std::array<int, 4> RandXYXY() {
+	int x = rand() % TFT_WIDTH;
+	int y = rand() % TFT_HEIGHT;
+	int x2 = rand() % TFT_WIDTH;
+	int y2 = rand() % TFT_HEIGHT;
+	return {x, y, x2, y2};
+}
 #include "Adafruit_SPITFT.h"
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-XPT2046_Touchscreen ts(TOUCH_CS);
-#define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
-int main() {  // タッチパネルのインスタンスを作成
+// GFXcanvas16 canvas(TFT_WIDTH, TFT_HEIGHT);  // 16bitカラースプライト（オフスクリーンバッファ）
 
+#define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);
+int main() {  // タッチパネルのインスタンスを作成
 
 	long i = clockCyclesPerMicrosecond();
 
@@ -91,9 +94,14 @@ int main() {  // タッチパネルのインスタンスを作成
 	SPI.setSCK(TFT_SCK);  // SPI0のSCK
 
 	// TFT初期設定
-	tft.begin();                              // TFTを初期化
-	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
-	canvas.setTextSize(1);                    // テキストサイズを設定
+	tft.begin();  // TFTを初期化
+	// tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
+	// GFXcanvas16 canvas(tft.width(), tft.height());
+	GFXcanvas8 canvas8(tft.width(), tft.height());
+	GFXcanvas16 canvas16(tft.width(), tft.height());
+	GFXcanvas1 canvas1(tft.width(), tft.height());
+
+	canvas1.setTextSize(1);  // テキストサイズを設定
 
 	// タッチパネル初期設定
 	ts.begin();                              // タッチパネル初期化
@@ -116,10 +124,30 @@ int main() {  // タッチパネルのインスタンスを作成
 			int16_t x = (tPoint.x - 400) * TFT_WIDTH / (4095 - 550);   // タッチx座標をTFT画面の座標に換算
 			int16_t y = (tPoint.y - 230) * TFT_HEIGHT / (4095 - 420);  // タッチy座標をTFT画面の座標に換算
 
-
 			// 円の連続で線を描画
 			tft.fillCircle(x, y, 2, 0x0A08);  // タッチ座標に塗り潰し円を描画
 		} else {
+			for (int i = 0; i < 100; i++) {
+				std::array<int, 4> xyxy = RandXYXY();
+				tft.drawLine(xyxy[0], xyxy[1], xyxy[2], xyxy[3], RANDCOLOR);  // ランダムな色で線を描画
+			}
+
+			canvas16.fillScreen(0x0000);        // 背景色
+
+			canvas16.setFont(&FreeSans18pt7b);  // フォント指定
+			canvas16.setKanjiFont(true);
+			canvas16.setCursor(0, 0);
+			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色（文字色、背景色）※背景色は省略可
+			canvas16.printf("実行時間:%d tick/ 温度：%f\r\n", clkcycle, analogReadTemp(3.3));
+			canvas16.setKanjiFont(false);
+			canvas16.setCursor(0, 100);
+			canvas16.printf("Cycle:%d tick/ Temp:%f\r\n", clkcycle, analogReadTemp(3.3));
+			//tft.drawBWBitmap(0, 0, canvas1.getBuffer(), canvas1.width(), canvas1.height());
+			tft.drawRGBBitmap(0, 0, &canvas16);
+
+
+			// tft.drawRGBBitmap(0, 0, canvas16.getBuffer(), canvas.width(), canvas.height());
+			/*
 			tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 			tft.setFont(&FreeSans12pt7b);    // フォント指定
 			tft.setKanjiFont(true);
@@ -133,6 +161,7 @@ int main() {  // タッチパネルのインスタンスを作成
 			tft.println(str);
 			tft.println(wstr);
 			tft.printf("実行時間:%d tick/ 温度：%f\r\n", clockCyclesPerMicrosecond(), analogReadTemp(3.3));
+			*/
 			/*
 
 			tft.useWindowMode(false);
@@ -188,30 +217,30 @@ int main() {  // タッチパネルのインスタンスを作成
 				printf("高速モード経過時間: %.3f 秒\n", elapsed_time);
 			}
 			*/
-		/*
-			tft.setTextSize(2, 2);
-			tft.write((uint32_t)0xe38184);  // UTF-8で「あ」を表示
+			/*
+				tft.setTextSize(2, 2);
+				tft.write((uint32_t)0xe38184);  // UTF-8で「あ」を表示
 
-   canvas.fillScreen(0x0000);  // 背景色
-   // 文字表示
-   canvas.setCursor(48, 125);            // 表示座標指定
-   canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
-   canvas.setFont(&FreeSans18pt7b);      // フォント指定
+	   canvas.fillScreen(0x0000);  // 背景色
+	   // 文字表示
+	   canvas.setCursor(48, 125);            // 表示座標指定
+	   canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
+	   canvas.setFont(&FreeSans18pt7b);      // フォント指定
 
-   float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
-   char buf[100];
-   canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
-   sprintf(buf, "こんにちは:%f", temp);
-   canvas.println(temp);  // 表示内容
+	   float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
+	   char buf[100];
+	   canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
+	   sprintf(buf, "こんにちは:%f", temp);
+	   canvas.println(temp);  // 表示内容
 
 
-   // 実行時間
-   canvas.setFont(&FreeSans12pt7b);  // フォント指定
-   canvas.setCursor(0, 22);          // 表示座標指定
-   canvas.print(time_d);             // 経過時間をms単位で表示
-   tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
-   DEBUGV("Tick:%d\r\n", time_d);
-   */
+	   // 実行時間
+	   canvas.setFont(&FreeSans12pt7b);  // フォント指定
+	   canvas.setCursor(0, 22);          // 表示座標指定
+	   canvas.print(time_d);             // 経過時間をms単位で表示
+	   tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
+	   DEBUGV("Tick:%d\r\n", time_d);
+	   */
 		}
 	}
 }

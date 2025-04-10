@@ -39,8 +39,8 @@
 	#include "Adafruit_SPITFT.h"
 
 	#ifdef STD_SDK
-	using namespace ardPort;
-	using namespace ardPort::spi;
+using namespace ardPort;
+using namespace ardPort::spi;
 
 	#endif
 
@@ -1876,12 +1876,11 @@ void Adafruit_SPITFT::pushColor(uint16_t color) {
 			edge clipping/rejection.
 	@param  x        Top left corner horizontal coordinate.
 	@param  y        Top left corner vertical coordinate.
-	@param  pcolors  Pointer to 16-bit array of pixel values.
+	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
 	@param  w        Width of bitmap in pixels.
 	@param  h        Height of bitmap in pixels.
 */
-void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors,
-									int16_t w, int16_t h) {
+void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h) {
 	int16_t x2, y2;                  // Lower-right coord
 	if ((x >= _width) ||             // Off-edge right
 		(y >= _height) ||            // " top
@@ -1912,6 +1911,119 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors,
 	while (h--) {                 // For each (clipped) scanline...
 		writePixels(pcolors, w);  // Push one (clipped) row
 		pcolors += saveW;         // Advance pointer by one full (unclipped) line
+	}
+	endWrite();
+}
+
+/*!
+	@brief  デバイス依存の機能（描画ウインドウ）を使って、８ビットのビットマップ（透過なし）
+			を描画する。8Bit色（RRRGGGBBフォーマット)は、RGB565に変換して描画される。
+	@param  x        Top left corner horizontal coordinate.
+	@param  y        Top left corner vertical coordinate.
+	@param  pcolors  表示する画像データのポインタ。画像データはバイトマップ
+	@param  w        Width of bitmap in pixels.
+	@param  h        Height of bitmap in pixels.
+*/
+void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16_t w, int16_t h) {
+	int16_t x2, y2;                  // Lower-right coord
+	if ((x >= _width) ||             // Off-edge right
+		(y >= _height) ||            // " top
+		((x2 = (x + w - 1)) < 0) ||  // " left
+		((y2 = (y + h - 1)) < 0))
+		return;  // " bottom
+
+	int16_t bx1 = 0, by1 = 0,  // Clipped top-left within bitmap
+		saveW = w;             // Save original bitmap width value
+	if (x < 0) {               // Clip left
+		w += x;
+		bx1 = -x;
+		x = 0;
+	}
+	if (y < 0) {  // Clip top
+		h += y;
+		by1 = -y;
+		y = 0;
+	}
+	if (x2 >= _width)
+		w = _width - x;  // Clip right
+	if (y2 >= _height)
+		h = _height - y;  // Clip bottom
+
+	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
+	startWrite();
+	setAddrWindow(x, y, w, h);    // Clipped area
+	// 一行ずつ出力しているので、それに合わせる。
+	// これだと、縦長の矩形で効率が悪いと思うのだが。
+	while (h--) {                 // For each (clipped) scanline...
+		uint16_t *cvtBuf = (uint16_t *)alloca(w * 2);
+		uint16_t *pWk = cvtBuf;
+		for (int i = 0; i < w; i++) {
+			*pWk = convert8To565(*(pcolors+i));
+			pWk++;
+		}
+		writePixels(cvtBuf, w);  // Push one (clipped) row
+		pcolors += saveW;         // Advance pointer by one full (unclipped) line
+	}
+	endWrite();
+}
+/// @brief デバイス依存の機能（描画ウインドウ）を使って、白黒ﾋﾞｯﾄﾏｯﾌﾟを表示する
+/// @param x 表示するX座標
+/// @param y 表示するY座標
+/// @param pcolors 表示する画像データのポインタ。画像データはビットマップ。
+/// @param w 表示する画像の幅
+/// @param h 表示する画像の高さ
+void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16_t w, int16_t h) {
+	int16_t x2, y2;                  // Lower-right coord
+	if ((x >= _width) ||             // Off-edge right
+		(y >= _height) ||            // " top
+		((x2 = (x + w - 1)) < 0) ||  // " left
+		((y2 = (y + h - 1)) < 0))
+		return;  // " bottom
+
+	int16_t bx1 = 0, by1 = 0,  // Clipped top-left within bitmap
+		saveW = w;             // Save original bitmap width value
+	if (x < 0) {               // Clip left
+		w += x;
+		bx1 = -x;
+		x = 0;
+	}
+	if (y < 0) {  // Clip top
+		h += y;
+		by1 = -y;
+		y = 0;
+	}
+	if (x2 >= _width)
+		w = _width - x;  // Clip right
+	if (y2 >= _height)
+		h = _height - y;  // Clip bottom
+
+	unsigned int saveWBytes = (saveW + 7)/8;
+	unsigned int bx1Bytes = (bx1+7)/8;
+
+	pcolors += by1 * saveWBytes + bx1Bytes;  // Offset bitmap ptr to clipped top-left
+	startWrite();
+	setAddrWindow(x, y, w, h);  // Clipped area
+	// 一行ずつ出力しているので、それに合わせる。
+	// これだと、縦長の矩形で効率が悪いと思うのだが。
+	uint16_t Xbytes = ((w + 7) / 8);
+
+	while (h--) {  // For each (clipped) scanline...
+		uint16_t *cvtBuf = (uint16_t *)alloca(w * 2);
+		uint16_t *pWk = cvtBuf;
+		for (int i = 0; i < Xbytes; i++) {
+			uint8_t bits = *(pcolors + i);
+			for (int j = 0; j < 8; j++) {
+				if (bits & 0x80) {
+					*pWk = 0xFFFF;  // 白
+				} else {
+					*pWk = 0x0000;  // 黒
+				}
+				bits <<= 1;
+				pWk++;
+			}
+		}
+		writePixels(cvtBuf, w);  // Push one (clipped) row
+		pcolors += saveWBytes;        // Advance pointer by one full (unclipped) line
 	}
 	endWrite();
 }

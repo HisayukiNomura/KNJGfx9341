@@ -21,6 +21,7 @@
 	#include <Adafruit_I2CDevice.h>
 	#include <Adafruit_SPIDevice.h>
 #endif
+
 /// A generic graphics superclass that can handle all sorts of drawing. At a
 /// minimum you can subclass and provide drawPixel(). At a maximum you can do a
 /// ton of overriding to optimize. Used for any/all Adafruit displays!
@@ -28,7 +29,15 @@
 #ifdef STD_SDK
 namespace ardPort {
 #endif
+
+	class GFXcanvas1;
+	class GFXcanvas8;
+	class GFXcanvas16;
+
 	class Adafruit_GFX : public core::Print {
+	   protected:
+		uint16_t convert8To565(uint8_t color8);
+
 	   public:
 		Adafruit_GFX(int16_t w, int16_t h);  // Constructor
 
@@ -93,6 +102,7 @@ namespace ardPort {
 						   int16_t radius, uint16_t color);
 		void fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
 						   int16_t radius, uint16_t color);
+
 		void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w,
 						int16_t h, uint16_t color);
 		void drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w,
@@ -111,20 +121,30 @@ namespace ardPort {
 								 const uint8_t mask[], int16_t w, int16_t h);
 		void drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, uint8_t *mask,
 								 int16_t w, int16_t h);
-		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w,
-						   int16_t h);
-		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w,
-						   int16_t h);
-		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
-						   const uint8_t mask[], int16_t w, int16_t h);
-		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask,
-						   int16_t w, int16_t h);
+
+		// ビットマップの描画
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h);
+		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h);
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h);
+		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h);
+		
+
+		// 8bit バージョン
+		void drawRGBBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h);
+		void drawRGBBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h);
+
 		void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
 		void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
 
+
+		// GFXCanvas使用
+		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *);
+		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas8 *);
+		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas1 *);
+
 		// 日本語表示用
 		// virtual void drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bmpData, uint16_t color, uint16_t bg, uint8_t size);
-		virtual void drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
+		virtual void drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
 
 		void getTextBounds(const char *string, int16_t x, int16_t y, int16_t *x1,
 						   int16_t *y1, uint16_t *w, uint16_t *h);
@@ -172,7 +192,6 @@ namespace ardPort {
 			textcolor = c;
 			textbgcolor = bg;
 		}
-
 
 		/**********************************************************************/
 		/*!
@@ -278,7 +297,6 @@ namespace ardPort {
 		bool wrap;             ///< If set, 'wrap' text at right edge of display
 		bool _cp437;           ///< If set, use correct CP437 charset (default is off)
 		GFXfont *gfxFont;      ///< Pointer to special font
-
 	};
 
 	/// A simple drawn button UI element
@@ -343,6 +361,8 @@ namespace ardPort {
 	   public:
 		GFXcanvas1(uint16_t w, uint16_t h, bool allocate_buffer = true);
 		~GFXcanvas1(void);
+		void useBackgroundColor();
+		void disableBackgroundColor();
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
@@ -363,6 +383,8 @@ namespace ardPort {
 		uint8_t *buffer;    ///< Raster data: no longer private, allow subclass access
 		bool buffer_owned;  ///< If true, destructor will free buffer, else it will do
 							///< nothing
+	   public:
+		bool isBackground;  /// 背景色を使用するかのフラグ
 
 	   private:
 #ifdef __AVR__
@@ -376,6 +398,9 @@ namespace ardPort {
 	   public:
 		GFXcanvas8(uint16_t w, uint16_t h, bool allocate_buffer = true);
 		~GFXcanvas8(void);
+		void useBackgroundColor(uint8_t color);
+		void disableBackgroundColor();
+
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
@@ -396,13 +421,21 @@ namespace ardPort {
 		uint8_t *buffer;    ///< Raster data: no longer private, allow subclass access
 		bool buffer_owned;  ///< If true, destructor will free buffer, else it will do
 							///< nothing
+	   public:
+		bool isBackground;  /// 背景色を使用するかのフラグ
+		uint16_t bckColor;  /// 背景色。この色はビットマップ描画時に透過色となる。
 	};
 
 	///  A GFX 16-bit canvas context for graphics
 	class GFXcanvas16 : public Adafruit_GFX {
+
+
 	   public:
 		GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer = true);
 		~GFXcanvas16(void);
+		void useBackgroundColor(uint16_t color);
+		void disableBackgroundColor();
+		
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void byteSwap(void);
@@ -424,7 +457,10 @@ namespace ardPort {
 		uint16_t *buffer;   ///< Raster data: no longer private, allow subclass access
 		bool buffer_owned;  ///< If true, destructor will free buffer, else it will do
 							///< nothing
-	};
+		public:
+		bool isBackground;  /// 背景色を使用するかのフラグ
+		uint16_t bckColor;  /// 背景色。この色はビットマップ描画時に透過色となる。
+		};
 #ifdef STD_SDK
 }
 #endif
