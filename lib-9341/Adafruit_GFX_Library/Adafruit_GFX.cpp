@@ -26,7 +26,7 @@ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERW					E)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
@@ -127,7 +127,6 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	wrap = true;
 	_cp437 = false;
 	gfxFont = NULL;
-	isKanji = false;  // デフォルトは漢字フォントを使用しない
 }
 #pragma endregion
 
@@ -175,14 +174,6 @@ void Adafruit_GFX::setFont(const GFXfont *f) {
 	gfxFont = (GFXfont *)f;
 }
 
-/**
- * @brief 漢字フォントを指定する。
- * @brief この設定が行われると、今までのsetFont設定(gfxFont)を無視して、漢字フォントを使用する。
- * @param a_isEnable true:漢字フォントを使用する。false:通常フォントを使用する。
- */
-void Adafruit_GFX::setKanjiFont(bool a_isEnable) {
-	isKanji = a_isEnable;
-}
 
 #pragma endregion
 
@@ -1369,9 +1360,9 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const ui
 	}
 	if (bg != color) {  // If opaque, draw vertical line for last column
 		if (size_x == 1 && size_y == 1)
-			writeFastVLine(x + 5, y, 8, bg);
+			writeFastVLine(x + w, y, h, bg);
 		else
-			writeFillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
+			writeFillRect(x + w * size_x, y, size_x, h * size_y, bg);
 	}
 	endWrite();
 }
@@ -1441,7 +1432,7 @@ size_t Adafruit_GFX::write(uint8_t c) {
 size_t Adafruit_GFX::write(uint32_t utf8Code) {
 	if (utf8Code == 0x0000000A) {
 		cursor_x = 0;
-		cursor_y += (int16_t)textsize_y * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+		cursor_y += KFont[0].height * textsize_y;  // 改行
 	} else if (utf8Code != 0x0000000D) {
 		const uint8_t *bmpData;
 		uint8_t w;
@@ -1468,11 +1459,11 @@ size_t Adafruit_GFX::write(uint32_t utf8Code) {
 		if (wrap) {
 			if ((cursor_x + w) > _width) {
 				cursor_x = 0;
-				cursor_y = cursor_y + h;
+				cursor_y = cursor_y + h * textsize_y;
 			}
 		}
 		drawChar(cursor_x, cursor_y, w, h, bmpData, textcolor, textbgcolor, textsize_x, textsize_y);
-		cursor_x = cursor_x + w;
+		cursor_x = cursor_x + w*textsize_x;
 		return 1;
 	}
 	return 0;

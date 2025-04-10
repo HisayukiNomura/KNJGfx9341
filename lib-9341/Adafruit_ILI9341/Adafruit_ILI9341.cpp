@@ -382,7 +382,7 @@ void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, cons
 		bool isByteMultiple = (w % 8 == 0);  // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
 
 		startWrite();
-		setAddrWindow(x, w, w, h);
+		setAddrWindow(x, y, w, h);
 		for (int8_t yy = 0; yy < h_bytes; yy++) {
 			for (int8_t xx = 0; xx < w_bytes; xx++) {
 				uint8_t bitCnt;

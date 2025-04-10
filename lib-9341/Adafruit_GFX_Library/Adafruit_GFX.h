@@ -135,7 +135,6 @@ namespace ardPort {
 		void setTextSize(uint8_t s);
 		void setTextSize(uint8_t sx, uint8_t sy);
 		void setFont(const GFXfont *f = NULL);
-		void setKanjiFont(bool a_isKanji);  // 漢字フォントを使用するかを指定する
 
 		/**********************************************************************/
 		/*!
@@ -279,7 +278,7 @@ namespace ardPort {
 		bool wrap;             ///< If set, 'wrap' text at right edge of display
 		bool _cp437;           ///< If set, use correct CP437 charset (default is off)
 		GFXfont *gfxFont;      ///< Pointer to special font
-		bool isKanji;          // 漢字フォントを使用するかのフラグ
+
 	};
 
 	/// A simple drawn button UI element

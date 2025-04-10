@@ -6,6 +6,8 @@
 #include "Adafruit_GFX.h"
 #include "defines.h"
 #include "hardware/spi.h"
+#include  <string>
+#include  "lib-9341/core/WString.h"
 #include "lib-9341/Adafruit_GFX_Library/Adafruit_GFX.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans18pt7b.h"
@@ -65,11 +67,12 @@ std::array<int, 4> RandXYWH() {
 }
 
 #include "Adafruit_SPITFT.h"
-
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+XPT2046_Touchscreen ts(TOUCH_CS);
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 int main() {  // タッチパネルのインスタンスを作成
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);
+
+
 	long i = clockCyclesPerMicrosecond();
 
 	stdio_init_all();
@@ -113,6 +116,7 @@ int main() {  // タッチパネルのインスタンスを作成
 			int16_t x = (tPoint.x - 400) * TFT_WIDTH / (4095 - 550);   // タッチx座標をTFT画面の座標に換算
 			int16_t y = (tPoint.y - 230) * TFT_HEIGHT / (4095 - 420);  // タッチy座標をTFT画面の座標に換算
 
+
 			// 円の連続で線を描画
 			tft.fillCircle(x, y, 2, 0x0A08);  // タッチ座標に塗り潰し円を描画
 		} else {
@@ -122,10 +126,39 @@ int main() {  // タッチパネルのインスタンスを作成
 			tft.setCursor(10, 10);
 			tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);  // テキスト色（文字色、背景色）※背景色は省略可
 
+			std::string str = "こんにちは、世界!";  // 表示内容
+			String wstr = "ハロー！World!";  // WStringに変換
+			tft.useWindowMode(true);
+			tft.setTextSize(1, 1);
+			tft.println(str);
+			tft.println(wstr);
+			tft.printf("実行時間:%d tick/ 温度：%f\r\n", clockCyclesPerMicrosecond(), analogReadTemp(3.3));
+			/*
+
 			tft.useWindowMode(false);
 			tft.setTextSize(1, 1);
-
-			tft.write("こんにちは");
+			tft.print("標準：ABC,漢字、ひらがな、ﾊﾝｶｸｶﾅ、〇×△、┏┳┓\r\n");
+			tft.useWindowMode(false);
+			tft.setTextSize(2, 2);
+			tft.print("拡大：ABC,漢、ひら、ﾊﾝｶｸ、〇×、┏┓\r\n");
+			tft.useWindowMode(true);
+			tft.setTextSize(1, 1);
+			tft.print("高速：ABC,漢字、ひらがな、ﾊﾝｶｸｶﾅ、〇×△、┏┳┓\r\n");
+			float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
+			tft.print("温度：");
+			tft.println(temp);
+			long clkcycle = clockCyclesPerMicrosecond();
+			tft.print("サイクル：");
+			tft.print(clkcycle);
+			tft.print("  HEX:");
+			tft.println(clkcycle,16);
+			tft.setKanjiFont(false);
+			tft.print("Temp:");  // ASCII文字列を表示
+			tft.println(temp);
+			tft.print("Cycle:");
+			tft.print(" HEX:");
+			tft.println(clkcycle, 16);
+			*/
 			/*
 			{
 				tft.setTextSize(1, 1);
@@ -155,30 +188,30 @@ int main() {  // タッチパネルのインスタンスを作成
 				printf("高速モード経過時間: %.3f 秒\n", elapsed_time);
 			}
 			*/
+		/*
 			tft.setTextSize(2, 2);
 			tft.write((uint32_t)0xe38184);  // UTF-8で「あ」を表示
 
-			/*
-			canvas.fillScreen(0x0000);  // 背景色
-			// 文字表示
-			canvas.setCursor(48, 125);            // 表示座標指定
-			canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
-			canvas.setFont(&FreeSans18pt7b);      // フォント指定
+   canvas.fillScreen(0x0000);  // 背景色
+   // 文字表示
+   canvas.setCursor(48, 125);            // 表示座標指定
+   canvas.setTextColor(STDCOLOR.WHITE);  // テキスト色（文字色、背景色）※背景色は省略可
+   canvas.setFont(&FreeSans18pt7b);      // フォント指定
 
-			float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
-			char buf[100];
-			canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
-			sprintf(buf, "こんにちは:%f", temp);
-			canvas.println(temp);  // 表示内容
+   float temp = analogReadTemp(3.3);     // 温度センサーの値を取得
+   char buf[100];
+   canvas.println(ltoa(clkcycle, buf, 10));  // 表示内容
+   sprintf(buf, "こんにちは:%f", temp);
+   canvas.println(temp);  // 表示内容
 
 
-			// 実行時間
-			canvas.setFont(&FreeSans12pt7b);  // フォント指定
-			canvas.setCursor(0, 22);          // 表示座標指定
-			canvas.print(time_d);             // 経過時間をms単位で表示
-			tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
-			DEBUGV("Tick:%d\r\n", time_d);
-			*/
+   // 実行時間
+   canvas.setFont(&FreeSans12pt7b);  // フォント指定
+   canvas.setCursor(0, 22);          // 表示座標指定
+   canvas.print(time_d);             // 経過時間をms単位で表示
+   tft.drawRGBBitmap(0, 0, canvas.getBuffer(), TFT_WIDTH, TFT_HEIGHT);
+   DEBUGV("Tick:%d\r\n", time_d);
+   */
 		}
 	}
 }

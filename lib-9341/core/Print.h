@@ -112,33 +112,117 @@ namespace ardPort::core {
 			}
 		}
 
-		template <typename T>	size_t print(T value, int option = DefaultOption<T>());
+		//template <typename T>	size_t print(T value, int option = DefaultOption<T>());
+		template <typename T>
+		size_t print(T value, int option = DefaultOption<T>()) {
+			if constexpr (std::is_same<T, std::string>::value) {
+				return write(value.c_str(), value.size());
+			} else if constexpr (std::is_same<T, String>::value) {
+				return write(value.c_str(), value.length());
+			} else if constexpr (std::is_same<T, const char *>::value) {
+				return write(value);
+			} else if constexpr (std::is_same<T, char *>::value) {
+				return write(value);
+			} else if constexpr (std::is_same<T, char>::value) {
+				int t = isKanji ? write(static_cast<uint32_t>(value)) : write(static_cast<uint8_t>(value));
+				return t;
+			} else if constexpr (std::is_same<T, long>::value) {
+				if (option == 0) {
+					return write((uint8_t)value);
+				} else if (option == 10) {
+					if (value < 0) {
+						int t = isKanji ? write(static_cast<uint32_t>('-')) : write(static_cast<uint8_t>('-'));
+						value = -value;
+						return printNumber(value, 10) + t;
+					}
+					return printNumber(value, 10);
+				} else {
+					return printNumber(value, option);
+				}
+			} else if constexpr (std::is_integral<T>::value) {
+				if (option == 0) {
+					return write((uint8_t)value);
+				} else if (option == 10) {
+					if (value < 0) {
+						int t = isKanji ? write(static_cast<uint32_t>('-')) : write(static_cast<uint8_t>('-'));
+						value = -value;
+						return printNumber(value, 10) + t;
+					}
+					return printNumber(value, 10);
+				} else {
+					return printNumber(value, option);
+				}
+			} else if constexpr (std::is_floating_point<T>::value) {
+				return printFloat(static_cast<double>(value), option);
+			} else
+#if defined(STD_SDK)
+#else
+				else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
+					return write((const uint8_t *)value, strlen_P((const char *)value));
+				}
+#endif
+			{
+				write("TYPERRR!");
+				// static_assert(std::is_same<T, void>::value, "Unsupported type for Print::print.");
+				return 0;
+			}
+		}
 
 #ifdef STD_SDK
 #else
 	size_t
 	println(const __FlashStringHelper *);
 #endif
-		/*
-		size_t println(const String &s);
-		size_t println(const char[]);
-		size_t println(char);
-		size_t println(unsigned char, int = DEC);
-		size_t println(int, int = DEC);
-		size_t println(unsigned int, int = DEC);
-		size_t println(long, int = DEC);
-		size_t println(unsigned long, int = DEC);
-		size_t println(double, int = 2);
-		*/
 
 		size_t println(const Printable &);
-		size_t println(void);
-		template <typename T> size_t println(T value, int option = DefaultOption<T>());
+		size_t println(void) {return write("\r\n");}
+
+		template <typename T>
+		size_t println(T value, int option = DefaultOption<T>()) {
+			if constexpr (std::is_same<T, std::string>::value) {
+				int n = write(value.c_str(), value.size());
+				n += println();
+				return n;
+			} else if constexpr (std::is_same<T, String>::value) {
+				int n = write(value.c_str(), value.length());
+				n += println();
+				return n;
+			} else if constexpr (std::is_same<T, const char *>::value) {
+				int n = write(value);
+				n += println();
+				return n;
+			} else if constexpr (std::is_same<T, char *>::value) {
+				int n = write(value);
+				n += println();
+				return n;
+			} else if constexpr (std::is_integral<T>::value) {
+				size_t n = print(value, option);
+				n += println();
+				return n;
+			} else if constexpr (std::is_floating_point<T>::value) {
+				size_t n = print(value, option);
+				n += println();
+				return n;
+			}
+#if defined(STD_SDK)
+#else
+			else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
+				size_t n = print(value);
+				n += println();
+				return n;
+			}
+#endif
+			else {
+				write("TYPERRR!");
+				// static_assert(std::is_same<T, void>::value, "Unsupported type for Print::print.");
+				return 0;
+			}
+		}
 
 		size_t printf(const char *format, ...);
 		virtual void flush() { /* Empty implementation for backward compatibility */ }
 	};
 
-#ifdef STD_SDK
+	#ifdef STD_SDK
 }
-#endif
+	#endif
