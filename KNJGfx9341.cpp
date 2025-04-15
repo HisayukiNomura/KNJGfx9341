@@ -73,9 +73,10 @@ std::array<int, 4> RandXYXY() {
 
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 #include "KanjiHelper.h"
-// #include "Kanji/Fonts/misaki_gothic_2nd_8x8_ALL.inc"
+
+#include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"
 // #include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
-#include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"
+// #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"
 // #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
 // #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"
 
@@ -119,11 +120,12 @@ int main() {  // タッチパネルのインスタンスを作成
 	long total = 0;
 	uint64_t time_1 = time_us_64();
 
-	// KanjiHelper::SetKanjiFont(misaki_gothic_2nd_08x08_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
+	// tft.SetKanjiFont(misaki_gothic_2nd_08x08_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 	// KanjiHelper::SetKanjiFont(JFDotShinonome12_12x12_ALL,JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 	// KanjiHelper::SetKanjiFont(JFDotShinonome16_16x16_ALL,JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
-	tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
+	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
 	// KanjiHelper::SetKanjiFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
+	tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
 	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 	tft.printf("こんにちは！ｺﾝﾆﾁﾊＡＢＣΔΣБ 123456789");
 	while (1) {
@@ -151,7 +153,7 @@ int main() {  // タッチパネルのインスタンスを作成
 
 			canvas16.setCursor(0, 0);
 			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色（文字色、背景色）※背景色は省略可
-			canvas16.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
+			canvas16.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
 			canvas16.printf("実行時間:%d tick/ 温度：%f\r\n", clkcycle, analogReadTemp(3.3));
 			canvas16.setFont(&FreeSans18pt7b);  // フォント指定
 			canvas16.setCursor(0, 100);
