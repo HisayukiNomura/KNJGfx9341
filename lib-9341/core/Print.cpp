@@ -44,11 +44,11 @@ using namespace ardPort::core;
 // Public Methods //////////////////////////////////////////////////////////////
 
 /**
- * @brief 漢字フォントを指定する。
- * @brief この設定が行われると、今までのsetFont設定(gfxFont)を無視して、漢字フォントを使用する。
+ * @brief 現在のフォント設定を変更せずに、漢字フォントを使用するか英文フォントを使用するかを切り替える。
  * @param a_isEnable true:漢字フォントを使用する。false:通常フォントを使用する。
+ * @details 漢字モードに切り替える前に、Adafruit_GFX::setFont()でフォントを設定しておく必要がある。
  */
-void Print::setKanjiFont(bool a_isEnable) {
+void Print::KanjiMode(bool a_isEnable) {
 	isKanji = a_isEnable;
 }
 

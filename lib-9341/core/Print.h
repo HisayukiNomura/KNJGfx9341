@@ -58,7 +58,7 @@ namespace ardPort::core {
 			write_error(0) {
 			isKanji = false;
 		}
-		void setKanjiFont(bool a_isKanji);  // 漢字フォントを使用するかを指定する
+		void KanjiMode(bool a_isKanji);  // 漢字フォントを使用するかを指定する
 
 		int getWriteError() { return write_error; }
 		void clearWriteError() { setWriteError(0); }

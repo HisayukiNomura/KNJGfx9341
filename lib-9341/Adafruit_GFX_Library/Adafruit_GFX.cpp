@@ -153,12 +153,12 @@ void Adafruit_GFX::setRotation(uint8_t x) {
 			break;
 	}
 }
-/**************************************************************************/
-/*!
-	@brief Set the font to display when print()ing, either custom or default
-	@param  f  The GFXfont object, if NULL use built in 6x8 font
-*/
-/**************************************************************************/
+/**
+ * @brief 英文フォントを指定する。
+ * @brief この設定が行われると、親クラスのisKanjiをFalseに戻し、英文フォントが使用されるようになる。
+ * @param　f GFXfontオブジェクト。NULLを指定するとビルトインの6x8フォントが使用される。
+ * @details フォント設定を日本語にするには、日本語フォントを指定してsetFontを呼びだす。
+ */
 void Adafruit_GFX::setFont(const GFXfont *f) {
 	if (f) {             // Font struct pointer passed in?
 		if (!gfxFont) {  // And no current font struct?
@@ -172,8 +172,19 @@ void Adafruit_GFX::setFont(const GFXfont *f) {
 		cursor_y -= 6;
 	}
 	gfxFont = (GFXfont *)f;
+	isKanji = false;
 }
-
+/**
+ * @brief 漢字フォントを指定する。
+ * @brief この設定が行われると、親クラスのisKanjiをTrueにして、漢字フォントを使用するようになる。
+ * @param　a_pKanjiData 漢字フォントのデータ
+ * @param　a_pBmpData 漢字フォントのビットマップデータ
+ * @details 元の英文に戻すには、英文フォントを指定してsetFontを呼びだすか、Print::KanjiMode(false)を呼び出す。
+ */
+void Adafruit_GFX::setFont(const KanjiData *a_pKanjiData, const uint8_t *a_pBmpData) {
+	KanjiHelper::SetKanjiFont(a_pKanjiData, a_pBmpData);
+	isKanji = true;
+}
 #pragma endregion
 
 #pragma region 特殊画面操作
@@ -1445,6 +1456,7 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 /// @param   size_y 文字の縦方向の拡大率
 /// @details ここで定義されるのは、最も汎用的になると思われる実装。例えば、ILI9341の場合（おそらくTFT7735も）、描画ウインドウを指定することでより高速に表示できる。
 /// 必要に応じて、このクラスを継承するクラスでは、より効率的な実装を行うべき。
+/// このライブラリでは、Adafruit_ILI9341.cppなどで、drawCharをオーバーロードしている。
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
 	// 表示するデータの上下左右が、表示可能領域を超えていたら何もしない。クリッピング処理
 	// 元々の判断そのままだが、すこしオカシイ気がする。
@@ -1502,14 +1514,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const ui
 	@brief  Print one byte/character of data, used to support print()
 	@param  c  The 8-bit ascii character to write
 
-	文字表示の流れとしては、
-	Print::printlnなど
-	print::write(char*)
-	print::write(char *,len)
-	print::write(char)　Virtual　⇒　Adafruit_GFX::write
-	となっている。
-	まずは、この部分でUTF8文字を正しく表示させる。
-*/
 /**************************************************************************/
 size_t Adafruit_GFX::write(uint8_t c) {
 	if (!gfxFont) {  // 'Classic' built-in font
@@ -1560,29 +1564,30 @@ size_t Adafruit_GFX::write(uint8_t c) {
 /// @param utf8Code 表示するUTF-8文字
 /// @return
 size_t Adafruit_GFX::write(uint32_t utf8Code) {
+	
 	if (utf8Code == 0x0000000A) {
 		cursor_x = 0;
-		cursor_y += KFont[0].height * textsize_y;  // 改行
+		cursor_y += KanjiHelper::getKanjiWidth() * textsize_y;  // 改行
 	} else if (utf8Code != 0x0000000D) {
 		const uint8_t *bmpData;
 		uint8_t w;
 		uint8_t h;
 		if (utf8Code <= 0xFF) {  // １バイト文字
-			const AsciiFont *pFont = KanjiHelper::FindAscii(utf8Code);
+			const KanjiData *pFont = KanjiHelper::FindAscii(utf8Code);
 			if (pFont == NULL) {
-				cursor_x = cursor_x + AFont[0].width;
+				cursor_x = cursor_x + KanjiHelper::getAsciiWidth();
 				return 1;
 			}
-			bmpData = pFont->bmpData;
+			bmpData =  KanjiHelper::getBmpData(pFont);
 			w = pFont->width;
 			h = pFont->height;
 		} else {
-			const KanjiFont *pFont = KanjiHelper::FindKanji(utf8Code);
+			const KanjiData *pFont = KanjiHelper::FindKanji(utf8Code);
 			if (pFont == NULL) {
-				cursor_x = cursor_x + KFont[0].width;
+				cursor_x = cursor_x + KanjiHelper::getKanjiWidth();
 				return 1;
 			}
-			bmpData = pFont->bmpData;
+			bmpData = KanjiHelper::getBmpData(pFont);
 			w = pFont->width;
 			h = pFont->height;
 		}
@@ -1596,6 +1601,7 @@ size_t Adafruit_GFX::write(uint32_t utf8Code) {
 		cursor_x = cursor_x + w * textsize_x;
 		return 1;
 	}
+	
 	return 0;
 }
 /**************************************************************************/

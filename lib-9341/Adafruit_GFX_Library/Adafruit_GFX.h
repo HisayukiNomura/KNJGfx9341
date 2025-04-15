@@ -6,6 +6,7 @@
 	// #include "../core/Arduino.h"
 	#include "../core/Print.h"
 	#include "gfxfont.h"
+struct KanjiData;
 #else
 	#if ARDUINO >= 100
 		#include "Arduino.h"
@@ -27,7 +28,7 @@
 /// ton of overriding to optimize. Used for any/all Adafruit displays!
 
 #ifdef STD_SDK
-namespace ardPort {
+	namespace ardPort {
 #endif
 
 	class GFXcanvas1;
@@ -155,6 +156,8 @@ namespace ardPort {
 		void setTextSize(uint8_t s);
 		void setTextSize(uint8_t sx, uint8_t sy);
 		void setFont(const GFXfont *f = NULL);
+		// 漢字フォントを使用する場合はこっちが呼び出される
+		void setFont(const KanjiData *a_pKanjiData, const uint8_t *a_pBmpData);
 
 		/**********************************************************************/
 		/*!
