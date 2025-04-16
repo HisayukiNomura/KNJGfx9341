@@ -2,6 +2,7 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -87,6 +88,7 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
 
 pico_set_program_name(KNJGfx9341 "KNJGfx9341")
 pico_set_program_version(KNJGfx9341 "0.1")
+target_link_options(KNJGfx9341 PRIVATE -Wl,-Map=output.map)
 
 # Generate PIO header
 #pico_generate_pio_header(KNJGfx9341 ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
@@ -152,4 +154,3 @@ target_link_libraries(KNJGfx9341
         )
 
 pico_add_extra_outputs(KNJGfx9341)
-

@@ -408,3 +408,4 @@ void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, cons
 		Adafruit_GFX::drawChar(x, y, w, h, bmpData, color, bg, size_x, size_y);
 	}
 }
+

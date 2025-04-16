@@ -264,6 +264,10 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		using ardPort::Adafruit_GFX::drawRGBBitmap;  // Check base class first
 		// １６ビットカラーのビットマップ転送
 		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h);
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) { drawRGBBitmap(x, y, (uint16_t *)bitmap, w, h); }
+		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent);
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {drawRGBBitmap(x,y,(uint16_t *)pcolors,w,h,colorTransparent);}
+
 		// ８ビットカラーのビットマップ転送
 		void drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16_t w, int16_t h);
 		// １ビットカラーのビットマップ転送
@@ -273,7 +277,7 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *canvas) {
 			if (canvas->isBackground) {
 				// 透過色を使うときは、描画ウインドウを使っての描画はできない（と思う）ので、Adafruitのビットマップを呼びだす
-        Adafruit_GFX::drawRGBBitmap(x, y, canvas);
+        		Adafruit_GFX::drawRGBBitmap(x, y, canvas);
 			} else {
 				drawRGBBitmap(x, y, canvas->getBuffer(), canvas->width(), canvas->height());
 			}

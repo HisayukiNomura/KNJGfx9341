@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 // https://logikara.blog/pico-ili9341/
 #include <array>
 
@@ -18,6 +18,10 @@
 #include "wiring_analog.h"
 #include "WString.h"
 #include "time.h"
+#include "pico/stdlib.h"
+
+#include "pico/stdlib.h"
+#include "pico/malloc.h"
 
 /*
 // SPI Defines
@@ -74,20 +78,87 @@ std::array<int, 4> RandXYXY() {
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 #include "KanjiHelper.h"
 
-#include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"
+// include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"
 // #include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
 // #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"
-// #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
+#include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
 // #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-XPT2046_Touchscreen ts(TOUCH_CS);
+#include "pictBackground.data"  // 背景データ
+
+void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+		tft.setCursor(110, 50);
+		tft.print("透過色なしの描画(高速)");
+		sleep_ms(1000);
+		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height());  // 背景データを描画
+		
+	}
+
+	
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+		tft.setCursor(110, 50);
+		tft.print("透過色ありの描画(低速)");
+		sleep_ms(1000);
+		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), (uint16_t)0x0001);  // 背景データを描画
+	}
+
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		const char* pictMsg[] = {"ビットマップ表示のデモンストレーション",
+								 "タッチで画面が変わります　　　　　　　",
+								 "drawRGBBitmapを使っています　　　　　",
+								 "透過色無しの高速描画です　　　　　　　"};
+		const uint16_t* array[] = {pictFuji1, pictFuji2, pictFuji3, pictFuji4};
+		int idx = 0;
+		int msIdx = 0;
+		tft.setCursor(0, 208);
+		tft.setTextColor(STDCOLOR.WHITE);        // テキスト色
+		tft.setBackgroundColor(STDCOLOR.BLACK);  // 背景色
+		tft.print(pictMsg[idx % 4]);
+
+		tft.drawRGBBitmap(0, 0, array[idx % 4], tft.width(), 200);  // 背景データを描画
+		while (idx < 20) {
+			if (ts.touched() == true || msIdx > 3000) {
+				idx++;
+				tft.drawRGBBitmap(0, 0, array[idx % 4], tft.width(), 200);  // 背景データを描画
+				msIdx = 0;
+				tft.setCursor(0, 208);
+				tft.print(pictMsg[idx % 4]);
+
+				while (ts.touched() == false) {
+					sleep_ms(10);
+					if (ts.touched() == false) break;
+				}
+			}
+			sleep_ms(1);
+			msIdx++;
+		}
+	}
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+	tft.setCursor(110, 50);
+	tft.print("透過色なしの描画");
+	tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), (uint16_t)0x0001);  // 背景データを描画
+}
+
+
 
 int main() {  // タッチパネルのインスタンスを作成
-
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);
 	long i = clockCyclesPerMicrosecond();
 
 	stdio_init_all();
+
+	// ヒープの空きメモリを取得
+	// struct mallinfo info = mallinfo();
+	// printf("ヒープの空きメモリ: %d bytes\n", info.fordblks);
+	// printf("ヒープの使用メモリ: %d bytes\n", info.uordblks);
 
 	/*
 	String str = "Hello";
@@ -104,17 +175,19 @@ int main() {  // タッチパネルのインスタンスを作成
 
 	// TFT初期設定
 	tft.begin();  // TFTを初期化
-	// tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
 	// GFXcanvas16 canvas(tft.width(), tft.height());
-	GFXcanvas8 canvas8(tft.width(), tft.height());
+	// GFXcanvas8 canvas8(tft.width(), tft.height());
 	GFXcanvas16 canvas16(tft.width(), tft.height());
-	GFXcanvas1 canvas1(tft.width(), tft.height());
+	// GFXcanvas1 canvas1(tft.width(), tft.height());
 
-	canvas1.setTextSize(1);  // テキストサイズを設定
+	// canvas1.setTextSize(1);  // テキストサイズを設定
 
 	// タッチパネル初期設定
 	ts.begin();                              // タッチパネル初期化
 	ts.setRotation(TFTROTATION.ROTATE_270);  // タッチパネルの回転を設定（液晶画面と合わせる）
+
+	// 液晶初期設定
+	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
 
 	int cnt = 0;
 	long total = 0;
@@ -122,13 +195,15 @@ int main() {  // タッチパネルのインスタンスを作成
 
 	// tft.SetKanjiFont(misaki_gothic_2nd_08x08_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 	// KanjiHelper::SetKanjiFont(JFDotShinonome12_12x12_ALL,JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
-	// KanjiHelper::SetKanjiFont(JFDotShinonome16_16x16_ALL,JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
+	tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
 	// KanjiHelper::SetKanjiFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
-	tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
+	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
 	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 	tft.printf("こんにちは！ｺﾝﾆﾁﾊＡＢＣΔΣБ 123456789");
 	while (1) {
+		demoBitmap(tft, ts);  // 背景データを描画
+
 		long clkcycle = clockCyclesPerMicrosecond();
 
 		uint64_t time_2 = time_us_64();
@@ -149,18 +224,17 @@ int main() {  // タッチパネルのインスタンスを作成
 				tft.drawLine(xyxy[0], xyxy[1], xyxy[2], xyxy[3], RANDCOLOR);  // ランダムな色で線を描画
 			}
 
-			canvas16.fillScreen(0x0000);        // 背景色
+			canvas16.fillScreen(0x0000);  // 背景色
 
 			canvas16.setCursor(0, 0);
-			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色（文字色、背景色）※背景色は省略可
-			canvas16.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
+			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);                            // テキスト色（文字色、背景色）※背景色は省略可
+			canvas16.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 			canvas16.printf("実行時間:%d tick/ 温度：%f\r\n", clkcycle, analogReadTemp(3.3));
 			canvas16.setFont(&FreeSans18pt7b);  // フォント指定
 			canvas16.setCursor(0, 100);
 			canvas16.printf("Cycle:%d tick/ Temp:%f\r\n", clkcycle, analogReadTemp(3.3));
-			//tft.drawBWBitmap(0, 0, canvas1.getBuffer(), canvas1.width(), canvas1.height());
+			// tft.drawBWBitmap(0, 0, canvas1.getBuffer(), canvas1.width(), canvas1.height());
 			tft.drawRGBBitmap(0, 0, &canvas16);
-
 
 			// tft.drawRGBBitmap(0, 0, canvas16.getBuffer(), canvas.width(), canvas.height());
 			/*

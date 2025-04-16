@@ -1879,6 +1879,13 @@ void Adafruit_SPITFT::pushColor(uint16_t color) {
 	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
 	@param  w        Width of bitmap in pixels.
 	@param  h        Height of bitmap in pixels.
+	@details このルーチンの工夫が面白い。ここでは、ウインドウを指定して、ピクセルデータを連続して出力して
+			いる。ただ、このルーチンでは、クリッピングを行っており、画像左上の座標が負の値になっているとき、
+			画面に必要な部分だけが描かれるようになっている。
+			そのため、pColorsで、描画データの開始点を最初に計算し、そのうえで、一気に全部出すのではなく、
+			一行づつに分割して出力している。
+			おそらく、多少の効率低下はあると思うが、これで画面の外側に画像が描画されてしまうということが
+			なくなる。
 */
 void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h) {
 	int16_t x2, y2;                  // Lower-right coord
@@ -1908,6 +1915,7 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int
 	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
 	startWrite();
 	setAddrWindow(x, y, w, h);    // Clipped area
+	
 	while (h--) {                 // For each (clipped) scanline...
 		writePixels(pcolors, w);  // Push one (clipped) row
 		pcolors += saveW;         // Advance pointer by one full (unclipped) line
@@ -1953,7 +1961,7 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int1
 	startWrite();
 	setAddrWindow(x, y, w, h);    // Clipped area
 	// 一行ずつ出力しているので、それに合わせる。
-	// これだと、縦長の矩形で効率が悪いと思うのだが。
+	// 
 	while (h--) {                 // For each (clipped) scanline...
 		uint16_t *cvtBuf = (uint16_t *)alloca(w * 2);
 		uint16_t *pWk = cvtBuf;
@@ -1972,6 +1980,7 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int1
 /// @param pcolors 表示する画像データのポインタ。画像データはビットマップ。
 /// @param w 表示する画像の幅
 /// @param h 表示する画像の高さ
+
 void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16_t w, int16_t h) {
 	int16_t x2, y2;                  // Lower-right coord
 	if ((x >= _width) ||             // Off-edge right
@@ -2027,6 +2036,62 @@ void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16
 	}
 	endWrite();
 }
+
+/*!
+	@brief  透過色を指定してビットマップを描画する。
+			透過色は、描画するビットマップの中に含まれる色で、描画しない色。
+			この場合は、ウインドウを使えないので１ドットづつ書いていくしか方法がない。
+	@param  x        Top left corner horizontal coordinate.
+	@param  y        Top left corner vertical coordinate.
+	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
+	@param  w        Width of bitmap in pixels.
+	@param  h        Height of bitmap in pixels.
+	@param  colorTransparent  透過色
+*/
+void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h,uint16_t colorTransparent) 
+{
+	int16_t x2, y2;                  // Lower-right coord
+	if ((x >= _width) ||             // Off-edge right
+		(y >= _height) ||            // " top
+		((x2 = (x + w - 1)) < 0) ||  // " left
+		((y2 = (y + h - 1)) < 0))
+		return;  // " bottom
+
+	int16_t bx1 = 0, by1 = 0,  // Clipped top-left within bitmap
+		saveW = w;             // Save original bitmap width value
+	if (x < 0) {               // Clip left
+		w += x;
+		bx1 = -x;
+		x = 0;
+	}
+	if (y < 0) {  // Clip top
+		h += y;
+		by1 = -y;
+		y = 0;
+	}
+	if (x2 >= _width)
+		w = _width - x;  // Clip right
+	if (y2 >= _height)
+		h = _height - y;  // Clip bottom
+
+	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
+	startWrite();
+
+	for (int iy = y ; iy < (y+h);iy++) {
+		for (int ix = x; ix < (x+w); ix++) {
+			uint32_t pictIdx = (by1 + iy) * saveW + bx1 + ix;
+			uint16_t color = pcolors[pictIdx];
+			if (color != colorTransparent) {
+				drawPixel(ix,iy,color);
+			}
+		}
+	}
+	endWrite();
+}
+
+
+
+
 
 // -------------------------------------------------------------------------
 // Miscellaneous class member functions that don't draw anything.

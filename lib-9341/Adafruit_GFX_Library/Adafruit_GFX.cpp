@@ -1136,6 +1136,7 @@ uint16_t Adafruit_GFX::convert8To565(uint8_t color8) {
 void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 								 int16_t w, int16_t h) {
 	startWrite();
+	int idx = 0;
 	for (int16_t j = 0; j < h; j++, y++) {
 		for (int16_t i = 0; i < w; i++) {
 			writePixel(x + i, y, convert8To565(pgm_read_word(&bitmap[j * w + i])));
