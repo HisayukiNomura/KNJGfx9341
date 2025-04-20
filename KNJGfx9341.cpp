@@ -78,10 +78,10 @@ std::array<int, 4> RandXYXY() {
 #define RANDXYWH rand() % TFT_WIDTH), (rand() % TFT_HEIGHT), (rand() % 100), (rand() % 100
 #include "KanjiHelper.h"
 
-// include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"
-// #include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
+// #include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"
+#include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
 // #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"
-#include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
+// #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
 // #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"
 
 #include "pictBackground.data"  // 背景データ
@@ -90,21 +90,89 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	{
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 
-		tft.setCursor(110, 50);
-		tft.print("透過色なしの描画(高速)");
+		tft.setCursor(60, 50);
+		tft.print("透過色なしの描画");
 		sleep_ms(1000);
 		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height());  // 背景データを描画
-		
+		const uint16_t* array[] = {sakura1, sakura2, sakura3, sakura4, sakura5, sakura6};
+		sleep_ms(1000);
+		for (int i = 0; i < 500; i++) {
+			int idx = rand() % 6;
+			int x = rand() % TFT_WIDTH;
+			int y = rand() % TFT_HEIGHT;
+			int w = 24;
+			int h = 24;
+			tft.drawRGBBitmap(x, y, array[idx], w, h);  // 背景データを描画
+		}
+		sleep_ms(1000);
 	}
 
-	
 	{
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 
-		tft.setCursor(110, 50);
-		tft.print("透過色ありの描画(低速)");
+		tft.setCursor(60, 50);
+		tft.print("透過色ありの描画");
 		sleep_ms(1000);
 		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), (uint16_t)0x0001);  // 背景データを描画
+		sleep_ms(1000);
+		const uint16_t* array[] = {sakura1, sakura2, sakura3, sakura4, sakura5, sakura6};
+		for (int i = 0; i < 500; i++) {
+			int idx = rand() % 6;
+			int x = rand() % TFT_WIDTH;
+			int y = rand() % TFT_HEIGHT;
+			int w = 24;
+			int h = 24;
+			tft.drawRGBBitmap(x, y, array[idx], w, h, 0x0000);  // 背景データを描画
+		}
+		sleep_ms(1000);
+	}
+	// 　キャンバスを使った透過画像の描画
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+		tft.setCursor(60, 50);
+		tft.print("スプライトを使用した描画");
+		sleep_ms(1000);
+		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), (uint16_t)0x0001);  // 背景データを描画
+		sleep_ms(1000);
+
+		GFXcanvas16 canvas(24, 24);    // 花びら描画用のスプライト
+		GFXcanvas16* pCanvasBack[20];  // 花びらの背景を保存しておく為のスプライト
+		for (int i = 0; i < 20; i++) {
+			pCanvasBack[i] = new GFXcanvas16(24, 24);  // 16bitカラースプライト（オフスクリーンバッファ）
+		}
+		const uint16_t* array[] = {sakura1, sakura2, sakura3, sakura4, sakura5, sakura6};
+
+		int16_t sakuraX[20];
+		int16_t sakuraY[20];
+
+		for (int i = 0; i < 20; i++) {
+			sakuraX[i] = sakuraY[i] = -1;
+		}
+		for (int j = 0; j < 500; j++) {
+			for (int i = 0; i < 20; i++) {
+				if (sakuraX[i] == -1 && sakuraY[i] == -1) {
+					if (rand() % 10 != 0) continue;
+					sakuraX[i] = rand() % TFT_WIDTH;
+					sakuraY[i] = 0;
+					pCanvasBack[i]->copyRGBBitmap(sakuraX[i], sakuraY[i], 24, 24, pictSakura, tft.width(), tft.height());  // キャンバスに背景画像をコピー
+				}
+				int dx = (rand() % 6) - 3;
+				int dy = (rand() % 3) + 2;
+				tft.drawRGBBitmap(sakuraX[i], sakuraY[i], pCanvasBack[i]);
+				if (sakuraY[i] + dy > TFT_HEIGHT) {
+					sakuraX[i] = sakuraY[i] = -1;
+					continue;
+				}
+				sakuraX[i] += dx;
+				sakuraY[i] += dy;
+				pCanvasBack[i]->copyRGBBitmap(sakuraX[i], sakuraY[i], 24, 24, pictSakura, tft.width(), tft.height());  // キャンバスに花びらの移動先部分の背景画像を、背景の全景からコピー
+				canvas = *pCanvasBack[i];                                                                              // キャンバスに背景画像をコピー
+				canvas.drawRGBBitmap(0, 0, array[j % 6], 24, 24, 0x0000);                                              // キャンバスに桜の画像を描画
+				tft.drawRGBBitmap(sakuraX[i], sakuraY[i], &canvas);                                                    // キャンバスを液晶に描画
+			}
+		}
+		sleep_ms(1000);
 	}
 
 	{
@@ -139,18 +207,167 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 			msIdx++;
 		}
 	}
+	sleep_ms(1000);
 	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+}
 
-	tft.setCursor(110, 50);
-	tft.print("透過色なしの描画");
-	tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), (uint16_t)0x0001);  // 背景データを描画
+void demoText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+	static const char* sampleText =
+		"恥の多い生涯を送って来ました。自分には、人間の生活というものが、見当つかないのです。"
+		"自分は東北の田舎に生れましたので、汽車をはじめて見たのは、よほど大きくなってからでした。"
+		"自分は停車場のブリッジを、上って、降りて、そうしてそれが線路をまたぎ越えるために造られたものだという事には全然気づかず、"
+		"ただそれは停車場の構内を外国の遊戯場みたいに、複雑に楽しく、ハイカラにするためにのみ、設備せられてあるものだとばかり思っていました。"
+		"しかも、かなり永い間そう思っていたのです。ブリッジの上ったり降りたりは、自分にはむしろ、ずいぶん垢抜けのした遊戯で、"
+		"それは鉄道のサーヴィスの中でも、最も気のきいたサーヴィスの一つだと思っていたのですが、のちにそれはただ旅客が線路を"
+		"またぎ越えるための頗る実利的な階段に過ぎないのを発見して、にわかに興が覚めました。"
+		"また、自分は子供の頃、絵本で地下鉄道というものを見て、これもやはり、実利的な必要から案出せられたものではなく、"
+		"地上の車に乗るよりは、地下の車に乗ったほうが風がわりで面白い遊びだから、とばかり思っていました。"
+		"自分は子供の頃から病弱で、よく寝込みましたが、寝ながら、敷布、枕のカヴァ、掛蒲団のカヴァを、つくづく、"
+		"つまらない装飾だと思い、それが案外に実用品だった事を、二十歳ちかくになってわかって、人間のつましさに暗然とし、悲しい思いをしました。"
+		"また、自分は、空腹という事を知りませんでした。いや、それは、自分が衣食住に困らない家に育ったという意味ではなく、"
+		"そんな馬鹿な意味ではなく、自分には「空腹」という感覚はどんなものだか、さっぱりわからなかったのです。"
+		"へんな言いかたですが、おなかが空いていても、自分でそれに気がつかないのです。"
+		"小学校、中学校、自分が学校から帰って来ると、周囲の人たちが、それ、おなかが空いたろう、自分たちにも覚えがある、"
+		"学校から帰って来た時の空腹は全くひどいからな、甘納豆はどう？カステラも、パンもあるよ、などと言って騒ぎますので、"
+		"自分は持ち前のおべっか精神を発揮して、おなかが空いた、と呟いて、甘納豆を十粒ばかり口にほうり込むのですが、空腹感とは、"
+		"どんなものだか、ちっともわかっていやしなかったのです。自分だって、それは勿論、大いにものを食べますが、"
+		"しかし、空腹感から、ものを食べた記憶は、ほとんどありません。めずらしいと思われたものを食べます。"
+		"豪華と思われたものを食べます。また、よそへ行って出されたものも、無理をしてまで、たいてい食べます。"
+		"そうして、子供の頃の自分にとって、最も苦痛な時刻は、実に、自分の家の食事の時間でした。"
+		"自分の田舎の家では、十人くらいの家族全部、めいめいのお膳を二列に向い合せに並べて、末っ子の自分は、"
+		"もちろん一ばん下の座でしたが、その食事の部屋は薄暗く、昼ごはんの時など、十幾人の家族が、ただ黙々としてめしを食っている有様には、"
+		"自分はいつも肌寒い思いをしました。それに田舎の昔気質の家でしたので、おかずも、たいていきまっていて、めずらしいもの、"
+		"豪華なもの、そんなものは望むべくもなかったので、いよいよ自分は食事の時刻を恐怖しました。"
+		"自分はその薄暗い部屋の末席に、寒さにがたがた震える思いで口にごはんを少量ずつ運び、押し込み、人間は、"
+		"どうして一日に三度々々ごはんを食べるのだろう、実にみな厳粛な顔をして食べている、これも一種の儀式のようなもので、"
+		"家族が日に三度々々、時刻をきめて薄暗い一部屋に集り、お膳を順序正しく並べ、食べたくなくても無言でごはんを噛かみながら、"
+		"うつむき、家中にうごめいている霊たちに祈るためのものかも知れない、とさえ考えた事があるくらいでした。"
+		"めしを食べなければ死ぬ、という言葉は、自分の耳には、ただイヤなおどかしとしか聞えませんでした。その迷信は、"
+		"（いまでも自分には、何だか迷信のように思われてならないのですが）しかし、いつも自分に不安と恐怖を与えました。"
+		"人間は、めしを食べなければ死ぬから、そのために働いて、めしを食べなければならぬ、という言葉ほど自分にとって難解で晦渋かいじゅうで、そうして脅迫めいた響きを感じさせる言葉は、無かったのです。";
+
+	size_t length = 0;
+	const char* str = sampleText;
+	int textHCount = tft.width() / KanjiHelper::getKanjiWidth();
+	int textVCount = tft.height() / KanjiHelper::getKanjiHeight();
+	int textCount = textHCount * textVCount;
+	int byteLen = 0;
+	while (*str) {
+		if ((*str & 0xC0) != 0x80) {  // UTF-8の先頭バイトを検出
+			length++;
+			if (length >= textCount) {
+				byteLen = str - sampleText;
+				break;
+			}
+		}
+		str++;
+	}
+	const uint16_t colorTbl[] = {STDCOLOR.SUPERDARK_RED, STDCOLOR.SUPERDARK_GREEN, STDCOLOR.SUPERDARK_BLUE, STDCOLOR.SUPERDARK_YELLOW,
+								 STDCOLOR.SUPERDARK_CYAN, STDCOLOR.SUPERDARK_MAGENTA, STDCOLOR.SUPERDARK_GRAY, STDCOLOR.SUPERDARK_PINK};
+	int64_t elapsed_time_1;
+	int64_t elapsed_time_2;
+	int64_t elapsed_time_3;
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.setCursor(60, 50);
+		tft.print("透過色なし - Window非使用");
+		sleep_ms(3000);
+
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.useWindowMode(false);
+
+		for (int i = 0; i < 8; i++) {
+			tft.fillRect(0, i * (tft.height() / 8), tft.width(), 30, colorTbl[i]);  // 背景色
+		}
+		tft.setCursor(0, 0);  // 描画開始位置を指定
+
+		tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		tft.write(sampleText, byteLen);
+		absolute_time_t end_time = get_absolute_time();                // 終了時間を取得
+		elapsed_time_1 = absolute_time_diff_us(start_time, end_time);  // 経過時間を計算
+		sleep_ms(1000);
+	}
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.setCursor(60, 50);
+		tft.print("透過色なし - Window使用");
+		sleep_ms(3000);
+
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.useWindowMode(true);
+
+		for (int i = 0; i < 8; i++) {
+			tft.fillRect(0, i * (tft.height() / 8), tft.width(), 30, colorTbl[i]);  // 背景色
+		}
+		tft.setCursor(0, 0);  // 描画開始位置を指定
+
+		tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		tft.write(sampleText, byteLen);
+		absolute_time_t end_time = get_absolute_time();                // 終了時間を取得
+		elapsed_time_2 = absolute_time_diff_us(start_time, end_time);  // 経過時間を計算
+		sleep_ms(1000);
+	}
+	{
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.setCursor(60, 50);
+		tft.print("透過あり - Window使用不能");
+		sleep_ms(3000);
+		tft.useWindowMode(true);
+		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+		for (int i = 0; i < 8; i++) {
+			tft.fillRect(0, i * (tft.height() / 8), tft.width(), 30, colorTbl[i]);  // 背景色
+		}
+		tft.setCursor(0, 0);                               // 描画開始位置を指定
+		tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.WHITE);  // テキスト色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		tft.write(sampleText, byteLen);
+		absolute_time_t end_time = get_absolute_time();                // 終了時間を取得
+		elapsed_time_3 = absolute_time_diff_us(start_time, end_time);  // 経過時間を計算
+		sleep_ms(1000);
+		
+	}
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+	tft.setCursor(10, 50);
+	tft.printf("描画時間（透過なしー低速）: %4.3f ms\n", (float)elapsed_time_1/1000);  // 経過時間を表示
+	tft.setCursor(10, 70);
+	tft.printf("描画時間（透過なしー高速）: %4.3f ms\n", (float)elapsed_time_2 / 1000);  // 経過時間を表示
+	tft.setCursor(10, 90);
+	tft.printf("描画時間（透過あり）　　　: %4.3f ms\n", (float)elapsed_time_3 / 1000);  // 経過時間を表示
+
+	for (int i=0;i<2000;i++) {
+		if (i % 100 == 0) {
+			tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色
+			tft.setCursor(50, 200);
+			tft.printf("タッチで次のデモに進む");
+		} else if (i % 100 == 50) {
+			tft.fillRect(0,200,tft.width(),20,STDCOLOR.BLACK);  // テキスト色
+		}
+		if (ts.touched() == true ) {
+			break;
+		}
+		sleep_ms(30);
+	}
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+}
+
+void demoAlphabetText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+	tft.setFont(&FreeSans12pt7b);  // 英文フォントを設定		
+	tft.setTextColor(STDCOLOR.RED, STDCOLOR.BLUE);  // テキスト色
+	tft.print("Hello, World");
 }
 
 
 
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+XPT2046_Touchscreen ts(TOUCH_CS);
+
 int main() {  // タッチパネルのインスタンスを作成
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);
+
 	long i = clockCyclesPerMicrosecond();
 
 	stdio_init_all();
@@ -189,21 +406,25 @@ int main() {  // タッチパネルのインスタンスを作成
 	// 液晶初期設定
 	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
 
+	// 使用可能な場合は、ウインドウモードを使用して高速に描画する
+	tft.useWindowMode(true);
+
 	int cnt = 0;
 	long total = 0;
 	uint64_t time_1 = time_us_64();
 
-	// tft.SetKanjiFont(misaki_gothic_2nd_08x08_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
-	// KanjiHelper::SetKanjiFont(JFDotShinonome12_12x12_ALL,JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
-	tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
+	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
+	tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
+	// tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
-	// KanjiHelper::SetKanjiFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
+	// tft.setFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
 	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 	tft.printf("こんにちは！ｺﾝﾆﾁﾊＡＢＣΔΣБ 123456789");
 	while (1) {
+		demoAlphabetText(tft,ts); 
+		demoText(tft, ts);    // 背景データを描画
 		demoBitmap(tft, ts);  // 背景データを描画
-
 		long clkcycle = clockCyclesPerMicrosecond();
 
 		uint64_t time_2 = time_us_64();
@@ -227,12 +448,13 @@ int main() {  // タッチパネルのインスタンスを作成
 			canvas16.fillScreen(0x0000);  // 背景色
 
 			canvas16.setCursor(0, 0);
-			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);                            // テキスト色（文字色、背景色）※背景色は省略可
-			canvas16.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
+			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色（文字色、背景色）※背景色は省略可
+			// canvas16.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 			canvas16.printf("実行時間:%d tick/ 温度：%f\r\n", clkcycle, analogReadTemp(3.3));
 			canvas16.setFont(&FreeSans18pt7b);  // フォント指定
 			canvas16.setCursor(0, 100);
 			canvas16.printf("Cycle:%d tick/ Temp:%f\r\n", clkcycle, analogReadTemp(3.3));
+
 			// tft.drawBWBitmap(0, 0, canvas1.getBuffer(), canvas1.width(), canvas1.height());
 			tft.drawRGBBitmap(0, 0, &canvas16);
 

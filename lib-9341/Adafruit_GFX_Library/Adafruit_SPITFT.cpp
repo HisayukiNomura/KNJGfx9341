@@ -2079,7 +2079,7 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int
 
 	for (int iy = y ; iy < (y+h);iy++) {
 		for (int ix = x; ix < (x+w); ix++) {
-			uint32_t pictIdx = (by1 + iy) * saveW + bx1 + ix;
+			uint32_t pictIdx = (by1 + (iy-y)) * saveW + bx1 + (ix-x);
 			uint16_t color = pcolors[pictIdx];
 			if (color != colorTransparent) {
 				drawPixel(ix,iy,color);
@@ -2088,10 +2088,6 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int
 	}
 	endWrite();
 }
-
-
-
-
 
 // -------------------------------------------------------------------------
 // Miscellaneous class member functions that don't draw anything.

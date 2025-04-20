@@ -37,8 +37,8 @@ class KanjiHelper {
 	 static const uint8_t getKanjiHeight() { return KanjiHeight; };
 	 static const uint8_t getAsciiWidth() { return AsciiWidth; };
 	 static const uint8_t getAsciiHeight() { return AsciiHeight; };
-
 	 static const uint8_t* getBmpData(const KanjiData *pFont);
-	
+
+	 
 };
 

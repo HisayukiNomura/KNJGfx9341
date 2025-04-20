@@ -128,7 +128,8 @@ struct KanjiData;
 		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h);
 		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h);
 		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h);
-		
+		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent);
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {drawRGBBitmap(x,y,(uint16_t *)pcolors,w,h,colorTransparent);}
 
 		// 8bit バージョン
 		void drawRGBBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h);
@@ -136,7 +137,6 @@ struct KanjiData;
 
 		void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size);
 		void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
-
 
 		// GFXCanvas使用
 		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *);
@@ -171,57 +171,65 @@ struct KanjiData;
 			cursor_y = y;
 		}
 
-		/**********************************************************************/
-		/*!
-		  @brief   Set text font color with transparant background
-		  @param   c   16-bit 5-6-5 Color to draw text with
-		  @note    For 'transparent' background, background and foreground
-				   are set to same color rather than using a separate flag.
-		*/
-		/**********************************************************************/
-		void setTextColor(uint16_t c) { textcolor = textbgcolor = c; }
-		/// @brief テキストの背景色を設定
-		/// @param bg 背景色
-		void setBackgroundColor(uint16_t bg) { textbgcolor = bg; }
+			/**********************************************************************/
+			/*!
+			  @brief   Set text font color with transparant background
+			  @param   c   16-bit 5-6-5 Color to draw text with
+			  @note    For 'transparent' background, background and foreground
+					   are set to same color rather than using a separate flag.
+			*/
+			/**********************************************************************/
+			void setTextColor(uint16_t c) {
+				textcolor = textbgcolor = c;
+			}
+			/// @brief テキストの背景色を設定
+			/// @param bg 背景色
+			void setBackgroundColor(uint16_t bg) {
+				textbgcolor = bg;
+			}
 
-		/**********************************************************************/
-		/*!
-		  @brief   Set text font color with custom background color
-		  @param   c   16-bit 5-6-5 Color to draw text with
-		  @param   bg  16-bit 5-6-5 Color to draw background/fill with
-		*/
-		/**********************************************************************/
-		void setTextColor(uint16_t c, uint16_t bg) {
-			textcolor = c;
-			textbgcolor = bg;
-		}
+			/**********************************************************************/
+			/*!
+			  @brief   Set text font color with custom background color
+			  @param   c   16-bit 5-6-5 Color to draw text with
+			  @param   bg  16-bit 5-6-5 Color to draw background/fill with
+			*/
+			/**********************************************************************/
+			void setTextColor(uint16_t c, uint16_t bg) {
+				textcolor = c;
+				textbgcolor = bg;
+			}
 
-		/**********************************************************************/
-		/*!
-		@brief  Set whether text that is too long for the screen width should
-				automatically wrap around to the next line (else clip right).
-		@param  w  true for wrapping, false for clipping
-		*/
-		/**********************************************************************/
-		void setTextWrap(bool w) { wrap = w; }
+			/**********************************************************************/
+			/*!
+			@brief  Set whether text that is too long for the screen width should
+					automatically wrap around to the next line (else clip right).
+			@param  w  true for wrapping, false for clipping
+			*/
+			/**********************************************************************/
+			void setTextWrap(bool w) {
+				wrap = w;
+			}
 
-		/**********************************************************************/
-		/*!
-		  @brief  Enable (or disable) Code Page 437-compatible charset.
-				  There was an error in glcdfont.c for the longest time -- one
-				  character (#176, the 'light shade' block) was missing -- this
-				  threw off the index of every character that followed it.
-				  But a TON of code has been written with the erroneous
-				  character indices. By default, the library uses the original
-				  'wrong' behavior and old sketches will still work. Pass
-				  'true' to this function to use correct CP437 character values
-				  in your code.
-		  @param  x  true = enable (new behavior), false = disable (old behavior)
-		*/
-		/**********************************************************************/
-		void cp437(bool x = true) { _cp437 = x; }
+			/**********************************************************************/
+			/*!
+			  @brief  Enable (or disable) Code Page 437-compatible charset.
+					  There was an error in glcdfont.c for the longest time -- one
+					  character (#176, the 'light shade' block) was missing -- this
+					  threw off the index of every character that followed it.
+					  But a TON of code has been written with the erroneous
+					  character indices. By default, the library uses the original
+					  'wrong' behavior and old sketches will still work. Pass
+					  'true' to this function to use correct CP437 character values
+					  in your code.
+			  @param  x  true = enable (new behavior), false = disable (old behavior)
+			*/
+			/**********************************************************************/
+			void cp437(bool x = true) {
+				_cp437 = x;
+			}
 
-		using Print::write;
+			using Print::write;
 
 #if not defined(STD_SDK)
 	/************************************************************************/
@@ -300,7 +308,7 @@ struct KanjiData;
 		bool wrap;             ///< If set, 'wrap' text at right edge of display
 		bool _cp437;           ///< If set, use correct CP437 charset (default is off)
 		GFXfont *gfxFont;      ///< Pointer to special font
-	};
+		};
 
 	/// A simple drawn button UI element
 	class Adafruit_GFX_Button {
@@ -364,13 +372,17 @@ struct KanjiData;
 	   public:
 		GFXcanvas1(uint16_t w, uint16_t h, bool allocate_buffer = true);
 		~GFXcanvas1(void);
-		void useBackgroundColor();
+		GFXcanvas1(const GFXcanvas1 *pSrc, bool allocate_buffer = true);  // コピーコンストラクタ
+
+		void useBackgroundColor(uint16_t color);
 		void disableBackgroundColor();
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 		void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
 		bool getPixel(int16_t x, int16_t y) const;
+		GFXcanvas1 *deepCopy(const GFXcanvas1 *canvas);
+
 		/**********************************************************************/
 		/*!
 		  @brief    Get a pointer to the internal buffer memory
@@ -388,7 +400,8 @@ struct KanjiData;
 							///< nothing
 	   public:
 		bool isBackground;  /// 背景色を使用するかのフラグ
-
+		bool bckColor;  /// 背景色。この色はビットマップ描画時に透過色となる。
+		
 	   private:
 #ifdef __AVR__
 		// Bitmask tables of 0x80>>X and ~(0x80>>X), because X>>Y is slow on AVR
@@ -401,9 +414,19 @@ struct KanjiData;
 	   public:
 		GFXcanvas8(uint16_t w, uint16_t h, bool allocate_buffer = true);
 		~GFXcanvas8(void);
+		GFXcanvas8(const GFXcanvas8 *pSrc, bool allocate_buffer = true);  // コピーコンストラクタ
+
+		// 代入演算子
+		GFXcanvas8 &operator=(const GFXcanvas8 &other) {
+			if (this != &other) {  // 自己代入のチェック
+				deepCopy(&other);
+			}
+			return *this;  // 自分自身を返す
+		}
+
 		void useBackgroundColor(uint8_t color);
 		void disableBackgroundColor();
-
+		GFXcanvas8 *deepCopy(const GFXcanvas8 *canvas);
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
@@ -434,11 +457,24 @@ struct KanjiData;
 
 
 	   public:
-		GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer = true);
-		~GFXcanvas16(void);
+		GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer = true);	// コンストラクタ
+		~GFXcanvas16(void);													// デストラクタ								
+		GFXcanvas16(const GFXcanvas16* pSrc, bool allocate_buffer = true);		// コピーコンストラクタ
+
+
+		// 代入演算子
+		GFXcanvas16 &operator=(const GFXcanvas16 &other) {
+			if (this != &other) {     // 自己代入のチェック
+				deepCopy(&other);
+			}
+			return *this;  // 自分自身を返す
+		}
+
 		void useBackgroundColor(uint16_t color);
 		void disableBackgroundColor();
-		
+		GFXcanvas16* deepCopy(const GFXcanvas16 *canvas);
+		void copyRGBBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *picBuf,uint16_t bufWidth,  uint16_t bufHeight);  // キャンバスに背景画像をコピー
+		void copyRGBBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *picBuf, uint16_t bufWidth, uint16_t bufHeight) {copyRGBBitmap(x, y, w, h, (uint16_t *)picBuf, bufWidth, bufHeight);}  // キャンバスに背景画像をコピー
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillScreen(uint16_t color);
 		void byteSwap(void);

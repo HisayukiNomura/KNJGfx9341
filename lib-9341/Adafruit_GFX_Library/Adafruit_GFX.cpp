@@ -1232,6 +1232,33 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
 	}
 	endWrite();
 }
+
+/*!
+	@brief  透過色を指定してビットマップを描画する。
+			透過色は、描画するビットマップの中に含まれる色で、描画しない色。
+			この場合は、ウインドウを使えないので１ドットづつ書いていくしか方法がない。
+	@param  x        Top left corner horizontal coordinate.
+	@param  y        Top left corner vertical coordinate.
+	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
+	@param  w        Width of bitmap in pixels.
+	@param  h        Height of bitmap in pixels.
+	@param  colorTransparent  透過色
+*/
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {
+	startWrite();
+
+	for (int i = 0;  i < h ; i++){
+		for (int j  = 0; j < w ; j++) {
+			uint32_t pictIdx = i * w + j;
+			uint16_t color = pcolors[pictIdx];
+			if (color != colorTransparent) {
+				writePixel(x + j, y + i, color);
+			}			
+		}
+	}
+	endWrite();
+}
+
 /// @brief Canvas16を使ったビットマップ描画。透過色をサポートする
 /// @param x　描画するX座標
 /// @param y 	描画するY座標
@@ -2063,11 +2090,37 @@ GFXcanvas1::~GFXcanvas1(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
 }
-void GFXcanvas1::useBackgroundColor() {
+void GFXcanvas1::useBackgroundColor(uint16_t color) {
 	isBackground = true;
+	bckColor = color;
 }
 void GFXcanvas1::disableBackgroundColor() {
 	isBackground = false;
+}
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas1::GFXcanvas1(const GFXcanvas1 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = ((WIDTH + 7) / 8) * HEIGHT;
+		if ((buffer = (uint8_t *)malloc(bytes))) {
+			memset(buffer, 0, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
 }
 
 /**************************************************************************/
@@ -2434,6 +2487,33 @@ GFXcanvas8::~GFXcanvas8(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
 }
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas8::GFXcanvas8(const GFXcanvas8 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = WIDTH * HEIGHT;
+		if ((buffer = (uint8_t *)malloc(bytes))) {
+			memcpy(buffer, pSrc->buffer, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
+}
+
+
 /**
  * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
  */
@@ -2448,6 +2528,15 @@ void GFXcanvas8::disableBackgroundColor() {
 	isBackground = false;
 	bckColor = 0;
 }
+
+GFXcanvas8 *GFXcanvas8::deepCopy(const GFXcanvas8 *src) {
+	if (WIDTH != src->width() || HEIGHT != src->height()) {
+		return NULL;
+	}
+	memcpy(buffer, src->buffer, WIDTH * HEIGHT );
+	return this;
+}
+
 /**************************************************************************/
 /*!
 	@brief  Draw a pixel to the canvas framebuffer
@@ -2729,6 +2818,32 @@ GFXcanvas16::~GFXcanvas16(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
 }
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas16::GFXcanvas16(const GFXcanvas16 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = WIDTH * HEIGHT * 2;
+		if ((buffer = (uint16_t *)malloc(bytes))) {
+			memcpy(buffer, pSrc->buffer, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
+}
+
 /**
  * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
  */
@@ -2742,6 +2857,14 @@ void GFXcanvas16::useBackgroundColor(uint16_t color) {
 void GFXcanvas16::disableBackgroundColor() {
 	isBackground = false;
 	bckColor = 0;
+}
+
+GFXcanvas16* GFXcanvas16::deepCopy(const GFXcanvas16 *src) {
+	if (WIDTH != src->width() || HEIGHT != src->height()) {
+		return NULL;
+	}
+	memcpy(buffer, src->buffer, WIDTH * HEIGHT * 2);
+	return this;	
 }
 
 /**************************************************************************/
@@ -3013,6 +3136,26 @@ void GFXcanvas16::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 		buffer[i] = color;
 	}
 }
+/**************************************************************************/
+/*!
+   @brief ビットマップをキャンバスにコピーする。 ビットマップは565フォーマットとする。
+   @param  x      X座標
+   @param  y      Y座標
+   @param  w      ビットマップの幅
+   @param  h      ビットマップの高さ
+   @param  picBuf ビットマップデータのポインタ。RGB565フォーマット
+   @note   ビットマップはキャンバスの左上に配置される。
+*/
+void GFXcanvas16::copyRGBBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *picBuf,  uint16_t bufWidth, uint16_t bufHeight) 
+{
+	uint16_t *ptr = &buffer[x + y * WIDTH];
+	for (int16_t i = 0; i < h; i++) {
+		for (int16_t j = 0; j < w; j++) {
+			buffer[i * w + j] = picBuf[(y + i) * bufWidth + x + j];
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma endregion
