@@ -10,7 +10,14 @@
 #include "lib-9341/core/WString.h"
 #include "lib-9341/Adafruit_GFX_Library/Adafruit_GFX.h"
 #include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans18pt7b.h"
+
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSansOblique9pt7b.h"
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans9pt7b.h"
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSerif9pt7b.h"
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSerifItalic9pt7b.h"
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeMono9pt7b.h"
+#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeMonoOblique9pt7b.h"
+
 #include "lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.h"  // タッチパネル制御用ライブラリ
 #include "lib-9341/KNJGfx_struct.h"
@@ -355,13 +362,44 @@ void demoText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 }
 
 void demoAlphabetText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
+	
 	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
-	tft.setFont(&FreeSans12pt7b);  // 英文フォントを設定		
-	tft.setTextColor(STDCOLOR.RED, STDCOLOR.BLUE);  // テキスト色
-	tft.print("Hello, World");
+	tft.setCursor(60, 50);
+	tft.print("フォント指定と英字の表示");
+	sleep_ms(3000);
+
+	const char* text = "Jackdaws love my big sphinx of quartz";
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+	tft.setFont(&FreeSerif9pt7b);  // 英文フォントを設定		
+	tft.setTextColor(STDCOLOR.RED);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 20);
+	tft.print(text);
+	tft.setFont(&FreeSerifItalic9pt7b);    // 英文フォントを設定
+	tft.setTextColor(STDCOLOR.RED);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 40);
+	tft.print(text);
+	tft.setFont(&FreeSans9pt7b);       // 英文フォントを設定
+	tft.setTextColor(STDCOLOR.GREEN);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 60);
+	tft.print(text);
+	tft.setFont(&FreeSansOblique9pt7b);       // 英文フォントを設定
+	tft.setTextColor(STDCOLOR.GREEN);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 80);
+	tft.print(text);
+	tft.setFont(&FreeMono9pt7b);    // 英文フォントを設定
+	tft.setTextColor(STDCOLOR.BLUE);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 100);
+	tft.print(text);
+	tft.setFont(&FreeMonoOblique9pt7b);      // 英文フォントを設定
+	tft.setTextColor(STDCOLOR.BLUE);  // フォント指定モードについては、背景色は指定できない。（仕様）
+	tft.setCursor(0, 140);
+	tft.print(text);
+
+	tft.setFont(NULL);
+	tft.setCursor(0, 180);
+	tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLUE); // 組み込みフォントの場合は、背景色を指定できる。
+	tft.print("When the setFont function is specified with NULL (or in its initial state), the built-in 5x7 size English characters are displayed. Unless a pointer to a Kanji font structure is specified in the setFont function, the character display remains compatible with the original Adafruit implementation.");
 }
-
-
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
 XPT2046_Touchscreen ts(TOUCH_CS);
@@ -451,7 +489,7 @@ int main() {  // タッチパネルのインスタンスを作成
 			canvas16.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色（文字色、背景色）※背景色は省略可
 			// canvas16.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 			canvas16.printf("実行時間:%d tick/ 温度：%f\r\n", clkcycle, analogReadTemp(3.3));
-			canvas16.setFont(&FreeSans18pt7b);  // フォント指定
+			canvas16.setFont(&FreeSans12pt7b);  // フォント指定
 			canvas16.setCursor(0, 100);
 			canvas16.printf("Cycle:%d tick/ Temp:%f\r\n", clkcycle, analogReadTemp(3.3));
 
