@@ -1283,6 +1283,7 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *pCanvas) {
 	endWrite();
 }
 
+
 /// @brief Canvas16を使ったビットマップ描画。透過色をサポートする
 /// @param x　描画するX座標
 /// @param y  描画するY座標
@@ -2517,14 +2518,14 @@ GFXcanvas8::GFXcanvas8(const GFXcanvas8 *pSrc, bool allocate_buffer) :
 /**
  * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
  */
-void GFXcanvas8::useBackgroundColor(uint8_t color) {
+void GFXcanvas8::useTransparentColor(uint8_t color) {
 	isBackground = true;
 	bckColor = color;
 }
 /**
  * @brief  背景色を無効にする。
  */
-void GFXcanvas8::disableBackgroundColor() {
+void GFXcanvas8::unUseTransparentColor() {
 	isBackground = false;
 	bckColor = 0;
 }
@@ -2847,14 +2848,14 @@ GFXcanvas16::GFXcanvas16(const GFXcanvas16 *pSrc, bool allocate_buffer) :
 /**
  * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
  */
-void GFXcanvas16::useBackgroundColor(uint16_t color) {
+void GFXcanvas16::useTransparentColor(uint16_t color) {
 	isBackground = true;
 	bckColor = color;
 }
 /**
  * @brief  背景色を無効にする。
  */
-void GFXcanvas16::disableBackgroundColor() {
+void GFXcanvas16::unUseTransparentColor() {
 	isBackground = false;
 	bckColor = 0;
 }

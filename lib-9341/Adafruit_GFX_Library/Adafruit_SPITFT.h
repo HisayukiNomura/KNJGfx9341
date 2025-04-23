@@ -26,6 +26,7 @@
 
 	#ifdef STD_SDK
 		#include "SPI.h"
+		#include "hardware/dma.h"
 	#else
 		#include <SPI.h>
 	#endif
@@ -226,13 +227,14 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		// before ending the transaction. It's more efficient than starting a
 		// transaction every time.
 		void writePixel(int16_t x, int16_t y, uint16_t color);
-		void writePixels(uint16_t *colors, uint32_t len, bool block = true,
-						 bool bigEndian = false);
+		void writePixels(uint16_t *colors, uint32_t len, bool block = true, bool bigEndian = false);
 		void writeColor(uint16_t color, uint32_t len);
-		void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
-						   uint16_t color);
+		void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+		void writeFillRect(XYWH xywh, uint16_t color) { writeFillRect(xywh.x, xywh.y, xywh.w, xywh.h, color); }
 		void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+		void writeFastHLine(XY xy, int16_t w, uint16_t color) { writeFastHLine(xy.x, xy.y, w, color); }
 		void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+		void writeFastVLine(XY xy, int16_t h, uint16_t color) { writeFastVLine(xy.x, xy.y, h, color); }
 		// This is a new function, similar to writeFillRect() except that
 		// all arguments MUST be onscreen, sorted and clipped. If higher-level
 		// primitives can handle their own sorting/clipping, it avoids repeating
@@ -254,8 +256,12 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		// higher-level primitives (which should use the functions above).
 		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+		void fillRect(XYWH xywh, uint16_t color) {fillRect(xywh.x, xywh.y, xywh.w, xywh.h, color);}
+		
 		void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+		void drawFastHLine(XY xy, int16_t w, uint16_t color) { drawFastHLine(xy.x, xy.y, w, color); }
 		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+		void drawFastVLine(XY xy, int16_t h, uint16_t color) { drawFastVLine(xy.x, xy.y, h, color); }
 		// A single-pixel push encapsulated in a transaction. I don't think
 		// this is used anymore (BMP demos might've used it?) but is provided
 		// for backward compatibility, consider it deprecated:
@@ -266,8 +272,8 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h);
 		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) { drawRGBBitmap(x, y, (uint16_t *)bitmap, w, h); }
 		void drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent);
-		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {drawRGBBitmap(x,y,(uint16_t *)pcolors,w,h,colorTransparent);}
-
+		void drawRGBBitmap(int16_t x, int16_t y, const uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) { drawRGBBitmap(x, y, (uint16_t *)pcolors, w, h, colorTransparent); }
+		void drawDMABitmap(const uint16_t *pcolors);
 		// ８ビットカラーのビットマップ転送
 		void drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16_t w, int16_t h);
 		// １ビットカラーのビットマップ転送
@@ -277,7 +283,7 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 		void drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *canvas) {
 			if (canvas->isBackground) {
 				// 透過色を使うときは、描画ウインドウを使っての描画はできない（と思う）ので、Adafruitのビットマップを呼びだす
-        		Adafruit_GFX::drawRGBBitmap(x, y, canvas);
+				Adafruit_GFX::drawRGBBitmap(x, y, canvas);
 			} else {
 				drawRGBBitmap(x, y, canvas->getBuffer(), canvas->width(), canvas->height());
 			}
@@ -287,7 +293,7 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 			if (canvas->isBackground) {
 				// 透過色を使うときは、描画ウインドウを使っての描画はできない（と思う）ので、Adafruitのビットマップを呼びだす
 				Adafruit_GFX::drawRGBBitmap(x, y, canvas);
-	  } else {
+			} else {
 				drawRGBBitmap(x, y, canvas->getBuffer(), canvas->width(), canvas->height());
 			}
 		}

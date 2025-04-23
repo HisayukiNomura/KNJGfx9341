@@ -82,6 +82,9 @@ namespace ardPort::core {
 		// should be overridden by subclasses with buffering
 		virtual int availableForWrite() { return 0; }
 
+		bool isKanjiMode() { return isKanji; }
+		void setKanjiMode(bool tf) {isKanji = tf;}
+
 #ifdef STD_SDK
 #else
 	size_t print(const __FlashStringHelper *);
@@ -98,12 +101,12 @@ namespace ardPort::core {
 		size_t print(double, int = 2);
 		*/
 		size_t print(const Printable &);
-// std::is_same<T, std::string>::value
+		// std::is_same<T, std::string>::value
 		template <typename T>
 		constexpr static int DefaultOption() {
 			if constexpr (std::is_floating_point<T>::value) {
 				return 2;  // 浮動小数点型のデフォルト桁数
-			} else if constexpr (std::is_same<T,long>::value) {
+			} else if constexpr (std::is_same<T, long>::value) {
 				return 10;  // 整数型のデフォルト進数
 			} else if constexpr (std::is_integral<T>::value) {
 				return 10;  // 整数型のデフォルト進数
@@ -112,7 +115,7 @@ namespace ardPort::core {
 			}
 		}
 
-		//template <typename T>	size_t print(T value, int option = DefaultOption<T>());
+		// template <typename T>	size_t print(T value, int option = DefaultOption<T>());
 		template <typename T>
 		size_t print(T value, int option = DefaultOption<T>()) {
 			if constexpr (std::is_same<T, std::string>::value) {
@@ -157,9 +160,9 @@ namespace ardPort::core {
 			} else
 #if defined(STD_SDK)
 #else
-				else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
-					return write((const uint8_t *)value, strlen_P((const char *)value));
-				}
+			else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
+				return write((const uint8_t *)value, strlen_P((const char *)value));
+			}
 #endif
 			{
 				write("TYPERRR!");
@@ -175,7 +178,7 @@ namespace ardPort::core {
 #endif
 
 		size_t println(const Printable &);
-		size_t println(void) {return write("\r\n");}
+		size_t println(void) { return write("\r\n"); }
 
 		template <typename T>
 		size_t println(T value, int option = DefaultOption<T>()) {
@@ -206,11 +209,11 @@ namespace ardPort::core {
 			}
 #if defined(STD_SDK)
 #else
-			else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
-				size_t n = print(value);
-				n += println();
-				return n;
-			}
+		else if constexpr (std::is_same<T, __FlashStringHelper *>::value) {
+			size_t n = print(value);
+			n += println();
+			return n;
+		}
 #endif
 			else {
 				write("TYPERRR!");
@@ -223,6 +226,6 @@ namespace ardPort::core {
 		virtual void flush() { /* Empty implementation for backward compatibility */ }
 	};
 
-	#ifdef STD_SDK
+#ifdef STD_SDK
 }
-	#endif
+#endif

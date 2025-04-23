@@ -59,4 +59,61 @@ namespace ardPort {
 		const uint8_t ROTATE_180 = 2;  // １８０度
 		const uint8_t ROTATE_270 = 3;  // ２７０度
 	} TFTROTATION;
+
+	class XYWH {
+	   public:
+		int16_t x;
+		int16_t y;
+		int16_t w;
+		int16_t h;
+		public:
+		XYWH(int16_t x, int16_t y, int16_t w, int16_t h) : x(x), y(y), w(w), h(h) {}
+		XYWH() : x(0), y(0), w(0), h(0) {}
+
+		void setxyxy(int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
+			// X方向の正規化
+			if (x2 < x1) {
+				int16_t tmp = x1;
+				x1 = x2;
+				x2 = tmp;
+			}
+			// Y方向の正規化
+			if (y2 < y1) {
+				int16_t tmp = y1;
+				y1 = y2;
+				y2 = tmp;
+			}
+			// 正規化後の座標と幅／高さの計算
+			x = x1;
+			y = y1;
+			w = x2 - x1 + 1;
+			h = y2 - y1 + 1;
+		}
+		void setxywh(int16_t x, int16_t y, int16_t w, int16_t h) {
+			this->x = x;
+			this->y = y;
+			this->w = w;
+			this->h = h;
+		}
+		void setRandom(int16_t xMax, int16_t yMax) {
+			setxyxy(rand() % xMax, rand() % yMax, rand() % xMax, rand() %yMax);
+		}		
+	};
+
+	class XY {
+	   public:
+		int16_t x;
+		int16_t y;
+		public:
+		XY(int16_t x, int16_t y) : x(x), y(y) {}
+		XY() : x(0), y(0) {}
+		void setxy(int16_t x, int16_t y) {
+			this->x = x;
+			this->y = y;
+		}
+		void setRandom(int16_t xMax, int16_t yMax) {
+			x = rand() % xMax;
+			y = rand() % yMax;
+		}
+	};
 }  // namespace ardport

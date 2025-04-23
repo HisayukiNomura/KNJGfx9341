@@ -33,6 +33,7 @@
  */
 #include "defines.h"
 
+
 // Not for ATtiny, at all
 #if !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny84__)
 
@@ -1974,6 +1975,43 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int1
 	}
 	endWrite();
 }
+
+/*!
+	@brief  DMAを使って、画面全体を描画する。
+	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
+	@note  没？　試してみたが、１画面の更新について、普通に描画するのより遅かった
+			DMAでは、Little Endianにする必要があるので、最初に全画面分上位下位を入れ替えている。
+			DMA 109.6 μs (上位下位のスワップをやめても、77.0 μs)
+			通常描画  66.0 μs
+					
+*/
+void Adafruit_SPITFT::drawDMABitmap(const uint16_t *pcolors) {
+	uint16_t chgEndien[WIDTH * HEIGHT];
+	
+	for (int i = 0; i < WIDTH * HEIGHT; i++) {
+		chgEndien[i] =  __builtin_bswap16(*(pcolors + i));
+	}
+
+	startWrite();
+	setAddrWindow(0, 0,width(),height());    // Clipped area	
+	const uint dma_tx = dma_claim_unused_channel(true);
+	dma_channel_config c = dma_channel_get_default_config(dma_tx);
+	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+	spi_inst_t *currentSPI = hwspi._spi == &SPI ? spi0 : spi1;
+	channel_config_set_dreq(&c, spi_get_dreq( currentSPI, true));
+	channel_config_set_write_increment(&c, false);
+	volatile void *pWriteAddr = &spi_get_hw(currentSPI)->dr;
+	dma_channel_configure(dma_tx, &c,
+						  pWriteAddr,          // write address
+						  chgEndien,           // read address
+						  WIDTH * HEIGHT * 2,  // element count (each element is of size transfer_data_size)
+						  false);              // don't start yet
+	dma_start_channel_mask(1u << dma_tx);
+	dma_channel_wait_for_finish_blocking(dma_tx);  // DMA転送完了を待機
+	dma_channel_unclaim(dma_tx);
+	endWrite();
+}
+
 /// @brief デバイス依存の機能（描画ウインドウ）を使って、白黒ﾋﾞｯﾄﾏｯﾌﾟを表示する
 /// @param x 表示するX座標
 /// @param y 表示するY座標
