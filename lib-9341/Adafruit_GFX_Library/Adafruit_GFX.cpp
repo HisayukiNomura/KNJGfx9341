@@ -26,7 +26,7 @@ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERW					E)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "Adafruit_GFX.h"
 #include "glcdfont.c"
+#include "Kanji/KanjiHelper.h"
 
 #ifdef STD_SDK
 using namespace ardPort;
@@ -105,6 +106,7 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
 		}
 #endif
 
+#pragma region コンストラクタ
 /**************************************************************************/
 /*!
    @brief    Instatiate a GFX context for graphics! Can only be done by a
@@ -126,6 +128,9 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	_cp437 = false;
 	gfxFont = NULL;
 }
+#pragma endregion
+
+#pragma region 設定関連
 
 /**************************************************************************/
 /*!
@@ -148,7 +153,41 @@ void Adafruit_GFX::setRotation(uint8_t x) {
 			break;
 	}
 }
+/**
+ * @brief 英文フォントを指定する。
+ * @brief この設定が行われると、親クラスのisKanjiをFalseに戻し、英文フォントが使用されるようになる。
+ * @param　f GFXfontオブジェクト。NULLを指定するとビルトインの6x8フォントが使用される。
+ * @details フォント設定を日本語にするには、日本語フォントを指定してsetFontを呼びだす。
+ */
+void Adafruit_GFX::setFont(const GFXfont *f) {
+	if (f) {             // Font struct pointer passed in?
+		if (!gfxFont) {  // And no current font struct?
+			// Switching from classic to new font behavior.
+			// Move cursor pos down 6 pixels so it's on baseline.
+			cursor_y += 6;
+		}
+	} else if (gfxFont == NULL) {  // NULL passed.  Current font struct defined?
+		// Switching from new to classic font behavior.
+		// Move cursor pos up 6 pixels so it's at top-left of char.
+		cursor_y -= 6;
+	}
+	gfxFont = (GFXfont *)f;
+	isKanji = false;
+}
+/**
+ * @brief 漢字フォントを指定する。
+ * @brief この設定が行われると、親クラスのisKanjiをTrueにして、漢字フォントを使用するようになる。
+ * @param　a_pKanjiData 漢字フォントのデータ
+ * @param　a_pBmpData 漢字フォントのビットマップデータ
+ * @details 元の英文に戻すには、英文フォントを指定してsetFontを呼びだすか、Print::KanjiMode(false)を呼び出す。
+ */
+void Adafruit_GFX::setFont(const KanjiData *a_pKanjiData, const uint8_t *a_pBmpData) {
+	KanjiHelper::SetKanjiFont(a_pKanjiData, a_pBmpData);
+	isKanji = true;
+}
+#pragma endregion
 
+#pragma region 特殊画面操作
 /**************************************************************************/
 /*!
 	@brief      Invert the display (ideally using built-in hardware command)
@@ -159,6 +198,7 @@ void Adafruit_GFX::invertDisplay(bool i) {
 	// Do nothing, must be subclassed if supported by hardware
 	(void)i;  // disable -Wunused-parameter warning
 }
+#pragma endregion
 
 #pragma region 描画機能
 /**************************************************************************/
@@ -358,9 +398,6 @@ void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 void Adafruit_GFX::fillScreen(uint16_t color) {
 	fillRect(0, 0, _width, _height, color);
 }
-
-
-
 
 /**************************************************************************/
 /*!
@@ -1072,6 +1109,64 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
 	endWrite();
 }
 
+uint16_t Adafruit_GFX::convert8To565(uint8_t color8) {
+	// 8ビットのRRRGGGBBフォーマットをRGB565に直接マッピング
+	uint8_t red = (color8 & 0b11100000) >> 5;    // 赤: 上位3ビット
+	uint8_t green = (color8 & 0b00011100) >> 2;  // 緑: 中位3ビット
+	uint8_t blue = (color8 & 0b00000011);        // 青: 下位2ビット
+
+	// ビットスケールの拡張（リニアマッピングで最大値を考慮）
+	uint16_t r5 = (red * 0x1F) / 0x07;    // 赤: 3ビット -> 5ビット
+	uint16_t g6 = (green * 0x3F) / 0x07;  // 緑: 3ビット -> 6ビット
+	uint16_t b5 = (blue * 0x1F) / 0x03;   // 青: 2ビット -> 5ビット
+	uint16_t col = (r5 << 11) | (g6 << 5) | b5;
+	return col;  // RGB565フォーマットを生成
+}
+/**************************************************************************/
+/*!
+	@brief  8bitカラーのビットマップイメージを転送する。この処理は、１ドットづつの描画なので非常に遅い。
+	@param    x   Top left corner x coordinate
+	@param    y   Top left corner y coordinate
+	@param    bitmap  byte array with 16-bit color bitmap
+	@param    w   Width of bitmap in pixels
+	@param    h   Height of bitmap in pixels
+	@details ウインドウ機能があるTFTについては、Adafruit_SPITFT.cpp側にオーバーロード関数を用意するほうが良い
+*/
+/**************************************************************************/
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
+								 int16_t w, int16_t h) {
+	startWrite();
+	int idx = 0;
+	for (int16_t j = 0; j < h; j++, y++) {
+		for (int16_t i = 0; i < w; i++) {
+			writePixel(x + i, y, convert8To565(pgm_read_word(&bitmap[j * w + i])));
+		}
+	}
+	endWrite();
+}
+
+/**************************************************************************/
+/*!
+	@brief  8bitカラーのビットマップイメージを転送する。この処理は、１ドットづつの描画なので非常に遅い。
+	@param    x   Top left corner x coordinate
+	@param    y   Top left corner y coordinate
+	@param    bitmap  byte array with 16-bit color bitmap
+	@param    w   Width of bitmap in pixels
+	@param    h   Height of bitmap in pixels
+	@details ウインドウ機能があるTFTについては、Adafruit_SPITFT.cpp側にオーバーロード関数を用意するほうが良い
+*/
+/**************************************************************************/
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint8_t *bitmap,
+								 int16_t w, int16_t h) {
+	startWrite();
+	for (int16_t j = 0; j < h; j++, y++) {
+		for (int16_t i = 0; i < w; i++) {
+			writePixel(x + i, y, convert8To565(bitmap[j * w + i]));
+		}
+	}
+	endWrite();
+}
+
 /**************************************************************************/
 /*!
    @brief   Draw a PROGMEM-resident 16-bit image (RGB 5/6/5) with a 1-bit mask
@@ -1132,6 +1227,108 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
 				b = mask[j * bw + i / 8];
 			if (b & 0x80) {
 				writePixel(x + i, y, bitmap[j * w + i]);
+			}
+		}
+	}
+	endWrite();
+}
+
+/*!
+	@brief  透過色を指定してビットマップを描画する。
+			透過色は、描画するビットマップの中に含まれる色で、描画しない色。
+			この場合は、ウインドウを使えないので１ドットづつ書いていくしか方法がない。
+	@param  x        Top left corner horizontal coordinate.
+	@param  y        Top left corner vertical coordinate.
+	@param  pcolors  表示する画像データのポインタ。画像データはワードマップ
+	@param  w        Width of bitmap in pixels.
+	@param  h        Height of bitmap in pixels.
+	@param  colorTransparent  透過色
+*/
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {
+	startWrite();
+
+	for (int i = 0;  i < h ; i++){
+		for (int j  = 0; j < w ; j++) {
+			uint32_t pictIdx = i * w + j;
+			uint16_t color = pcolors[pictIdx];
+			if (color != colorTransparent) {
+				writePixel(x + j, y + i, color);
+			}			
+		}
+	}
+	endWrite();
+}
+
+/// @brief Canvas16を使ったビットマップ描画。透過色をサポートする
+/// @param x　描画するX座標
+/// @param y 	描画するY座標
+/// @param pCanvas 	描画するGFXcanvas16のポインタ　
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, GFXcanvas16 *pCanvas) {
+	startWrite();
+	uint16_t w = pCanvas->width();
+	uint16_t h = pCanvas->height();
+	uint16_t *bitmap = pCanvas->getBuffer();
+	bool p = pCanvas->isBackground;
+	uint16_t bg = pCanvas->bckColor;
+
+	for (int16_t j = 0; j < h; j++, y++) {
+		for (int16_t i = 0; i < w; i++) {
+			if (p && (bitmap[j * w + i] == bg)) {
+				// 透明色を指定している場合は、背景色と同じ色のドットは描画しない
+			} else {
+				writePixel(x + i, y, bitmap[j * w + i]);
+			}
+		}
+	}
+	endWrite();
+}
+
+
+/// @brief Canvas16を使ったビットマップ描画。透過色をサポートする
+/// @param x　描画するX座標
+/// @param y  描画するY座標
+/// @param pCanvas 	描画するGFXcanvas16のポインタ　
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, GFXcanvas8 *pCanvas) {
+	startWrite();
+	uint16_t w = pCanvas->width();
+	uint16_t h = pCanvas->height();
+	uint8_t *bitmap = pCanvas->getBuffer();
+	bool p = pCanvas->isBackground;
+	uint8_t bg = pCanvas->bckColor;
+
+	for (int16_t j = 0; j < h; j++, y++) {
+		for (int16_t i = 0; i < w; i++) {
+			if (p && (bitmap[j * w + i] == bg)) {
+				// 透明色を指定している場合は、背景色と同じ色のドットは描画しない
+			} else {
+				writePixel(x + i, y, convert8To565(bitmap[j * w + i]));
+			}
+		}
+	}
+	endWrite();
+}
+
+/// @brief Canvas16を使ったビットマップ描画。透過色をサポートする
+/// @param x　描画するX座標
+/// @param y  描画するY座標
+/// @param pCanvas 	描画するGFXcanvas16のポインタ　
+void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, GFXcanvas1 *pCanvas) {
+	startWrite();
+	uint16_t w = pCanvas->width();
+	uint16_t h = pCanvas->height();
+	uint8_t *bitmap = pCanvas->getBuffer();
+	bool p = pCanvas->isBackground;
+
+	for (int16_t j = 0; j < h; j++, y++) {
+		for (int16_t i = 0; i < w; i++) {
+			if (p && pCanvas->getPixel(i, j) == false) {
+				// 透明色を指定している場合は、背景色と同じ色のドットは描画しない
+			} else {
+				if (pCanvas->getPixel(i, j)) {
+					writePixel(x + i, y, 0xFFFF);
+				} else {
+					writePixel(x + i, y, 0x0000);
+				}
 			}
 		}
 	}
@@ -1275,11 +1472,77 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 
 	}  // End classic vs custom font
 }
+
+/// @brief 画面に漢字を１文字表示する。仮想関数なので、Adafruit_GFXを継承したクラスでオーバーロードされる可能性がある。
+/// @param   x   描画開始位置の左上座標
+/// @param   y   描画開始位置の左上座標
+/// @param   w   描画するフォントビットマップの横ドット数
+/// @param   h   描画するフォントビットマップの縦ドット数
+/// @param   bmpData  描画するフォントビットマップデータ
+/// @param   color 文字の前景色（565カラー）
+/// @param   bg 文字の背景色（565カラー）　前景色と同じ色が指定されたら、透過表示とみなす。
+/// @param   size_x 文字の横方向の拡大率
+/// @param   size_y 文字の縦方向の拡大率
+/// @details ここで定義されるのは、最も汎用的になると思われる実装。例えば、ILI9341の場合（おそらくTFT7735も）、描画ウインドウを指定することでより高速に表示できる。
+/// 必要に応じて、このクラスを継承するクラスでは、より効率的な実装を行うべき。
+/// このライブラリでは、Adafruit_ILI9341.cppなどで、drawCharをオーバーロードしている。
+void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
+	// 表示するデータの上下左右が、表示可能領域を超えていたら何もしない。クリッピング処理
+	// 元々の判断そのままだが、すこしオカシイ気がする。
+	// たとえば、表示領域を左にはみ出さないかの判断を、 x > _width　としているが、これだと描画開始地点（文字の左）が横幅を超えるかの判断しかしていない。
+	// 本来、表示領域の左側と、表示する文字の右側を比較する必要があるのでは？ x > _width ではなく、 (x+w) >= _width と判断すべきでは？
+	if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
+
+	uint8_t w_bytes = (w + 8 - 1) / 8;   // 横方向のバイト数
+	uint8_t h_bytes = h;                 // 縦方向のバイト数
+	uint16_t bmpIdx = 0;                 // ビットマップ情報には、bmp + yy*w_bytes + xx でアクセスできるが、順番に並んでいるので最初から順に読むほうが速いのでは？
+	bool isByteMultiple = (w % 8 == 0);  // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
+
+	startWrite();
+
+	for (int8_t yy = 0; yy < h_bytes; yy++) {
+		for (int8_t xx = 0; xx < w_bytes; xx++) {
+			uint8_t bitCnt;
+			if (isByteMultiple) {
+				bitCnt = 8;
+			} else {
+				bitCnt = (xx != (w_bytes - 1)) ? 8 : (w % 8);
+			}
+			uint8_t bits = bmpData[bmpIdx];
+			for (int8_t bb = 0; bb < bitCnt; bb++) {
+				if (bits & 0x80) {
+					if (size_x == 1 && size_y == 1)
+						writePixel(x + xx * 8 + bb, y + yy, color);
+					else
+						writeFillRect(x + (xx * 8 + bb) * size_x, y + yy * size_y, size_x, size_y, color);
+				} else {
+					if (color != bg) {  // 前景色と背景色が同じときは、透過色として背景色は描画しない。
+						if (size_x == 1 && size_y == 1)
+							writePixel(x + xx * 8 + bb, y + yy, bg);
+						else
+							writeFillRect(x + (xx * 8 + bb) * size_x, y + yy * size_y, size_x, size_y, bg);
+					}
+				}
+
+				bits <<= 1;
+			}
+			bmpIdx++;
+		}
+	}
+	if (bg != color) {  // If opaque, draw vertical line for last column
+		if (size_x == 1 && size_y == 1)
+			writeFastVLine(x + w, y, h, bg);
+		else
+			writeFillRect(x + w * size_x, y, size_x, h * size_y, bg);
+	}
+	endWrite();
+}
+
 /**************************************************************************/
 /*!
 	@brief  Print one byte/character of data, used to support print()
 	@param  c  The 8-bit ascii character to write
-*/
+
 /**************************************************************************/
 size_t Adafruit_GFX::write(uint8_t c) {
 	if (!gfxFont) {  // 'Classic' built-in font
@@ -1326,7 +1589,50 @@ size_t Adafruit_GFX::write(uint8_t c) {
 	}
 	return 1;
 }
-
+/// @brief 32bitで渡された文字（UTF)を表示する。
+/// @param utf8Code 表示するUTF-8文字
+/// @return
+size_t Adafruit_GFX::write(uint32_t utf8Code) {
+	
+	if (utf8Code == 0x0000000A) {
+		cursor_x = 0;
+		cursor_y += KanjiHelper::getKanjiWidth() * textsize_y;  // 改行
+	} else if (utf8Code != 0x0000000D) {
+		const uint8_t *bmpData;
+		uint8_t w;
+		uint8_t h;
+		if (utf8Code <= 0xFF) {  // １バイト文字
+			const KanjiData *pFont = KanjiHelper::FindAscii(utf8Code);
+			if (pFont == NULL) {
+				cursor_x = cursor_x + KanjiHelper::getAsciiWidth();
+				return 1;
+			}
+			bmpData =  KanjiHelper::getBmpData(pFont);
+			w = pFont->width;
+			h = pFont->height;
+		} else {
+			const KanjiData *pFont = KanjiHelper::FindKanji(utf8Code);
+			if (pFont == NULL) {
+				cursor_x = cursor_x + KanjiHelper::getKanjiWidth();
+				return 1;
+			}
+			bmpData = KanjiHelper::getBmpData(pFont);
+			w = pFont->width;
+			h = pFont->height;
+		}
+		if (wrap) {
+			if ((cursor_x + w) > _width) {
+				cursor_x = 0;
+				cursor_y = cursor_y + h * textsize_y;
+			}
+		}
+		drawChar(cursor_x, cursor_y, w, h, bmpData, textcolor, textbgcolor, textsize_x, textsize_y);
+		cursor_x = cursor_x + w * textsize_x;
+		return 1;
+	}
+	
+	return 0;
+}
 /**************************************************************************/
 /*!
 	@brief   Set text 'magnification' size. Each increase in s makes 1 pixel
@@ -1349,30 +1655,6 @@ void Adafruit_GFX::setTextSize(uint8_t s) {
 void Adafruit_GFX::setTextSize(uint8_t s_x, uint8_t s_y) {
 	textsize_x = (s_x > 0) ? s_x : 1;
 	textsize_y = (s_y > 0) ? s_y : 1;
-}
-
-
-
-
-/**************************************************************************/
-/*!
-	@brief Set the font to display when print()ing, either custom or default
-	@param  f  The GFXfont object, if NULL use built in 6x8 font
-*/
-/**************************************************************************/
-void Adafruit_GFX::setFont(const GFXfont *f) {
-	if (f) {             // Font struct pointer passed in?
-		if (!gfxFont) {  // And no current font struct?
-			// Switching from classic to new font behavior.
-			// Move cursor pos down 6 pixels so it's on baseline.
-			cursor_y += 6;
-		}
-	} else if (gfxFont) {  // NULL passed.  Current font struct defined?
-		// Switching from new to classic font behavior.
-		// Move cursor pos up 6 pixels so it's at top-left of char.
-		cursor_y -= 6;
-	}
-	gfxFont = (GFXfont *)f;
 }
 
 /**************************************************************************/
@@ -1788,6 +2070,8 @@ const uint8_t PROGMEM GFXcanvas1::GFXclrBit[] = {0x7F, 0xBF, 0xDF, 0xEF,
 GFXcanvas1::GFXcanvas1(uint16_t w, uint16_t h, bool allocate_buffer) :
 	Adafruit_GFX(w, h),
 	buffer_owned(allocate_buffer) {
+	isBackground = false;
+
 	if (allocate_buffer) {
 		uint32_t bytes = ((w + 7) / 8) * h;
 		if ((buffer = (uint8_t *)malloc(bytes))) {
@@ -1806,6 +2090,38 @@ GFXcanvas1::GFXcanvas1(uint16_t w, uint16_t h, bool allocate_buffer) :
 GFXcanvas1::~GFXcanvas1(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
+}
+void GFXcanvas1::useBackgroundColor(uint16_t color) {
+	isBackground = true;
+	bckColor = color;
+}
+void GFXcanvas1::disableBackgroundColor() {
+	isBackground = false;
+}
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas1::GFXcanvas1(const GFXcanvas1 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = ((WIDTH + 7) / 8) * HEIGHT;
+		if ((buffer = (uint8_t *)malloc(bytes))) {
+			memset(buffer, 0, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
 }
 
 /**************************************************************************/
@@ -2137,7 +2453,6 @@ void GFXcanvas1::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 }
 #pragma endregion
 
-
 #pragma region ８ビット色キャンバス機能 -  GFXcanvas8
 /**************************************************************************/
 /*!
@@ -2153,6 +2468,8 @@ void GFXcanvas1::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 GFXcanvas8::GFXcanvas8(uint16_t w, uint16_t h, bool allocate_buffer) :
 	Adafruit_GFX(w, h),
 	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = 0;
 	if (allocate_buffer) {
 		uint32_t bytes = w * h;
 		if ((buffer = (uint8_t *)malloc(bytes))) {
@@ -2170,6 +2487,55 @@ GFXcanvas8::GFXcanvas8(uint16_t w, uint16_t h, bool allocate_buffer) :
 GFXcanvas8::~GFXcanvas8(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
+}
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas8::GFXcanvas8(const GFXcanvas8 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = WIDTH * HEIGHT;
+		if ((buffer = (uint8_t *)malloc(bytes))) {
+			memcpy(buffer, pSrc->buffer, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
+}
+
+
+/**
+ * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
+ */
+void GFXcanvas8::useTransparentColor(uint8_t color) {
+	isBackground = true;
+	bckColor = color;
+}
+/**
+ * @brief  背景色を無効にする。
+ */
+void GFXcanvas8::unUseTransparentColor() {
+	isBackground = false;
+	bckColor = 0;
+}
+
+GFXcanvas8 *GFXcanvas8::deepCopy(const GFXcanvas8 *src) {
+	if (WIDTH != src->width() || HEIGHT != src->height()) {
+		return NULL;
+	}
+	memcpy(buffer, src->buffer, WIDTH * HEIGHT );
+	return this;
 }
 
 /**************************************************************************/
@@ -2432,6 +2798,8 @@ void GFXcanvas8::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 GFXcanvas16::GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer) :
 	Adafruit_GFX(w, h),
 	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = 0;		
 	if (allocate_buffer) {
 		uint32_t bytes = w * h * 2;
 		if ((buffer = (uint16_t *)malloc(bytes))) {
@@ -2450,6 +2818,54 @@ GFXcanvas16::GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer) :
 GFXcanvas16::~GFXcanvas16(void) {
 	if (buffer && buffer_owned)
 		free(buffer);
+}
+
+/**************************************************************************/
+/*!
+   @brief    コピーコンストラクタ
+   @param    pSrc  複製元のキャンバスへのポインタ
+   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
+   デストラクタでfreeされる。
+   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+*/
+/**************************************************************************/
+GFXcanvas16::GFXcanvas16(const GFXcanvas16 *pSrc, bool allocate_buffer) :
+	Adafruit_GFX(pSrc->width(), pSrc->height()),
+	buffer_owned(allocate_buffer) {
+	isBackground = false;
+	bckColor = pSrc->bckColor;
+
+	if (allocate_buffer) {
+		uint32_t bytes = WIDTH * HEIGHT * 2;
+		if ((buffer = (uint16_t *)malloc(bytes))) {
+			memcpy(buffer, pSrc->buffer, bytes);
+		}
+	} else {
+		buffer = pSrc->buffer;
+	}
+}
+
+/**
+ * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
+ */
+void GFXcanvas16::useTransparentColor(uint16_t color) {
+	isBackground = true;
+	bckColor = color;
+}
+/**
+ * @brief  背景色を無効にする。
+ */
+void GFXcanvas16::unUseTransparentColor() {
+	isBackground = false;
+	bckColor = 0;
+}
+
+GFXcanvas16* GFXcanvas16::deepCopy(const GFXcanvas16 *src) {
+	if (WIDTH != src->width() || HEIGHT != src->height()) {
+		return NULL;
+	}
+	memcpy(buffer, src->buffer, WIDTH * HEIGHT * 2);
+	return this;	
 }
 
 /**************************************************************************/
@@ -2721,6 +3137,26 @@ void GFXcanvas16::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 		buffer[i] = color;
 	}
 }
+/**************************************************************************/
+/*!
+   @brief ビットマップをキャンバスにコピーする。 ビットマップは565フォーマットとする。
+   @param  x      X座標
+   @param  y      Y座標
+   @param  w      ビットマップの幅
+   @param  h      ビットマップの高さ
+   @param  picBuf ビットマップデータのポインタ。RGB565フォーマット
+   @note   ビットマップはキャンバスの左上に配置される。
+*/
+void GFXcanvas16::copyRGBBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *picBuf,  uint16_t bufWidth, uint16_t bufHeight) 
+{
+	uint16_t *ptr = &buffer[x + y * WIDTH];
+	for (int16_t i = 0; i < h; i++) {
+		for (int16_t j = 0; j < w; j++) {
+			buffer[i * w + j] = picBuf[(y + i) * bufWidth + x + j];
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma endregion
