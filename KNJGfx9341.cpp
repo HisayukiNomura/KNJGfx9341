@@ -944,7 +944,7 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setBackgroundColor(STDCOLOR.BLACK);                  // 背景色
 		tft.drawRGBBitmap(0, 0, pictScroll1, tft.width(), 240);  // 背景データを描画
 
-		//		tft.setScrollMargins(16,16);
+		//	tft.setScrollMargins(16,16);
 		tft.scrollTo(0);
 		int waitms = 30;
 		int pos = 0;
