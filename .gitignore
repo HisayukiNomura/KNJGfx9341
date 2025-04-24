@@ -8,3 +8,5 @@ Scopy_SPISettings.ini
 .gitignore
 go.bat
 *.pdf
+CMakeFiles
+dev_memo.txt
