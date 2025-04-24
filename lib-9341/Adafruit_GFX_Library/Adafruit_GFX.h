@@ -493,7 +493,9 @@ namespace ardPort {
 		*/
 		/**********************************************************************/
 		uint16_t *getBuffer(void) const { return buffer; }
-
+	
+		void setBuffer(uint16_t* buf) { buffer = buf;} 
+		
 	   protected:
 		uint16_t getRawPixel(int16_t x, int16_t y) const;
 		void drawFastRawVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
