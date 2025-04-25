@@ -24,8 +24,8 @@
 #include "PortingCommon.h"
 #include "CoreMutex.h"
 #ifdef STD_SDK
-	#include "../pins.h"
-	#include "../debug.h"
+	#include "../misc/pins.h"
+	#include "../misc/debug.h"
 	using namespace ardPort::core;
 #endif
 

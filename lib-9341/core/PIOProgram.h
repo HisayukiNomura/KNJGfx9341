@@ -21,7 +21,8 @@
 #pragma once
 #include "defines.h"
 
-#include "../defines.h"
+#include "../misc/defines.h" 
+
 #include <hardware/pio.h>
 
 #ifdef STD_SDK

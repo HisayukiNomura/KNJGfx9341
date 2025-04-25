@@ -1,6 +1,6 @@
 #ifndef _ADAFRUIT_GFX_H
 #define _ADAFRUIT_GFX_H
-#include "../defines.h"
+#include "../misc/defines.h"
 
 #ifdef STD_SDK
 	// #include "../core/Arduino.h"

@@ -24,7 +24,7 @@
 
 #include "lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.h"  // タッチパネル制御用ライブラリ
-#include "lib-9341/KNJGfx_struct.h"
+#include "lib-9341/misc/KNJGfx_struct.h"
 #include "pico/stdlib.h"
 #include "wiring_analog.h"
 #include "WString.h"

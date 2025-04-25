@@ -26,7 +26,7 @@
 	#include <hardware/gpio.h>
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
-	#include "../pins.h"
+	#include "../misc/pins.h"
 	using namespace ardPort::spi;
 #else
 	#include "SPI.h"

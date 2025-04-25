@@ -17,7 +17,7 @@
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "../defines.h"
+#include "../misc/defines.h"
 
 #ifdef STD_SDK
 	#include <PortingCommon.h>
@@ -27,7 +27,7 @@
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
 	#include "hardwarespi.h"
-	#include "../debug.h"
+	#include "../misc/debug.h"
 	#include "wiring_private.h"
 	using namespace ardPort::core;
 #else

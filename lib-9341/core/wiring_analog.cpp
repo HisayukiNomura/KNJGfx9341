@@ -18,7 +18,7 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "../defines.h"
+#include "../misc/defines.h"
 
 #ifdef STD_SDK
 	#include <CoreMutex.h>
@@ -30,8 +30,8 @@
 	#include "Common.h"
 	#include "PortingCommon.h"
 	#include "wiring_common.h"
-	#include "../pins.h"
-	#include "../debug.h"
+	#include "../misc/pins.h"
+	#include "../misc/debug.h"
 using namespace ardPort::core;
 #else
 	#include <Arduino.h>

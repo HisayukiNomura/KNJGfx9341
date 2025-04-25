@@ -19,7 +19,7 @@
 */
 
 #pragma once
-#include "../defines.h"
+#include "../misc/defines.h"
 
 #if defined(STD_SDK)
 #include <HardwareSPI.h>

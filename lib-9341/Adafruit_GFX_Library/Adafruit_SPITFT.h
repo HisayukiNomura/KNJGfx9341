@@ -31,8 +31,7 @@
 		#include <SPI.h>
 	#endif
 
-	#include "../defines.h"
-
+	#include "../misc/defines.h"
 	#ifdef STD_SDK
 namespace ardPort {
 	#endif

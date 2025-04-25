@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "../defines.h"
+#include "../misc/defines.h" 
+
 #include <type_traits>
 #include <string>
 #include <inttypes.h>

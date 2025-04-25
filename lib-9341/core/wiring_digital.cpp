@@ -20,7 +20,7 @@
 
 #include "defines.h"
 #ifdef STD_SDK
-	#include "../debug.h"
+	#include "../misc/debug.h"
 	#include "PortingCommon.h"
 	#include "Common.h"
 	#include "wiring_common.h"

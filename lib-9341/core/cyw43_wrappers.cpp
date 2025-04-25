@@ -18,7 +18,7 @@
 */
 #include "defines.h"
 #ifdef STD_SDK
-#include "../pins.h"
+#include "../misc/pins.h"
 #else
 
 #endif

@@ -35,7 +35,7 @@
 
 #ifndef _ADAFRUIT_ILI9341H_
 #define _ADAFRUIT_ILI9341H_
-#include "../defines.h"
+#include "../misc/defines.h"
 
 #ifdef STD_SDK
 	#include "Adafruit_GFX.h"
@@ -51,7 +51,6 @@
 	#include <SPI.h>
 #endif
 
-#include "../defines.h"
 
 #ifdef STD_SDK
 namespace ardPort {
