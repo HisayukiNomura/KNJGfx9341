@@ -20,15 +20,15 @@
 #include "../misc/defines.h"
 
 #ifdef STD_SDK
-	#include <PortingCommon.h>
+	#include "../misc/PortingCommon.h"
 	#include <map>
 	#include <hardware/spi.h>
 	#include <hardware/gpio.h>
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
-	#include "hardwarespi.h"
+	#include "../core/hardwarespi.h"
 	#include "../misc/debug.h"
-	#include "wiring_private.h"
+	#include "../core/wiring_private.h"
 	using namespace ardPort::core;
 #else
 	#include <Arduino.h>
@@ -38,87 +38,87 @@
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
 #endif
-#include "hardwarespi.h"
+//#include "hardwarespi.h"
 
 #ifdef STD_SDK
 namespace ardPort::spi {
-#endif 
-
-/**
-	@brief Helper routined shared by SPI and SoftwareSPI
-*/
-
-class SPIHelper {
-   public:
-	SPIHelper() { /* noop */ }
-	~SPIHelper() { /* noop */ }
-
+#endif
+	using namespace ardPort::core;
 	/**
-		@brief Returns the SDK CPOL setting for a given SPISettings configuration
-
-		@param _spis SPISettings to parse
-		@returns SDK-defined CPOL value
+		@brief Helper routined shared by SPI and SoftwareSPI
 	*/
 
-	inline spi_cpol_t
-	cpol(const SPISettings &_spis) {
-		switch (_spis.getDataMode()) {
-			case SPI_MODE0:
-				return SPI_CPOL_0;
-			case SPI_MODE1:
-				return SPI_CPOL_0;
-			case SPI_MODE2:
-				return SPI_CPOL_1;
-			case SPI_MODE3:
-				return SPI_CPOL_1;
+	class SPIHelper {
+	   public:
+		SPIHelper() { /* noop */ }
+		~SPIHelper() { /* noop */ }
+
+		/**
+			@brief Returns the SDK CPOL setting for a given SPISettings configuration
+
+			@param _spis SPISettings to parse
+			@returns SDK-defined CPOL value
+		*/
+
+		inline spi_cpol_t
+		cpol(const SPISettings &_spis) {
+			switch (_spis.getDataMode()) {
+				case SPI_MODE0:
+					return SPI_CPOL_0;
+				case SPI_MODE1:
+					return SPI_CPOL_0;
+				case SPI_MODE2:
+					return SPI_CPOL_1;
+				case SPI_MODE3:
+					return SPI_CPOL_1;
+			}
+			// Error
+			return SPI_CPOL_0;
 		}
-		// Error
-		return SPI_CPOL_0;
-	}
 
-	/**
-		@brief Returns the SDK CPHA setting for a given SPISettings configuration
+		/**
+			@brief Returns the SDK CPHA setting for a given SPISettings configuration
 
-		@param _spis SPISettings to parse
-		@returns SDK-defined CPHA value
-	*/
-	inline spi_cpha_t cpha(const SPISettings &_spis) {
-		switch (_spis.getDataMode()) {
-			case SPI_MODE0:
-				return SPI_CPHA_0;
-			case SPI_MODE1:
-				return SPI_CPHA_1;
-			case SPI_MODE2:
-				return SPI_CPHA_0;
-			case SPI_MODE3:
-				return SPI_CPHA_1;
+			@param _spis SPISettings to parse
+			@returns SDK-defined CPHA value
+		*/
+		inline spi_cpha_t cpha(const SPISettings &_spis) {
+			switch (_spis.getDataMode()) {
+				case SPI_MODE0:
+					return SPI_CPHA_0;
+				case SPI_MODE1:
+					return SPI_CPHA_1;
+				case SPI_MODE2:
+					return SPI_CPHA_0;
+				case SPI_MODE3:
+					return SPI_CPHA_1;
+			}
+			// Error
+			return SPI_CPHA_0;
 		}
-		// Error
-		return SPI_CPHA_0;
-	}
 
-	/**
-		@brief Reverses bits in a byte for MSB->LSB swapping
+		/**
+			@brief Reverses bits in a byte for MSB->LSB swapping
 
-		@param b Input byte
-		@returns Bit-reversed byte
-	*/
-	inline uint8_t reverseByte(uint8_t b) {
-		b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-		b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-		b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-		return b;
-	}
+			@param b Input byte
+			@returns Bit-reversed byte
+		*/
+		inline uint8_t reverseByte(uint8_t b) {
+			b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+			b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+			b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+			return b;
+		}
 
-	/**
-		@brief MSB->LSB bit reversal for 16b quantities
+		/**
+			@brief MSB->LSB bit reversal for 16b quantities
 
-		@param w 16-b input value
-		@returns 16-bit reversed value
-	*/
-	inline uint16_t reverse16Bit(uint16_t w) {
-		return (reverseByte(w & 0xff) << 8) | (reverseByte(w >> 8));
-	}
+			@param w 16-b input value
+			@returns 16-bit reversed value
+		*/
+		inline uint16_t reverse16Bit(uint16_t w) {
+			return (reverseByte(w & 0xff) << 8) | (reverseByte(w >> 8));
+		}
 
 #ifdef PICO_RP2350B
 	static constexpr int GPIOIRQREGS = 6;

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "defines.h"
+#include "misc/defines.h"
 #include "Common.h"
 #include <inttypes.h>
 #ifdef STD_SDK

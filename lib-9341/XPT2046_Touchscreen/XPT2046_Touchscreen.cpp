@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-#include "defines.h"
+#include "misc/defines.h"
 #include "XPT2046_Touchscreen.h"
 
 #define Z_THRESHOLD     400

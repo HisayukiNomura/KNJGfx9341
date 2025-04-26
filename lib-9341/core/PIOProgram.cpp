@@ -17,14 +17,14 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "../misc/defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
 #include "CoreMutex.h"
 #include "PIOProgram.h"
 #include <map>
 #include <hardware/claim.h>
-#include "../misc/debug.h"
+#include "misc/debug.h"
 using namespace ardPort::core;
 #else 
 #include <Arduino.h>

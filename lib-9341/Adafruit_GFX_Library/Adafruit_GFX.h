@@ -4,7 +4,7 @@
 
 #ifdef STD_SDK
 	// #include "../core/Arduino.h"
-	#include "KNJGfx_struct.h"
+	#include "../misc/KNJGfx_struct.h"
 	#include "../core/Print.h"
 	#include "gfxfont.h"
 struct KanjiData;
@@ -31,12 +31,11 @@ struct KanjiData;
 #ifdef STD_SDK
 namespace ardPort {
 #endif
-
 	class GFXcanvas1;
 	class GFXcanvas8;
 	class GFXcanvas16;
 
-	class Adafruit_GFX : public core::Print {
+	class Adafruit_GFX : public ardPort::core::Print {
 	   protected:
 		uint16_t convert8To565(uint8_t color8);
 

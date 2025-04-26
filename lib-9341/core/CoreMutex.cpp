@@ -21,11 +21,11 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "PortingCommon.h"
+#include "misc/PortingCommon.h"
 #include "CoreMutex.h"
 #ifdef STD_SDK
-	#include "../misc/pins.h"
-	#include "../misc/debug.h"
+	#include "misc/pins.h"
+	#include "misc/debug.h"
 	using namespace ardPort::core;
 #endif
 

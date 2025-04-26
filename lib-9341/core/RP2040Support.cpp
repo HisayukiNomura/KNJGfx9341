@@ -17,12 +17,12 @@
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "../misc/defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
-	#include "PortingCommon.h"
+	#include "misc/PortingCommon.h"
 	#include <pico/runtime.h>
-    #include "RP2040Support.h"
+	#include "RP2040Support.h"
 	using namespace ardPort::core;
 #else
 	#include <Arduino.h>

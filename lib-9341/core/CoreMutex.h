@@ -22,9 +22,7 @@
 */
 
 #pragma once
-#include "defines.h"
-
-
+#include "../misc/defines.h"
 
 #include <pico/mutex.h>
 #include "_freertos.h"

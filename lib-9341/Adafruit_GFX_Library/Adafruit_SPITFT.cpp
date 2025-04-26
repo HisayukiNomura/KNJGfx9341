@@ -24,15 +24,14 @@
  *
  * @section author Author
  *
- * Written by Limor "ladyada" Fried for Adafruit Industries,
+ * Written by Limor "ladyada" Fried for Adafruit Industries,P
  * with contributions from the open source community.
  *
  * @section license License
  *
  * BSD license, all text here must be included in any redistribution.
  */
-#include "defines.h"
-
+#include "misc/defines.h"
 
 // Not for ATtiny, at all
 #if !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny84__)

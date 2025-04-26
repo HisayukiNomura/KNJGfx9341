@@ -26,11 +26,8 @@
 // ・弱い参照は使わず、コンパイル時に渡されるマクロで条件コンパイル。（CMakleFiles.txtで定義される）
 // ・元のコードは、ボードごとにほとんど同じ関数だったが、これらはまとめてしまう。
 
-
-#include "defines.h"
-#include "PortingCommon.h"
-
-
+#include "misc/defines.h"
+#include "misc/PortingCommon.h"
 
 #ifdef STD_SDK
 #include "core/cyw43_wrappers.h"

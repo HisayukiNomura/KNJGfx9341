@@ -3,9 +3,8 @@
 #include <array>
 #include <malloc.h>
 
-#include "defines.h"
+#include "misc/defines.h"
 #include "Adafruit_GFX.h"
-#include "defines.h"
 #include "hardware/spi.h"
 #include "pico/malloc.h"
 

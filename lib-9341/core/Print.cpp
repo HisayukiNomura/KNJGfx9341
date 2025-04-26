@@ -19,14 +19,14 @@
  Modified 23 November 2006 by David A. Mellis
  Modified 03 August 2015 by Chuck Todd
  */
-#include "defines.h"
+#include "misc/defines.h"
 #ifdef STD_SDK
 	#include <stdlib.h>
 	#include <stdio.h>
 	#include <string.h>
 	#include <string>
 	#include <math.h>
-	#include "PortingCommon.h"
+	#include "misc/PortingCommon.h"
 
 	#include "Print.h"
 using namespace ardPort::core;

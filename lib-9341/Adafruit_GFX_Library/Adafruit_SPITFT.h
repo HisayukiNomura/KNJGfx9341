@@ -25,7 +25,7 @@
 	#include "Adafruit_GFX.h"
 
 	#ifdef STD_SDK
-		#include "SPI.h"
+		#include "../spi/SPI.h"
 		#include "hardware/dma.h"
 	#else
 		#include <SPI.h>
@@ -129,7 +129,7 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 			  again to avoid breaking a lot of other code. If in doubt, read
 			  the comments.
 	*/
-	class Adafruit_SPITFT : public Adafruit_GFX {
+	class Adafruit_SPITFT : public ardPort::Adafruit_GFX {
 	   public:
 		// CONSTRUCTORS --------------------------------------------------------
 

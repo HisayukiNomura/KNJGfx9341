@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "../misc/defines.h"
 /***
  * @file pins_arduino.h
  * @brief ボード種別ごとのピン定義
@@ -17,7 +17,7 @@
  *	set(PICO_BOARD_VALUE 0) # 未知のボード
  * endif()
  * add_compile_definitions(PICO_BOARD_VALUE=${PICO_BOARD_VALUE})
- * 
+ *
  * とにかく、このヘッダファイルをincludeするすべてのソースファイルで、PICO_BOARD_VALUEが定義されているようにすればよい
  * ので、define.hなどで定義しても良いが、ボードを変えるたびに修正が必要になる。
  */

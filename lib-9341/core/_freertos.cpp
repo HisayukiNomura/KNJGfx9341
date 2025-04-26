@@ -17,12 +17,12 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "defines.h"
+#include "misc/defines.h"
 #ifdef STD_SDK
 	#include "_freertos.h"
 	#include <pico/mutex.h>
 	#include <stdlib.h>
-	#include "PortingCommon.h"
+	#include "misc/PortingCommon.h"
 #else
 	#include "_freertos.h"
 	#include <pico/mutex.h>

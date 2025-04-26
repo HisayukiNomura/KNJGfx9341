@@ -18,16 +18,16 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
-	#include <PortingCommon.h>
-	#include <CoreMutex.h>
+	#include <misc/PortingCommon.h>
+	#include <core/CoreMutex.h>
 	#include <hardware/gpio.h>
 	#include <hardware/sync.h>
-	#include "_freertos.h"
-	#include "Common.h"
-	#include "wiring_common.h"
+	#include "core/_freertos.h"
+	#include "core/Common.h"
+	#include "core/wiring_common.h"
 using namespace ardPort::core;
 #else
 	#include <Arduino.h>

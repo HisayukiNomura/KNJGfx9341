@@ -38,11 +38,11 @@
 #include "../misc/defines.h"
 
 #ifdef STD_SDK
-	#include "Adafruit_GFX.h"
-	#include "PortingCommon.h"
-	#include "Print.h"
-	#include <Adafruit_SPITFT.h>
-	#include <SPI.h>
+	#include "../Adafruit_GFX_Library/Adafruit_GFX.h"
+	#include "../misc/PortingCommon.h"
+	#include "../core/Print.h"
+	#include "../Adafruit_GFX_Library/Adafruit_SPITFT.h"
+	#include "../spi/SPI.h"
 #else
 	#include "Adafruit_GFX.h"
 	#include "Arduino.h"

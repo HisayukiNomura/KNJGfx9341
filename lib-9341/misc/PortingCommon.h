@@ -8,12 +8,12 @@
  *        元になったコード（STD_SDKシンボルの有無で元の状態としてビルドされる）は、末尾にコメントとして残してある。
  */
 #pragma once
-#include "defines.h"
+#include "../misc/defines.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "lib-9341/core/stdlib_noniso.h"  // stdlibで非標準のitoaなどの関数。stdlib.hにないものも含んでいる
+#include "../core/stdlib_noniso.h"  // stdlibで非標準のitoaなどの関数。stdlib.hにないものも含んでいる
 #include <hardware/clocks.h>              // 標準SDK：　Required for the port*Register macros
 
 #include <hardware/gpio.h>  // 標準SDK：　Required for the port*Register macros
@@ -21,6 +21,10 @@
 
 // Arduino IDEでは、F_CPUの定義がおそらく Tools > CPU SPEED で設定されてF_CPUに定義されているようだ。(デフォルトはなぜか200Mhzでオーバークロック)
 // 似た方法でもよかった（CMakeFile.txt）が、一応正攻法にする
+#undef clockCyclesPerMicrosecond
+#undef clockCyclesToMicroseconds
+#undef microsecondsToClockCycles
+
 #define clockCyclesPerMicrosecond() (clock_get_hz(clk_sys) / 1000000L)    // システムクロック周波数を取得
 #define clockCyclesToMicroseconds(a) ((a) / clockCyclesPerMicrosecond())  // クロックサイクルからマイクロ秒への変換
 #define microsecondsToClockCycles(a) ((a) * clockCyclesPerMicrosecond())  // クロックサイクルからマイクロ秒への変換
@@ -47,7 +51,7 @@ extern const String emptyString;
 
 #if false
 	#pragma once
-	#include "defines.h"
+	#include "../misc/defines.h"
 	#ifdef STD_SDK
 		#include <stdint.h>
 		#include <stdlib.h>
