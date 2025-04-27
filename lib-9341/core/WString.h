@@ -18,10 +18,8 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-#ifndef String_class_h
-#define String_class_h
-#ifndef IN_ARDUINO_IDE
+#pragma once
+#ifndef ARDUINO
 
 	#ifdef __cplusplus
 		#include "../misc/defines.h"
@@ -275,5 +273,6 @@ class StringSumHelper : public String {
 };
 
 	#endif  // __cplusplus
-#endif      // String_class_h
-#endif
+#else
+	#include <WString.h>
+#endif  // ARDUINO

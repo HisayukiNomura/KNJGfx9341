@@ -1,11 +1,11 @@
 #ifndef _ADAFRUIT_GFX_H
 #define _ADAFRUIT_GFX_H
-#include "../misc/defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
 	// #include "../core/Arduino.h"
-	#include "../misc/KNJGfx_struct.h"
-	#include "../core/Print.h"
+	#include "misc/KNJGfx_struct.h"
+	#include "core/Print.h"
 	#include "gfxfont.h"
 struct KanjiData;
 #else

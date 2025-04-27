@@ -2,7 +2,7 @@
 
 #define STD_SDK
 
-#ifndef IN_ARDUINO_IDE
+#ifndef ARDUINO
 
 	#ifdef __cplusplus
 		#include <cstddef>
@@ -16,16 +16,20 @@
 	#include <stdlib.h>
 	#define PROGMEM
 	#define PGM_P const char *
+
+#ifndef ARDUINO
 	#ifndef pgm_read_byte
 		#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 	#endif
 	#ifndef pgm_read_word
 		#define pgm_read_word(addr) (*(const unsigned short *)(addr))
 	#endif
-//	#ifndef pgm_read_dword
-//		#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
-//	#endif
+	
+	#ifndef pgm_read_dword
+		#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
+	#endif
 	//  #define PICO_CYW43_SUPPORTED
+#endif
 	#ifndef ARDUINO_ARCH_RP2040
 		#define ARDUINO_ARCH_RP2040
 	#endif
@@ -55,4 +59,8 @@ constexpr uint64_t __bitset(const int (&a)[N], size_t i = 0U) {
 	#define TFT_FORCE_HANKANA  // Unicodeの半角カナ文字を強制的に１バイトカナとして扱う
 
 	#pragma GCC optimize("O0")
+#else
+	/// 漢字関連のシンボル
+	#define TFT_FORCE_HANKANA  // Unicodeの半角カナ文字を強制的に１バイトカナとして扱う
+
 #endif

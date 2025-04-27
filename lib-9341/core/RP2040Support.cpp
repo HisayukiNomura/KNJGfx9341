@@ -22,7 +22,7 @@
 #ifdef STD_SDK
 	#include "misc/PortingCommon.h"
 	#include <pico/runtime.h>
-	#include "RP2040Support.h"
+	#include "core/RP2040Support.h"
 	using namespace ardPort::core;
 #else
 	#include <Arduino.h>

@@ -20,15 +20,15 @@
 #include "../misc/defines.h"
 
 #ifdef STD_SDK
-	#include "../misc/PortingCommon.h"
+	#include "misc/PortingCommon.h"
 	#include <map>
 	#include <hardware/spi.h>
 	#include <hardware/gpio.h>
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
-	#include "../core/hardwarespi.h"
-	#include "../misc/debug.h"
-	#include "../core/wiring_private.h"
+	#include "core/hardwarespi.h"
+	#include "misc/debug.h"
+	#include "core/wiring_private.h"
 	using namespace ardPort::core;
 #else
 	#include <Arduino.h>

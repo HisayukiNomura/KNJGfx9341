@@ -22,11 +22,12 @@
 */
 
 #include "misc/PortingCommon.h"
-#include "CoreMutex.h"
+
 #ifdef STD_SDK
+	#include "core/CoreMutex.h"
 	#include "misc/pins.h"
 	#include "misc/debug.h"
-	using namespace ardPort::core;
+using namespace ardPort::core;
 #endif
 
 CoreMutex::CoreMutex(mutex_t *mutex, uint8_t option) {

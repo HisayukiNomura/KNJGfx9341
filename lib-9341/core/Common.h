@@ -21,7 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#ifndef IN_ARDUINO_IDE
+#ifndef ARDUINO
 
 	#include "../misc/defines.h"
 
@@ -197,4 +197,6 @@ void randomSeed(unsigned long);
 long map(long, long, long, long, long);
 
 #endif // __cplusplus
-#endif // IN_ARDUINO_IDE
+#else
+#include <api/Common.h>
+#endif // ARDUINO

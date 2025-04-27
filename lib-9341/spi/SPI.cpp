@@ -18,9 +18,11 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "misc/defines.h"
-
+#ifdef ARDUINO
+	#include "Arduino.h"
+#endif
 #ifdef STD_SDK
-	#include "SPI.h"
+	#include "spi/SPI.h"
 	#include <hardware/dma.h>
 	#include <hardware/spi.h>
 	#include <hardware/gpio.h>

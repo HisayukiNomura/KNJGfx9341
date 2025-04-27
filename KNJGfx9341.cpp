@@ -998,9 +998,9 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	}
 
 }
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-XPT2046_Touchscreen ts(TOUCH_CS);
 int main() {  // タッチパネルのインスタンスを作成
+	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+	XPT2046_Touchscreen ts(TOUCH_CS);
 
 	long i = clockCyclesPerMicrosecond();
 

@@ -24,10 +24,10 @@
 
 #pragma once
 #include "../misc/defines.h"
-#ifndef IN_ARDUINO_IDE
-	#ifdef STD_SDK
+
+#ifndef ARDUINO
 namespace ardPort {
-		// clang-format off
+	// clang-format off
 	#ifdef ENABLE_DEBUG_PRINTF
 		#define DEBUGV(fmt, ...) {printf("%s:%d - ", __FILE__, __LINE__);printf(fmt, ##__VA_ARGS__);}
 
@@ -63,9 +63,12 @@ namespace ardPort {
 		#endif
 	#endif
 	}
-// clang-format on	
+	#ifdef __cplusplus
+		extern void
+				hexdump(const void* mem, uint32_t len, uint8_t cols = 16);
+	#endif
 
-#else
+#else // ARDUINO
 #if !defined(DEBUG_RP2040_PORT)
 #define DEBUGV(...) do { } while(0)
 #define DEBUGCORE(...) do { } while(0)
@@ -93,10 +96,5 @@ namespace ardPort {
 #endif
 #endif
 
-#endif
+#endif // ARDUINO
 
-#ifdef __cplusplus
-	extern void
-			hexdump(const void* mem, uint32_t len, uint8_t cols = 16);
-#endif
-#endif

@@ -25,8 +25,8 @@
 	#include "core/Common.h" 
 	#include "core/wiring_common.h"
 	#include <hardware/gpio.h>
-
 #else
+	#include "misc/debug.h"
 	#include "Arduino.h"
 	#include "Common.h"
 	#include "wiring_common.h"

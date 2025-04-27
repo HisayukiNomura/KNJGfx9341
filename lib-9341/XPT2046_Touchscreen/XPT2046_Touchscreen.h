@@ -24,7 +24,7 @@
 #include "../misc/defines.h"
 #ifdef STD_SDK
 	#include "misc/PortingCommon.h"
-	#include <SPI.h>
+	#include "spi/SPI.h"
 
 	using namespace ardPort::core;
 	using namespace ardPort::spi;

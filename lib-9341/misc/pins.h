@@ -21,8 +21,7 @@
  * とにかく、このヘッダファイルをincludeするすべてのソースファイルで、PICO_BOARD_VALUEが定義されているようにすればよい
  * ので、define.hなどで定義しても良いが、ボードを変えるたびに修正が必要になる。
  */
-
-#if PICO_BOARD_VALUE == 1 || PICO_BOARD_VALUE == 2  // PICO/PICO2
+#if PICO_BOARD_VALUE == 1 || PICO_BOARD_VALUE == 2 || defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_RASPBERRY_PI_PICO_2)  // PICO/PICO2
 	// LEDs
 	#define PIN_LED (25u)
 
@@ -54,7 +53,7 @@
 	#define SERIAL_HOWMANY (3u)
 	#define SPI_HOWMANY (2u)
 	#define WIRE_HOWMANY (2u)
-#elif PICO_BOARD_VALUE == 3 || PICO_BOARD_VALUE == 4  // PICO W/2W
+#elif PICO_BOARD_VALUE == 3 || PICO_BOARD_VALUE == 4 || defined(ARDUINO_RASPBERRY_PI_PICO_W) || defined(ARDUINO_RASPBERRY_PI_PICO_2W) // PICO W/2W
 	// LEDs
 	#define PIN_LED (25u)
 
@@ -87,7 +86,10 @@
 	#define SPI_HOWMANY (2u)
 	#define WIRE_HOWMANY (2u)
 #else
-#error "PICO_BOARD is not defined. Please define it in CMakeLists.txt(recomended) or in defines.h"
+	#if defined(ARDUINO)
+		#define ERRMSG "It appears to have been built from the Arduino IDE, but the specified target board is not supported."
+		#error ERRMSG
+	#else
+		#error "It appears to have been build from standard SDK , but PICO_BOARD is not defined. Please define it in CMakeLists.txt(recomended) or in defines.h"
+	#endif
 #endif
-
-

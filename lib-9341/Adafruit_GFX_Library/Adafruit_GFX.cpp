@@ -31,7 +31,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 #include "misc/defines.h"
-#include "Adafruit_GFX.h"
+#include "Adafruit_GFX_Library/Adafruit_GFX.h"
 #include "glcdfont.c"
 #include "Kanji/KanjiHelper.h"
 

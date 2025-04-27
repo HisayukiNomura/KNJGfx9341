@@ -36,7 +36,7 @@
 // Not for ATtiny, at all
 #if !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny84__)
 
-	#include "Adafruit_SPITFT.h"
+	#include "Adafruit_GFX_Library/Adafruit_SPITFT.h"
 
 	#ifdef STD_SDK
 using namespace ardPort;

@@ -29,7 +29,7 @@
 #include "misc/defines.h"
 #include "misc/PortingCommon.h"
 
-#ifdef STD_SDK
+#ifndef ARDUINO
 #include "core/cyw43_wrappers.h"
 #include "core/wiring_digital.h"
 
@@ -101,7 +101,7 @@ extern "C" void initVariant() {
 
 #else
 #include "core/cyw43_wrappers.h"
-
+/*
 
 extern "C" void pinMode(pin_size_t pin, PinMode mode) {
 		cyw43_pinMode(pin, mode);
@@ -114,4 +114,5 @@ extern "C" void digitalWrite(pin_size_t pin, PinStatus val) {
 extern "C" PinStatus digitalRead(pin_size_t pin) {
 	return cyw43_digitalRead(pin);
 }
+*/
 #endif

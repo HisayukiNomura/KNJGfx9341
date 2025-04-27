@@ -1,6 +1,6 @@
 
 // Arduinoのmainなどで定義されたり行われる処理を代替するためのコード
-
+#ifndef ARDUINO
 // このライブラリが、FreeRTOS下で実行されているかを示すフラグ。
 /// @brief このライブラリが、FreeRTOS下で実行されているかを示すフラグ。
 /// @details Arduino の Raspberry PI Coreでは、main.cpp (packages\rp2040\hardware\rp2040\4.5.1\cores\rp2040\main.cpp)で、実体として定義されている。
@@ -13,3 +13,4 @@ volatile bool __isFreeRTOS = false;
 ///          設定は、\hardware\rp2040\4.5.1\libraries\FreeRTOS\src\variantHooks.cpp内で行われる。
 ///          非Arduino 環境でFreeRTOSを使用する場合は、この辺を見ていく必要があるだろう。ただTFT液晶に関して言えば、Mutexについては割り込み禁止/許可位しか使用していないので、あまり関係ないかもしれない。
 volatile bool __freeRTOSinitted;
+#endif
