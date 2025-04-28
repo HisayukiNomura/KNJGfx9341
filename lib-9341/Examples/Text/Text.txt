@@ -1,0 +1,75 @@
+#include <KNJGfx9341.h>
+#include "pictBackground.h"
+#include "Kanji/KanjiHelper.h"
+
+
+// 日本語フォントのインストール
+#include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_SCHOOL.inc"		// 東雲12x12、教育漢字
+#include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_SCHOOL.inc"		// 東雲12x12、教育漢字
+#include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_SCHOOL.inc"		// 東雲12x12、教育漢字
+#include "Kanji/Fonts/ipaexg_24x24_SCHOOL.inc"								// IPA24x24、教育漢字
+
+using namespace ardPort;
+
+
+// 使用するポートの定義
+#define TFT_SCK 18  // 液晶表示の SCK
+#define TFT_MOSI 19 // 液晶表示の MOSI
+#define TFT_DC 20   // 液晶画面の DC
+#define TFT_RST 21  // 液晶画面の RST
+#define TFT_CS 22   // 液晶画面の CS
+
+#define TOUCH_MISO 16  // タッチパネルの MISO
+#define TOUCH_CS 17    // タッチパネルの CS
+
+#define TFT_WIDTH 320   // 画面幅
+#define TFT_HEIGHT 240  // 画面高さ
+
+// 画面コントロールのためのオブジェクト
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST); 
+    
+void setup() {
+  // put your setup code here, to run once:
+    // ILI9341ディスプレイのインスタンスを作成　　＜＜＜＜＜　追加　（３）
+
+    
+    SPI.setTX(TFT_MOSI); // SPI0のTX(MOSI)
+    SPI.setSCK(TFT_SCK); // SPI0のSCK  
+    tft.begin();         // TFTを初期化
+
+  
+	  // 液晶初期設定
+	  tft.setRotation(TFTROTATION.ROTATE_NORMAL);
+	  // 使用可能な場合は、ウインドウモードを使用して高速に描画する
+	  tft.useWindowMode(true);
+
+    // 画面を黒で塗りつぶす　　　　　　　　　　　　＜＜＜＜＜　追加　（５）　
+    tft.fillScreen(ILI9341_BLACK); 
+   
+}
+
+
+void loop() {
+	int cursorY = 0;
+	tft.setCursor(0,cursorY);
+  tft.setFont(JFDotShinonome12_12x12_SCHOOL, JFDotShinonome12_12x12_SCHOOL_bitmap); 
+	tft.print("こんにちは!");
+	cursorY += 14;
+
+	tft.setCursor(0,cursorY);
+  tft.setFont(JFDotShinonome14_14x14_SCHOOL, JFDotShinonome14_14x14_SCHOOL_bitmap); 
+	tft.print("こんにちは!");
+	cursorY += 16;
+
+	tft.setCursor(0,cursorY);
+  tft.setFont(JFDotShinonome16_16x16_SCHOOL, JFDotShinonome16_16x16_SCHOOL_bitmap); 
+	tft.print("こんにちは!");
+	cursorY += 18;
+
+	tft.setCursor(0,cursorY);
+  tft.setFont(ipaexg_24x24_SCHOOL, ipaexg_24x24_SCHOOL_bitmap); 
+	tft.print("こんにちは!");
+
+	sleep_ms(10000);
+        
+}

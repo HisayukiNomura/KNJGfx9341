@@ -1,54 +1,32 @@
-﻿#include <stdio.h>
-// https://logikara.blog/pico-ili9341/
-#include <array>
-#include <malloc.h>
+#include <KNJGfx9341.h>
+#include "pictBackground.h"
+#include "Kanji/KanjiHelper.h"
 
-#include "misc/defines.h"
-#include "Adafruit_GFX.h"
-#include "hardware/spi.h"
-#include "pico/malloc.h"
+// 英文フォントのインストール
+#include "Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeSansOblique9pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeSans9pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeSerif9pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeSerifItalic9pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeMono9pt7b.h"
+#include "Adafruit_GFX_Library/Fonts/FreeMonoOblique9pt7b.h"
 
-#include <string>
-#include "lib-9341/core/WString.h"
-#include "lib-9341/Adafruit_GFX_Library/Adafruit_GFX.h"
+// 日本語フォントのインストール
+#include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"  // 東雲12x12、JIS第1+2+記号その他
+// #include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"		// 美咲8x8、JIS第1+2+記号その他
+// #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"		// 東雲14x14、JIS第1+2+記号その他
+// #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"		// 東雲16x16、JIS第1+2+記号その他
+// #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"								// IPA24x24、JIS第1+2+記号その他
 
-// 使用するフォントだけをインクルードする
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans12pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSansOblique9pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSans9pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSerif9pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeSerifItalic9pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeMono9pt7b.h"
-#include "lib-9341/Adafruit_GFX_Library/Fonts/FreeMonoOblique9pt7b.h"
+// 名前空間の使用を宣言する。
+// これを挿入することで、Adafruit_GFXと同じ名前のクラスを使用したときに、本ライブラリが
+// 使用される。オリジナルのAdafruit_GFXに戻したい場合は、クラス名の変更などは不要で、
+// このusingを削除すればよい。
+// また、２つのライブラリを同時に使いたい場合、明示的に ardPort::Adafruit_ILI9341のように
+// 修飾して使用することができる。
+using namespace ardPort;
 
-#include "lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.h"
-#include "lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.h"  // タッチパネル制御用ライブラリ
-#include "lib-9341/misc/KNJGfx_struct.h"
-#include "pico/stdlib.h"
-#include "wiring_analog.h"
-#include "WString.h"
-#include "time.h"
-#include "pico/stdlib.h"
-
-#include "pico/stdlib.h"
-#include "pico/malloc.h"
-
-#include "hardware/spi.h"
-
-/*
-// SPI Defines
-// We are going to use SPI 0, and allocate it to the following GPIO pins
-// Pins can be changed, see the GPIO function select table in the datasheet for
-information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
-#define PIN_CS   17
-#define PIN_SCK  18
-#define PIN_MOSI 19
-*/
-
-#define TFT_WIDTH 320   // 画面幅
-#define TFT_HEIGHT 240  // 画面高さ
-
-// 使用するポートの定義。
+// 使用するポートの定義
 #define TFT_SCK 18   // 液晶表示の SCK
 #define TFT_MOSI 19  // 液晶表示の MOSI
 #define TFT_DC 20    // 液晶画面の DC
@@ -58,29 +36,12 @@ information on GPIO assignments #define SPI_PORT spi0 #define PIN_MISO 16
 #define TOUCH_MISO 16  // タッチパネルの MISO
 #define TOUCH_CS 17    // タッチパネルの CS
 
-// 名前空間の使用を宣言する。
-// これを挿入することで、Adafruit_GFXと同じ名前のクラスを使用したときに、本ライブラリが
-// 使用される。オリジナルのAdafruit_GFXに戻したい場合は、クラス名の変更などは不要で、
-// このusingを削除すればよい。
-// また、２つのライブラリを同時に使いたい場合、明示的に ardPort::Adafruit_ILI9341のように
-// 修飾して使用することができる。
-using namespace ardPort;
-using namespace ardPort::spi;
+#define TFT_WIDTH 320   // 画面幅
+#define TFT_HEIGHT 240  // 画面高さ
 
-#include "Adafruit_SPITFT.h"
-
-#include "KanjiHelper.h"
-
-// 日本語フォントのインストール
-#include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"  // 東雲12x12、JIS第1+2+記号その他
-// #include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"		// 美咲8x8、JIS第1+2+記号その他
-// #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"		// 東雲14x14、JIS第1+2+記号その他
-// #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"		// 東雲16x16、JIS第1+2+記号その他
-// #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"								// IPA24x24、JIS第1+2+記号その他
-
-#include "pictBackground.data"  // 背景データ
-
-
+// 画面コントロールのためのオブジェクト
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);
+XPT2046_Touchscreen ts(TOUCH_CS);
 
 /// @brief 指定された画面のサイズ（省略時は接続されたデバイスの画面全体）に表示できるような文字列の長さを求める。
 /// @details 文字列はUTF-8で指定する。漢字はUTF-8の文字バイト、半角カナは1バイトとして計算する。デモのときに、画面全体に文字が表示できるよううにするため。
@@ -124,9 +85,9 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 	int touchCount = 0;
 	while (true) {
 		if (message != nullptr) {
-			//struct mallinfo info = mallinfo();
-			//tft.setCursor(0, 0);
-			//tft.printf("Heap : %d used/ %d free", info.fordblks, info.uordblks);
+			// struct mallinfo info = mallinfo();
+			// tft.setCursor(0, 0);
+			// tft.printf("Heap : %d used/ %d free", info.fordblks, info.uordblks);
 
 			if (count % 200 == 0) {
 				tft.setCursor(10, 220);
@@ -145,14 +106,14 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 
 			// 円の連続で線を描画
 			tft.drawCircle(x, y, touchCount * 2, rand() % 0xFFFF);  // タッチ座標に塗り潰し円を描画
-			if (touchCount == 10) {									// 10回タッチしたら、押されたと判断するのだが・・・
+			if (touchCount == 10) {                                 // 10回タッチしたら、押されたと判断するのだが・・・
 				int waitRelease = 0;
 				while (ts.touched()) {
 					if (waitRelease > 1000) break;
 					sleep_ms(10);  // CPU負荷を下げるために少し待機
 					waitRelease++;
 				}
-				break; 
+				break;
 			}
 		} else {
 			touchCount = 0;
@@ -164,9 +125,207 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 	}
 	return false;  // タイムアウトせずにループを抜けたらfalseを返す
 }
-/// @brief ビットマップ表示のデモ
-/// @param tft 液晶クラスのインスタンス
-/// @param ts 　タッチパネルクラスのインスタンス
+
+void demoShape(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+
+	tft.setCursor(10, 20);
+	tft.print("図形などの描画");
+	tft.setCursor(10, 60);
+	tft.print("直線や矩形、塗りつぶしなどを実行します。基本的に、Adafruitのコードそのままです。\n\n時間を測定しますが、この時間には描画時間の他に、乱数による描画位置や色の決定時間も含まれます。");
+	tft.print("順番に、点、直線、水平線、垂直線、矩形、角丸矩形、直線や矩形、塗りつぶしなどを実行します。基本的に、Adafruitのコードそのままです。\n\n時間を測定しますが、この時間には描画時間の他に、乱数による描画位置や色の決定時間も含まれます。");
+
+	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
+	int64_t elapsed_time_1;
+	int64_t elapsed_time_2;
+	int64_t elapsed_time_3;
+	int64_t elapsed_time_4;
+	int64_t elapsed_time_5;
+	int64_t elapsed_time_6;
+	int64_t elapsed_time_7;
+	int64_t elapsed_time_8;
+	int64_t elapsed_time_9;
+	int64_t elapsed_time_10;
+	int64_t elapsed_time_11;
+	int64_t elapsed_time_12;
+	int64_t elapsed_time_13;
+
+	{                                                      // 点
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 10000; i++) {
+			tft.drawPixel(rand() % tft.width(), rand() % tft.height(), rand() & 0xFFFF);
+		}
+		elapsed_time_1 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 直線
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XY xy0;
+			XY xy1;
+			xy0.setRandom(tft.width(), tft.height());
+			xy1.setRandom(tft.width(), tft.height());
+			tft.drawLine(xy0, xy1, rand() & 0xFFFF);
+		}
+		elapsed_time_2 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+
+	{                                                      // 水平線
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			tft.drawFastHLine(0, rand() % tft.height(), tft.width(), rand() & 0xFFFF);
+		}
+		elapsed_time_3 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 垂直線
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			tft.drawFastVLine(rand() % tft.width(), 0, tft.height(), rand() & 0xFFFF);
+		}
+		elapsed_time_4 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 矩形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XYWH xywh;
+			xywh.setRandom(tft.width(), tft.height());
+			tft.drawRect(xywh, rand() & 0xFFFF);
+		}
+		elapsed_time_5 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 角丸矩形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XYWH xywh;
+			while (1) {
+				xywh.setRandom(tft.width(), tft.height());
+				if (xywh.w <= 10 || xywh.h < 10) continue;
+				break;
+			}
+			tft.drawRoundRect(xywh, 5, rand() & 0xFFFF);
+		}
+		elapsed_time_6 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 三角形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XY xy0;
+			XY xy1;
+			XY xy2;
+			xy0.setRandom(tft.width(), tft.height());
+			xy1.setRandom(tft.width(), tft.height());
+			xy2.setRandom(tft.width(), tft.height());
+			tft.drawTriangle(xy0, xy1, xy2, rand() & 0xFFFF);
+		}
+		elapsed_time_7 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+
+	{                                                      // 円
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XY xy;
+			uint8_t r = 0;
+			while (1) {
+				r = rand() % 20;
+				xy.setRandom(tft.width(), tft.height());
+				if (xy.x + r >= tft.width() || xy.y + r >= tft.height()) continue;
+				if (xy.x - r < 0 || xy.y - r < 0) continue;
+				break;
+			}
+			tft.drawCircle(xy, r, rand() & 0xFFFF);
+		}
+		elapsed_time_8 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 塗りつぶし矩形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XYWH xywh;
+			xywh.setRandom(tft.width(), tft.height());
+			tft.fillRect(xywh, rand() & 0xFFFF);
+		}
+		elapsed_time_9 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 塗りつぶし角丸矩形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XYWH xywh;
+			while (1) {
+				xywh.setRandom(tft.width(), tft.height());
+				if (xywh.w <= 10 || xywh.h < 10) continue;
+				break;
+			}
+			tft.fillRoundRect(xywh, 5, rand() & 0xFFFF);
+		}
+		elapsed_time_10 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+
+	{                                                      // 塗りつぶし三角形
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XY xy0;
+			XY xy1;
+			XY xy2;
+			xy0.setRandom(tft.width(), tft.height());
+			xy1.setRandom(tft.width(), tft.height());
+			xy2.setRandom(tft.width(), tft.height());
+			tft.fillTriangle(xy0, xy1, xy2, rand() & 0xFFFF);
+		}
+		elapsed_time_11 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	{                                                      // 塗りつぶし円
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
+		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
+		for (int i = 0; i < 1000; i++) {
+			XY xy;
+			uint8_t r = 0;
+			while (1) {
+				r = rand() % 20;
+				xy.setRandom(tft.width(), tft.height());
+				if (xy.x + r >= tft.width() || xy.y + r >= tft.height()) continue;
+				if (xy.x - r < 0 || xy.y - r < 0) continue;
+				break;
+			}
+			tft.fillCircle(xy, r, rand() & 0xFFFF);
+		}
+		elapsed_time_12 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
+	}
+	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+	tft.setCursor(0, 10);
+	tft.print("一回当たりの描画時間（描画位置や色の決定時間を含む）\n\n");
+	int cnt = 0;
+	for (int y = 34; y < 240; y += 12) {
+		tft.fillRect(0, y, tft.width(), 12, ((cnt % 2) == 0) ? STDCOLOR.SUPERDARK_GRAY : STDCOLOR.BLACK);  // 背景色
+		cnt++;
+	}
+
+	tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.WHITE);                                     // テキスト色
+	tft.printf("　点　　　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_1 / 10000);  // 経過時間を表示
+	tft.printf("　直線　　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_2 / 1000);   // 経過時間を表示
+	tft.printf("　水平線　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_3 / 1000);   // 経過時間を表示
+	tft.printf("　垂直線　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_4 / 1000);   // 経過時間を表示
+	tft.printf("　矩形　　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_5 / 1000);   // 経過時間を表示
+	tft.printf("　角丸矩形　　　　: %8.3f μS　　　　\n", (float)elapsed_time_6 / 1000);   // 経過時間を表示
+	tft.printf("　三角形　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_7 / 1000);   // 経過時間を表示
+	tft.printf("　円　　　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_8 / 1000);   // 経過時間を表示
+	tft.printf("　矩形（塗）　　　: %8.3f μS　　　　\n", (float)elapsed_time_9 / 1000);   // 経過時間を表示
+	tft.printf("　角丸矩形（塗）　: %8.3f μS　　　　\n", (float)elapsed_time_10 / 1000);  // 経過時間を表示
+	tft.printf("　三角形（塗）　　: %8.3f μS　　　　\n", (float)elapsed_time_11 / 1000);  // 経過時間を表示
+	tft.printf("　円（塗）　　　　: %8.3f μS　　　　\n", (float)elapsed_time_12 / 1000);  // 経過時間を表示
+
+	tft.setCursor(10, 180);
+	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
+}
+
 void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // 文字色、背景色
 	{
@@ -186,7 +345,6 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 
-		/// 画面全体にDMA転送を使って画像を表示する
 		tft.setCursor(60, 50);
 		tft.print("DMAで全画面画面更新");
 		sleep_ms(1000);
@@ -195,7 +353,7 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		absolute_time_t end_time = get_absolute_time();                // 終了時間を取得
 		elapsed_time_1 = absolute_time_diff_us(start_time, end_time);  // 経過時間を計算
 		sleep_ms(2000);
-		/// 画面全体にソフトウェアで画像を表示する
+
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(60, 50);
 		tft.print("ソフトウェアで全画面画面更新");
@@ -206,19 +364,16 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		elapsed_time_2 = absolute_time_diff_us(start_time, end_time);    // 経過時間を計算
 		sleep_ms(2000);
 
-		/// 画面全体にソフトウェアで画像を表示する（透過色あり）
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(60, 50);
 		tft.print("透過つきで全画面更新");
 		sleep_ms(1000);
 		start_time = get_absolute_time();                                        // 開始時間を取得
-		/// 透過色を指定して描画する.この場合、透過色は0x0001 (ほぼ黒だが黒ではない）
 		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), 0x0001);  // 背景データを描画
 		end_time = get_absolute_time();                                          // 終了時間を取得
 		elapsed_time_3 = absolute_time_diff_us(start_time, end_time);            // 経過時間を計算
 		sleep_ms(2000);
-		
-		/// 実行時間の比較
+
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(10, 50);
 		tft.printf("描画時間（DMA）: %4.3f ms\n", (float)elapsed_time_1 / 1000);  // 経過時間を表示
@@ -230,12 +385,11 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setCursor(10, 180);
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
-	///　キャンバスを使ったビットマップ表示のデモ
-	{				
+	{
 		int64_t elapsed_time_1;
 		int64_t elapsed_time_2;
 		int64_t elapsed_time_3;
-		{	
+		{
 			tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 
 			tft.setCursor(10, 20);
@@ -563,204 +717,27 @@ void demoAlphabetText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	tft.setKanjiMode(true);
 }
 
-void demoShape(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
-	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+void setup() {
+	// put your setup code here, to run once:
+	// ILI9341ディスプレイのインスタンスを作成　　＜＜＜＜＜　追加　（３）
 
-	tft.setCursor(10, 20);
-	tft.print("図形などの描画");
-	tft.setCursor(10, 60);
-	tft.print("直線や矩形、塗りつぶしなどを実行します。基本的に、Adafruitのコードそのままです。\n\n時間を測定しますが、この時間には描画時間の他に、乱数による描画位置や色の決定時間も含まれます。");
-	tft.print("順番に、点、直線、水平線、垂直線、矩形、角丸矩形、直線や矩形、塗りつぶしなどを実行します。基本的に、Adafruitのコードそのままです。\n\n時間を測定しますが、この時間には描画時間の他に、乱数による描画位置や色の決定時間も含まれます。");
+	SPI.setTX(TFT_MOSI);  // SPI0のTX(MOSI)
+	SPI.setSCK(TFT_SCK);  // SPI0のSCK
+	tft.begin();          // TFTを初期化
 
-	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
+	// 漢字フォントの設定　　　　　　　　　　　　　＜＜＜＜＜　追加　（４）　
+	tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);
 
-	int64_t elapsed_time_1;
-	int64_t elapsed_time_2;
-	int64_t elapsed_time_3;
-	int64_t elapsed_time_4;
-	int64_t elapsed_time_5;
-	int64_t elapsed_time_6;
-	int64_t elapsed_time_7;
-	int64_t elapsed_time_8;
-	int64_t elapsed_time_9;
-	int64_t elapsed_time_10;
-	int64_t elapsed_time_11;
-	int64_t elapsed_time_12;
-	int64_t elapsed_time_13;
+	// 液晶初期設定
+	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
+	// 使用可能な場合は、ウインドウモードを使用して高速に描画する
+	tft.useWindowMode(true);
+	// タッチスクリーンの初期化
+	ts.begin();
+	ts.setRotation(TFTROTATION.ROTATE_270);  // タッチパネルの回転を設定（液晶画面と合わせる）
 
-	{                                                      // 点
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 10000; i++) {
-			tft.drawPixel(rand() % tft.width(), rand() % tft.height(), rand() & 0xFFFF);
-		}
-		elapsed_time_1 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 直線
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XY xy0;
-			XY xy1;
-			xy0.setRandom(tft.width(), tft.height());
-			xy1.setRandom(tft.width(), tft.height());
-			tft.drawLine(xy0, xy1, rand() & 0xFFFF);
-		}
-		elapsed_time_2 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-
-	{                                                      // 水平線
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			tft.drawFastHLine(0, rand() % tft.height(), tft.width(), rand() & 0xFFFF);
-		}
-		elapsed_time_3 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 垂直線
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			tft.drawFastVLine(rand() % tft.width(), 0, tft.height(), rand() & 0xFFFF);
-		}
-		elapsed_time_4 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 矩形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XYWH xywh;
-			xywh.setRandom(tft.width(), tft.height());
-			tft.drawRect(xywh, rand() & 0xFFFF);
-		}
-		elapsed_time_5 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 角丸矩形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XYWH xywh;
-			while (1) {
-				xywh.setRandom(tft.width(), tft.height());
-				if (xywh.w <= 10 || xywh.h < 10) continue;
-				break;
-			}
-			tft.drawRoundRect(xywh, 5, rand() & 0xFFFF);
-		}
-		elapsed_time_6 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 三角形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XY xy0;
-			XY xy1;
-			XY xy2;
-			xy0.setRandom(tft.width(), tft.height());
-			xy1.setRandom(tft.width(), tft.height());
-			xy2.setRandom(tft.width(), tft.height());
-			tft.drawTriangle(xy0, xy1, xy2, rand() & 0xFFFF);
-		}
-		elapsed_time_7 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-
-	{                                                      // 円
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XY xy;
-			uint8_t r = 0;
-			while (1) {
-				r = rand() % 20;
-				xy.setRandom(tft.width(), tft.height());
-				if (xy.x + r >= tft.width() || xy.y + r >= tft.height()) continue;
-				if (xy.x - r < 0 || xy.y - r < 0) continue;
-				break;
-			}
-			tft.drawCircle(xy, r, rand() & 0xFFFF);
-		}
-		elapsed_time_8 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 塗りつぶし矩形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XYWH xywh;
-			xywh.setRandom(tft.width(), tft.height());
-			tft.fillRect(xywh, rand() & 0xFFFF);
-		}
-		elapsed_time_9 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 塗りつぶし角丸矩形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XYWH xywh;
-			while (1) {
-				xywh.setRandom(tft.width(), tft.height());
-				if (xywh.w <= 10 || xywh.h < 10) continue;
-				break;
-			}
-			tft.fillRoundRect(xywh, 5, rand() & 0xFFFF);
-		}
-		elapsed_time_10 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	{                                                      // 塗りつぶし三角形
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XY xy0;
-			XY xy1;
-			XY xy2;
-			xy0.setRandom(tft.width(), tft.height());
-			xy1.setRandom(tft.width(), tft.height());
-			xy2.setRandom(tft.width(), tft.height());
-			tft.fillTriangle(xy0, xy1, xy2, rand() & 0xFFFF);
-		}
-		elapsed_time_11 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-
-	{                                                      // 塗りつぶし円
-		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
-		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-		for (int i = 0; i < 1000; i++) {
-			XY xy;
-			uint8_t r = 0;
-			while (1) {
-				r = rand() % 20;
-				xy.setRandom(tft.width(), tft.height());
-				if (xy.x + r >= tft.width() || xy.y + r >= tft.height()) continue;
-				if (xy.x - r < 0 || xy.y - r < 0) continue;
-				break;
-			}
-			tft.fillCircle(xy, r, rand() & 0xFFFF);
-		}
-		elapsed_time_12 = absolute_time_diff_us(start_time, get_absolute_time());  // 経過時間を計算
-	}
-	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
-	tft.setCursor(0, 10);
-	tft.print("一回当たりの描画時間（描画位置や色の決定時間を含む）\n\n");
-	int cnt = 0;
-	for (int y = 34; y < 240; y += 12) {
-		tft.fillRect(0, y, tft.width(), 12, ((cnt % 2) == 0) ? STDCOLOR.SUPERDARK_GRAY : STDCOLOR.BLACK);  // 背景色
-		cnt++;
-	}
-	tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.WHITE);                                     // テキスト色
-	tft.printf("　点　　　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_1 / 10000);  // 経過時間を表示
-	tft.printf("　直線　　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_2 / 1000);   // 経過時間を表示
-	tft.printf("　水平線　　　　　: %8.4f μS　　　　\n", (float)elapsed_time_3 / 1000);   // 経過時間を表示
-	tft.printf("　垂直線　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_4 / 1000);   // 経過時間を表示
-	tft.printf("　矩形　　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_5 / 1000);   // 経過時間を表示
-	tft.printf("　角丸矩形　　　　: %8.3f μS　　　　\n", (float)elapsed_time_6 / 1000);   // 経過時間を表示
-	tft.printf("　三角形　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_7 / 1000);   // 経過時間を表示
-	tft.printf("　円　　　　　　　: %8.3f μS　　　　\n", (float)elapsed_time_8 / 1000);   // 経過時間を表示
-	tft.printf("　矩形（塗）　　　: %8.3f μS　　　　\n", (float)elapsed_time_9 / 1000);   // 経過時間を表示
-	tft.printf("　角丸矩形（塗）　: %8.3f μS　　　　\n", (float)elapsed_time_10 / 1000);  // 経過時間を表示
-	tft.printf("　三角形（塗）　　: %8.3f μS　　　　\n", (float)elapsed_time_11 / 1000);  // 経過時間を表示
-	tft.printf("　円（塗）　　　　: %8.3f μS　　　　\n", (float)elapsed_time_12 / 1000);  // 経過時間を表示
-
-	tft.setCursor(10, 180);
-	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
+	// 画面を黒で塗りつぶす　　　　　　　　　　　　＜＜＜＜＜　追加　（５）　
+	tft.fillScreen(ILI9341_BLACK);
 }
 
 void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
@@ -776,11 +753,11 @@ void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	tft.print("GFXcanvas16にテキストを描画し、これを一括で画面に転送することで、文字を表示するときのちらつき（フリッカー）を押さえることができます。");
 	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	{
-		GFXcanvas16* pCanvas = new GFXcanvas16(tft.width(), tft.height() / 2,false);                              // 画面半分分のキャンバスの作成
-		pCanvas->setBuffer(screenbuffer);                                                                      // バッファの設定
-		pCanvas->fillScreen(STDCOLOR.DARK_BLUE);                                                             // 背景色
-		pCanvas->setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);                                           // テキスト色
-		pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);                     // 漢字フォントの設定
+		GFXcanvas16* pCanvas = new GFXcanvas16(tft.width(), tft.height() / 2, false);     // 画面半分分のキャンバスの作成
+		pCanvas->setBuffer(screenbuffer);                                                 // バッファの設定
+		pCanvas->fillScreen(STDCOLOR.DARK_BLUE);                                          // 背景色
+		pCanvas->setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);                        // テキスト色
+		pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 		pCanvas->setCursor(30, 0);
 		pCanvas->print("キャンバス経由で描画");
 
@@ -817,7 +794,7 @@ void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 
 	uint32_t elapsed_time;
 	{
-		GFXcanvas16 canvas16(tft.width(), tft.height(),false);
+		GFXcanvas16 canvas16(tft.width(), tft.height(), false);
 		canvas16.setBuffer(screenbuffer);
 		canvas16.fillScreen(STDCOLOR.DARK_BLUE);           // 背景色
 		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
@@ -851,8 +828,8 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setCursor(10, 60);
 		tft.print("画面を回転させます。");
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
-	
-		const char* text[] = { "TFTROTATION.NORMAL",  "TFTROTATION.ROTATE_90", "TFTROTATION.ROTATE_180", "TFTROTATION.ROTATE_270" };
+
+		const char* text[] = {"TFTROTATION.NORMAL", "TFTROTATION.ROTATE_90", "TFTROTATION.ROTATE_180", "TFTROTATION.ROTATE_270"};
 		tft.setFont(&FreeSerif9pt7b);  // 英文フォントを設定
 		tft.setKanjiMode(false);
 		for (int i = 0; i < 4; i++) {
@@ -913,7 +890,7 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 			}
 		}
 	}
- 
+
 	{
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(10, 20);
@@ -953,7 +930,7 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.scrollTo(0);
 		tft.setScrollMargins(0, 0);
 		tft.setRotation(TFTROTATION.ROTATE_270);
-		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
 		tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
@@ -1027,45 +1004,13 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.scrollTo(0);
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
-
 }
-int main() {  // タッチパネルのインスタンスを作成
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);
 
-	long i = clockCyclesPerMicrosecond();
-
-	stdio_init_all();
-
-	SPI.setTX(TFT_MOSI);  // SPI0のTX(MOSI)
-	SPI.setSCK(TFT_SCK);  // SPI0のSCK
-
-	// TFT初期設定
-	tft.begin();  // TFTを初期化
-
-	// タッチパネル初期設定
-	ts.begin();                              // タッチパネル初期化
-	ts.setRotation(TFTROTATION.ROTATE_270);  // タッチパネルの回転を設定（液晶画面と合わせる）
-	// 液晶初期設定
-	tft.setRotation(TFTROTATION.ROTATE_270);  // TFTの回転を設定（0-3）
-	// 使用可能な場合は、ウインドウモードを使用して高速に描画する
-	tft.useWindowMode(true);
-
-	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
-	
-	tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
-	// tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
-	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
-	// tft.setFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
-	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
-	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
-	uint32_t elapsed_time = 0;
-	while (1) {
-		demoShape(tft, ts);      // 図形描画
-		demoBitmap(tft, ts);     // 背景データを描画
-		demoAlphabetText(tft, ts);
-		demoText(tft, ts);    // 背景データを描画
-		demoCanvas(tft, ts);  // キャンバスによるフリッカーレス表示
-		demoScrollEtc(tft, ts);  // スクロールなどの機能を実行
-	}
+void loop() {
+	demoShape(tft, ts);
+	demoBitmap(tft, ts);
+	demoAlphabetText(tft, ts);
+	demoText(tft, ts);       // 背景データを描画
+	demoCanvas(tft, ts);     // キャンバスによるフリッカーレス表示
+	demoScrollEtc(tft, ts);  // スクロールなどの機能を実行
 }

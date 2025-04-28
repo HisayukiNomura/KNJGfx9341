@@ -27,7 +27,21 @@ xcopy /e /i /h /y  lib-9341\* KNJGfx9341_ARD\ >> outlog.txt 2>&1
 cd KNJGfx9341_ARD
 for /r %%d in (*.cpp) do move "%%d" . >> ..\outlog.txt 2>&1
 for /r %%d in (*.c) do move "%%d" . >> ..\outlog.txt 2>&1
-cd ..
+cd Examples
+
+echo  "---------- processing Example ino ----------" >> outlog.txt 2>&1
+setlocal enabledelayedexpansion
+for /R %%F in (*.txt) do (
+    set "newname=%%~dpF%%~nF.ino"
+    move "%%F" "!newname!" >> ..\outlog.txt 2>&1
+)
+for /R %%F in (*.htxt) do (
+    set "newname=%%~dpF%%~nF.h"
+    move "%%F" "!newname!" >> ..\outlog.txt 2>&1
+)
+endlocal
+cd ../..
+
 
 echo  "---------- making zip archive and copy it to USERPROFILE% ----------" >> outlog.txt 2>&1
 7z a KNJGfx9341_ARD.zip KNJGfx9341_ARD -xr!*.bak  >> outlog.txt 2>&1
@@ -35,4 +49,4 @@ rmdir /q /s KNJGfx9341_ARD  >> outlog.txt 2>&1
 copy  KNJGfx9341_ARD.zip %USERPROFILE%  >> outlog.txt 2>&1
 del KNJGfx9341_ARD.zip  >> outlog.txt 2>&1
 echo successfully created %USERPROFILE%\KNJGfx9341_ARD.zip
-echo "  *If an error occurs, the execution log was saved in outlog.txt."
+echo   *If an error occurs, the execution log was saved in outlog.txt.

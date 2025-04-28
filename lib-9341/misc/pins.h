@@ -23,6 +23,38 @@
  */
 #if PICO_BOARD_VALUE == 1 || PICO_BOARD_VALUE == 2 || defined(ARDUINO_RASPBERRY_PI_PICO) || defined(ARDUINO_RASPBERRY_PI_PICO_2)  // PICO/PICO2
 	// LEDs
+	#ifdef PIN_LED
+		#undef PIN_LED
+
+		// Serial
+		#undef PIN_SERIAL1_TX
+		#undef PIN_SERIAL1_RX
+
+		#undef PIN_SERIAL2_TX
+		#undef PIN_SERIAL2_RX
+
+		// SPI
+		#undef PIN_SPI0_MISO
+		#undef PIN_SPI0_MOSI
+		#undef PIN_SPI0_SCK
+		#undef PIN_SPI0_SS
+
+		#undef PIN_SPI1_MISO
+		#undef PIN_SPI1_MOSI
+		#undef PIN_SPI1_SCK
+		#undef PIN_SPI1_SS
+
+		// Wire
+		#undef PIN_WIRE0_SDA
+		#undef PIN_WIRE0_SCL
+
+		#undef PIN_WIRE1_SDA
+		#undef PIN_WIRE1_SCL
+
+		#undef SERIAL_HOWMANY
+		#undef SPI_HOWMANY
+		#undef WIRE_HOWMANY
+	#endif
 	#define PIN_LED (25u)
 
 	// Serial
@@ -53,8 +85,40 @@
 	#define SERIAL_HOWMANY (3u)
 	#define SPI_HOWMANY (2u)
 	#define WIRE_HOWMANY (2u)
-#elif PICO_BOARD_VALUE == 3 || PICO_BOARD_VALUE == 4 || defined(ARDUINO_RASPBERRY_PI_PICO_W) || defined(ARDUINO_RASPBERRY_PI_PICO_2W) // PICO W/2W
-	// LEDs
+#elif PICO_BOARD_VALUE == 3 || PICO_BOARD_VALUE == 4 || defined(ARDUINO_RASPBERRY_PI_PICO_W) || defined(ARDUINO_RASPBERRY_PI_PICO_2W)  // PICO W/2W
+	#ifdef PIN_LED
+		#undef PIN_LED
+
+		// Serial
+		#undef PIN_SERIAL1_TX
+		#undef PIN_SERIAL1_RX
+
+		#undef PIN_SERIAL2_TX
+		#undef PIN_SERIAL2_RX
+
+		// SPI
+		#undef PIN_SPI0_MISO
+		#undef PIN_SPI0_MOSI
+		#undef PIN_SPI0_SCK
+		#undef PIN_SPI0_SS
+
+		#undef PIN_SPI1_MISO
+		#undef PIN_SPI1_MOSI
+		#undef PIN_SPI1_SCK
+		#undef PIN_SPI1_SS
+
+		// Wire
+		#undef PIN_WIRE0_SDA
+		#undef PIN_WIRE0_SCL
+
+		#undef PIN_WIRE1_SDA
+		#undef PIN_WIRE1_SCL
+
+		#undef SERIAL_HOWMANY
+		#undef SPI_HOWMANY
+		#undef WIRE_HOWMANY
+	#endif
+// LEDs
 	#define PIN_LED (25u)
 
 	// Serial
