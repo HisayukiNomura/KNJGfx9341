@@ -7,9 +7,10 @@ Scopy_SPISettings.ini
 *.bak
 .gitignore
 go.bat
-makezip.bat
 *.pdf
 CMakeFiles
 dev_memo.txt
 dev_memo.txt
 *.zip
+KNJGfx9341_ARD
+outlog.txt
