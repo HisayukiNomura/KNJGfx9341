@@ -51,7 +51,6 @@
 	#include <SPI.h>
 #endif
 
-
 #ifdef STD_SDK
 namespace ardPort {
 #endif
@@ -92,7 +91,7 @@ namespace ardPort {
 #define ILI9341_VSCRSADD 0x37  ///< Vertical Scrolling Start Address
 #define ILI9341_PIXFMT 0x3A    ///< COLMOD: Pixel Format Set
 
-#define ILI9341_IFCTRL 0xF6	/// Interface Control
+#define ILI9341_IFCTRL 0xF6  /// Interface Control
 
 #define ILI9341_FRMCTR1 \
 	0xB1                      ///< Frame Rate Control (In Normal Mode/Full Colors)
@@ -140,6 +139,35 @@ namespace ardPort {
 #define ILI9341_GREENYELLOW 0xAFE5  ///< 173, 255,  41
 #define ILI9341_PINK 0xFC18         ///< 255, 130, 198
 
+	enum ILI9341_GAMMA {
+		GAMMA_CURVE_1 = 0x01,
+		GAMMA_CURVE_2 = 0x02,
+		GAMMA_CURVE_3 = 0x04,
+		GAMMA_CURVE_4 = 0x08,
+	};
+
+	enum ILI9341_IFCTRL_DM {
+		DM_INTERNALCLOCK = 0x00,
+		DM_RGBINTERFACE = 0x01,
+		DM_VSYNCINTERFACE = 0x02,
+		DM_SETTINGDISABLE = 0x04,
+	};
+	enum ILI9341_IFCTRL_RM {
+		RM_SYSIF = 0x00,
+		RM_RGBIF = 0x01,
+	};
+	enum ILI9341_IFCTRL_ENDIAN {
+		ENDIAN_BIG = 0x00,
+		ENDIAN_LITTLE = 0x01,
+	};
+	enum ILI9341_IFCTRL_WEMODE {
+		WEMODE_IGNORE = 0x00,
+		WEMODE_FOLLOWING = 0x01,
+	};
+	enum ILI9341_IFCTRL_RIM {
+		RIM_RGB18OR16BIT = 0,
+		RIM_RBG6BIT = 1,
+	};
 	/**************************************************************************/
 	/*!
 	@brief Class to manage hardware interface with ILI9341 chipset (also seems to
@@ -148,37 +176,44 @@ namespace ardPort {
 	/**************************************************************************/
 
 	class Adafruit_ILI9341 : public Adafruit_SPITFT {
-    private:
-	 bool bUseWindow;
+	   private:
+		bool bUseWindow;
 
-	public:
-	 Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _MOSI, int8_t _SCLK,
-					  int8_t _RST = -1, int8_t _MISO = -1);
-	 Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _RST = -1);
+	   public:
+		Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _MOSI, int8_t _SCLK,
+						 int8_t _RST = -1, int8_t _MISO = -1);
+		Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _RST = -1);
 #if !defined(ESP8266)
-		Adafruit_ILI9341(SPIClass* spiClass, int8_t dc, int8_t cs = -1,
-						 int8_t rst = -1);
+			Adafruit_ILI9341(SPIClass * spiClass, int8_t dc, int8_t cs = -1,
+							 int8_t rst = -1);
 #endif  // end !ESP8266
-		Adafruit_ILI9341(tftBusWidth busWidth, int8_t d0, int8_t wr, int8_t dc,
-						 int8_t cs = -1, int8_t rst = -1, int8_t rd = -1);
+			Adafruit_ILI9341(tftBusWidth busWidth, int8_t d0, int8_t wr, int8_t dc,
+							 int8_t cs = -1, int8_t rst = -1, int8_t rd = -1);
 
-		void begin(uint32_t freq = 0);
-		void setRotation(uint8_t r);
-		void invertDisplay(bool i);
-		void scrollTo(uint16_t y);
-		void setScrollMargins(uint16_t top, uint16_t bottom);
-    /**
-     * @brief 漢字の描画にWindow機能を使うかのフラグ
-     */
-    void useWindowMode(bool tf) {
-      bUseWindow = tf;
-    }
+			void begin(uint32_t freq = 0);
+			void setRotation(uint8_t r);
+			void invertDisplay(bool i);
+			void scrollTo(uint16_t y);
+			void setScrollMargins(uint16_t top, uint16_t bottom);
+			/**
+			 * @brief 漢字の描画にWindow機能を使うかのフラグ
+			 */
+			void useWindowMode(bool tf){
+				bUseWindow = tf;}
 
 		// virtual void drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bmpData, uint16_t color, uint16_t bg, uint8_t size);
 		virtual void drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t* bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y);
 
 		// Transaction API not used by GFX
 		void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
+		void displaySleep(bool enterSleep);
+		void setGamma(ILI9341_GAMMA gamma);
+		void set3DGammaEnable(bool onoff);
+		void setPositiveGamma(uint8_t*);
+		void setNegativeGamma(uint8_t*);
+		// void setDigitalGamma(uint8_t*);  Not implemented.
+		void setIFControl(ILI9341_IFCTRL_WEMODE weMode, uint8_t EPF, uint8_t MDT, ILI9341_IFCTRL_ENDIAN endian, ILI9341_IFCTRL_DM dmMode, ILI9341_IFCTRL_RM rmMode, ILI9341_IFCTRL_RIM rimMode);
 
 		uint8_t readcommand8(uint8_t reg, uint8_t index = 0);
 	};

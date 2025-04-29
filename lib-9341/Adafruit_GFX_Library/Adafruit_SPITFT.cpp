@@ -2253,6 +2253,7 @@ void Adafruit_SPITFT::sendCommand16(uint16_t commandWord,
 	SPI_END_TRANSACTION();
 }
 
+
 /*!
  @brief   Read 8 bits of data from display configuration memory (not RAM).
  This is highly undocumented/supported and should be avoided,

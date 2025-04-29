@@ -80,8 +80,6 @@ using namespace ardPort::spi;
 
 #include "pictBackground.data"  // 背景データ
 
-
-
 /// @brief 指定された画面のサイズ（省略時は接続されたデバイスの画面全体）に表示できるような文字列の長さを求める。
 /// @details 文字列はUTF-8で指定する。漢字はUTF-8の文字バイト、半角カナは1バイトとして計算する。デモのときに、画面全体に文字が表示できるよううにするため。
 /// @param tft 接続されている画面のインスタンス（横幅、縦が指定されなかった場合、接続されているデバイスの画面サイズを取得するため）
@@ -119,14 +117,14 @@ int getTextByteLen(Adafruit_ILI9341 tft, const char* Text, int width = 0, int he
 /// @return タイムアウト終了した場合にはtrueを返す。タッチした場合にはfalseを返す。
 bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int timeout_ms, const char* message = nullptr) {
 	absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-
+	tft.displaySleep(true);
 	int count = 0;
 	int touchCount = 0;
 	while (true) {
 		if (message != nullptr) {
-			//struct mallinfo info = mallinfo();
-			//tft.setCursor(0, 0);
-			//tft.printf("Heap : %d used/ %d free", info.fordblks, info.uordblks);
+			// struct mallinfo info = mallinfo();
+			// tft.setCursor(0, 0);
+			// tft.printf("Heap : %d used/ %d free", info.fordblks, info.uordblks);
 
 			if (count % 200 == 0) {
 				tft.setCursor(10, 220);
@@ -145,14 +143,14 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 
 			// 円の連続で線を描画
 			tft.drawCircle(x, y, touchCount * 2, rand() % 0xFFFF);  // タッチ座標に塗り潰し円を描画
-			if (touchCount == 10) {									// 10回タッチしたら、押されたと判断するのだが・・・
+			if (touchCount == 10) {                                 // 10回タッチしたら、押されたと判断するのだが・・・
 				int waitRelease = 0;
 				while (ts.touched()) {
 					if (waitRelease > 1000) break;
 					sleep_ms(10);  // CPU負荷を下げるために少し待機
 					waitRelease++;
 				}
-				break; 
+				break;
 			}
 		} else {
 			touchCount = 0;
@@ -162,6 +160,8 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 		}
 		sleep_ms(10);  // CPU負荷を下げるために少し待機
 	}
+	tft.displaySleep(false);
+
 	return false;  // タイムアウトせずにループを抜けたらfalseを返す
 }
 /// @brief ビットマップ表示のデモ
@@ -211,13 +211,13 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setCursor(60, 50);
 		tft.print("透過つきで全画面更新");
 		sleep_ms(1000);
-		start_time = get_absolute_time();                                        // 開始時間を取得
+		start_time = get_absolute_time();  // 開始時間を取得
 		/// 透過色を指定して描画する.この場合、透過色は0x0001 (ほぼ黒だが黒ではない）
 		tft.drawRGBBitmap(0, 0, pictSakura, tft.width(), tft.height(), 0x0001);  // 背景データを描画
 		end_time = get_absolute_time();                                          // 終了時間を取得
 		elapsed_time_3 = absolute_time_diff_us(start_time, end_time);            // 経過時間を計算
 		sleep_ms(2000);
-		
+
 		/// 実行時間の比較
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(10, 50);
@@ -230,12 +230,12 @@ void demoBitmap(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setCursor(10, 180);
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
-	///　キャンバスを使ったビットマップ表示のデモ
-	{				
+	/// 　キャンバスを使ったビットマップ表示のデモ
+	{
 		int64_t elapsed_time_1;
 		int64_t elapsed_time_2;
 		int64_t elapsed_time_3;
-		{	
+		{
 			tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 
 			tft.setCursor(10, 20);
@@ -776,11 +776,11 @@ void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 	tft.print("GFXcanvas16にテキストを描画し、これを一括で画面に転送することで、文字を表示するときのちらつき（フリッカー）を押さえることができます。");
 	waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	{
-		GFXcanvas16* pCanvas = new GFXcanvas16(tft.width(), tft.height() / 2,false);                              // 画面半分分のキャンバスの作成
-		pCanvas->setBuffer(screenbuffer);                                                                      // バッファの設定
-		pCanvas->fillScreen(STDCOLOR.DARK_BLUE);                                                             // 背景色
-		pCanvas->setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);                                           // テキスト色
-		pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);                     // 漢字フォントの設定
+		GFXcanvas16* pCanvas = new GFXcanvas16(tft.width(), tft.height() / 2, false);     // 画面半分分のキャンバスの作成
+		pCanvas->setBuffer(screenbuffer);                                                 // バッファの設定
+		pCanvas->fillScreen(STDCOLOR.DARK_BLUE);                                          // 背景色
+		pCanvas->setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);                        // テキスト色
+		pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 		pCanvas->setCursor(30, 0);
 		pCanvas->print("キャンバス経由で描画");
 
@@ -817,7 +817,7 @@ void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 
 	uint32_t elapsed_time;
 	{
-		GFXcanvas16 canvas16(tft.width(), tft.height(),false);
+		GFXcanvas16 canvas16(tft.width(), tft.height(), false);
 		canvas16.setBuffer(screenbuffer);
 		canvas16.fillScreen(STDCOLOR.DARK_BLUE);           // 背景色
 		absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
@@ -851,8 +851,8 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.setCursor(10, 60);
 		tft.print("画面を回転させます。");
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
-	
-		const char* text[] = { "TFTROTATION.NORMAL",  "TFTROTATION.ROTATE_90", "TFTROTATION.ROTATE_180", "TFTROTATION.ROTATE_270" };
+
+		const char* text[] = {"TFTROTATION.NORMAL", "TFTROTATION.ROTATE_90", "TFTROTATION.ROTATE_180", "TFTROTATION.ROTATE_270"};
 		tft.setFont(&FreeSerif9pt7b);  // 英文フォントを設定
 		tft.setKanjiMode(false);
 		for (int i = 0; i < 4; i++) {
@@ -913,7 +913,7 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 			}
 		}
 	}
- 
+
 	{
 		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
 		tft.setCursor(10, 20);
@@ -953,7 +953,7 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.scrollTo(0);
 		tft.setScrollMargins(0, 0);
 		tft.setRotation(TFTROTATION.ROTATE_270);
-		tft.fillScreen(STDCOLOR.BLACK);  // 背景色
+		tft.fillScreen(STDCOLOR.BLACK);                    // 背景色
 		tft.setTextColor(STDCOLOR.WHITE, STDCOLOR.BLACK);  // テキスト色
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
@@ -1027,9 +1027,9 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		tft.scrollTo(0);
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
-
 }
 int main() {  // タッチパネルのインスタンスを作成
+
 	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
 	XPT2046_Touchscreen ts(TOUCH_CS);
 
@@ -1052,20 +1052,21 @@ int main() {  // タッチパネルのインスタンスを作成
 	tft.useWindowMode(true);
 
 	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
-	
+
 	tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
 	// tft.setFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
-	tft.fillScreen(STDCOLOR.BLACK);  // 背景色
-	uint32_t elapsed_time = 0;
+	tft.fillScreen(STDCOLOR.BLACK);                        // 背景色
+	tft.drawRGBBitmap(0, 0, pictFuji1, tft.width(), 200);  // 背景データを描画
+
 	while (1) {
-		demoShape(tft, ts);      // 図形描画
-		demoBitmap(tft, ts);     // 背景データを描画
+		demoShape(tft, ts);   // 図形描画
+		demoBitmap(tft, ts);  // 背景データを描画
 		demoAlphabetText(tft, ts);
-		demoText(tft, ts);    // 背景データを描画
-		demoCanvas(tft, ts);  // キャンバスによるフリッカーレス表示
+		demoText(tft, ts);       // 背景データを描画
+		demoCanvas(tft, ts);     // キャンバスによるフリッカーレス表示
 		demoScrollEtc(tft, ts);  // スクロールなどの機能を実行
 	}
 }
