@@ -1,5 +1,4 @@
 #include <KNJGfx9341.h>
-#include "pictBackground.h"
 #include "Kanji/KanjiHelper.h"
 
 
@@ -39,7 +38,7 @@ void setup() {
 
   
 	  // 液晶初期設定
-	  tft.setRotation(TFTROTATION.ROTATE_NORMAL);
+	  tft.setRotation(0);
 	  // 使用可能な場合は、ウインドウモードを使用して高速に描画する
 	  tft.useWindowMode(true);
 
