@@ -60,7 +60,7 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(KNJGfx9341   KNJGfx9341.cpp 
-                            lib-9341/defines.cpp
+                            lib-9341/misc/defines.cpp
 
                             lib-9341/Adafruit_GFX_Library/Adafruit_GFX.cpp
                             lib-9341/Adafruit_GFX_Library/Adafruit_SPITFT.cpp
@@ -83,7 +83,7 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
 
                             lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.cpp
 
-                            lib-9341/pins.cpp
+                            lib-9341/misc/pins.cpp
 )   
 
 pico_set_program_name(KNJGfx9341 "KNJGfx9341")
@@ -113,6 +113,7 @@ target_link_libraries(KNJGfx9341
 target_include_directories(KNJGfx9341 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341
+        ${CMAKE_CURRENT_LIST_DIR}/lib-9341/misc
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library/Fonts
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_BusIO

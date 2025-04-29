@@ -19,7 +19,7 @@
 */
 
 #pragma once
-#include "defines.h"
+#include "../misc/defines.h"
 
 #ifdef STD_SDK
 	#include <hardware/clocks.h>

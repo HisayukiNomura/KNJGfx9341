@@ -26,13 +26,10 @@
 // ・弱い参照は使わず、コンパイル時に渡されるマクロで条件コンパイル。（CMakleFiles.txtで定義される）
 // ・元のコードは、ボードごとにほとんど同じ関数だったが、これらはまとめてしまう。
 
+#include "misc/defines.h"
+#include "misc/PortingCommon.h"
 
-#include "defines.h"
-#include "PortingCommon.h"
-
-
-
-#ifdef STD_SDK
+#ifndef ARDUINO
 #include "core/cyw43_wrappers.h"
 #include "core/wiring_digital.h"
 
@@ -104,7 +101,7 @@ extern "C" void initVariant() {
 
 #else
 #include "core/cyw43_wrappers.h"
-
+/*
 
 extern "C" void pinMode(pin_size_t pin, PinMode mode) {
 		cyw43_pinMode(pin, mode);
@@ -117,4 +114,5 @@ extern "C" void digitalWrite(pin_size_t pin, PinStatus val) {
 extern "C" PinStatus digitalRead(pin_size_t pin) {
 	return cyw43_digitalRead(pin);
 }
+*/
 #endif

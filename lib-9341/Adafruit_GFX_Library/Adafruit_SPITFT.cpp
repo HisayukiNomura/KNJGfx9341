@@ -24,20 +24,19 @@
  *
  * @section author Author
  *
- * Written by Limor "ladyada" Fried for Adafruit Industries,
+ * Written by Limor "ladyada" Fried for Adafruit Industries,P
  * with contributions from the open source community.
  *
  * @section license License
  *
  * BSD license, all text here must be included in any redistribution.
  */
-#include "defines.h"
-
+#include "misc/defines.h"
 
 // Not for ATtiny, at all
 #if !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny84__)
 
-	#include "Adafruit_SPITFT.h"
+	#include "Adafruit_GFX_Library/Adafruit_SPITFT.h"
 
 	#ifdef STD_SDK
 using namespace ardPort;
@@ -2253,6 +2252,7 @@ void Adafruit_SPITFT::sendCommand16(uint16_t commandWord,
 		SPI_CS_HIGH();
 	SPI_END_TRANSACTION();
 }
+
 
 /*!
  @brief   Read 8 bits of data from display configuration memory (not RAM).

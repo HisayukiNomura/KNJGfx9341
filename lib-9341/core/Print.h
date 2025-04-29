@@ -19,14 +19,17 @@
 
 #pragma once
 
-#include "../defines.h"
+#include "../misc/defines.h" 
+
 #include <type_traits>
 #include <string>
+#include <cstring>
 #include <inttypes.h>
 #include <stdio.h>  // for size_t
 
-#include "WString.h"
-#include "Printable.h"
+#include "core/WString.h"
+#include "core/Printable.h"
+
 
 #define DEC 10
 #define HEX 16

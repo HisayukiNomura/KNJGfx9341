@@ -17,16 +17,18 @@
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "defines.h"
-
+#include "misc/defines.h"
+#ifdef ARDUINO
+	#include "Arduino.h"
+#endif
 #ifdef STD_SDK
-	#include "SPI.h"
+	#include "spi/SPI.h"
 	#include <hardware/dma.h>
 	#include <hardware/spi.h>
 	#include <hardware/gpio.h>
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
-	#include "../pins.h"
+	#include "misc/pins.h"
 	using namespace ardPort::spi;
 #else
 	#include "SPI.h"

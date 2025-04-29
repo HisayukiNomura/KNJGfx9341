@@ -45,11 +45,11 @@
  * BSD license, all text here must be included in any redistribution.
  *
  */
-#include "defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
-	#include "Adafruit_ILI9341.h"
-	#include "../pins.h"
+	#include "Adafruit_ILI9341/Adafruit_ILI9341.h"
+	#include "misc/pins.h"
 	#ifndef pgm_read_byte
 		#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 	#endif
@@ -342,6 +342,58 @@ void Adafruit_ILI9341::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t w,
 	writeCommand(ILI9341_RAMWR);  // Write to RAM
 }
 
+void Adafruit_ILI9341::displaySleep(bool enterSleep) {
+	if (enterSleep) {
+		sendCommand(ILI9341_SLPIN);  // Enter Sleep Mode
+		delay(5);
+
+	} else {
+		sendCommand(ILI9341_SLPOUT);  // Sleep Out
+		delay(120);
+	}
+}
+
+void Adafruit_ILI9341::setGamma(ILI9341_GAMMA a_gamma) {
+	uint8_t gamma = (uint8_t)a_gamma;
+	sendCommand(ILI9341_GAMMASET, &gamma, 1);
+}
+/// @brief 3Dガンマの設定
+/// @param onOff trueの場合有効
+void Adafruit_ILI9341::set3DGammaEnable(bool onOff) {
+	uint8_t paramOnOff = onOff ? 0x03 : 0x2;
+	sendCommand(0xF2, &paramOnOff, 1);
+}
+/// @brief Positive Gamma補正の設定
+/// @details 初期設定では、0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00　になっている。
+/// @param val 設定値へのポインタ。15バイトの配列
+void Adafruit_ILI9341::setPositiveGamma(uint8_t *val) {
+	sendCommand(ILI9341_GMCTRP1, val, 15);
+}
+/// @brief  Negative Gammaの設定
+/// @details 初期設定では、0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F
+/// @param val 設定値へのポインタ。15バイトの配列
+void Adafruit_ILI9341::setNegativeGamma(uint8_t *val) {
+	sendCommand(ILI9341_GMCTRN1, val, 15);
+}
+/// @brief インタフェースの設定
+/// @param weMode メモリ書き込み制御。デフォルトは１。0：転送データ数が(EC-SC+1)*(EP-SP+1)を超えた場合、超えたデータは無視される。WEMODE=1：転送データ数が(EC-SC+1)*(EP-SP+1)を超えた場合、カラム番号とページ番号を無視する。(EC-SC+1)*(EP-SP+1)を超えると、列とページ番号はリセットされ、超えたデータは次の列とページに書き込まれる。
+/// @param EPF デフォルト0。65Kカラーモード・データ・フォーマット。データシート参照
+/// @param MDT　デフォルト0。表示データの転送方法を選択する
+/// @param endian　0…ラージエンディアン、1…リトルエンディアン。デフォルト１。
+/// @param rmMode GRAM にアクセスするインターフェースを選択。SYSTEM/VSYNCインタフェースで書き込む場合は0 、RGBインターフェースで表示データを書き込む場合は１。デフォルト０
+/// @param rimMode　RGBインターフェースを使用する場合、RGBインターフェースモードを指定する。 これらのビットは表示動作の前に設定されなければならない。これらのビットはRGBインターフェイスを通した表示動作の前に設定されるべきで、動作中に設定されるべきではありません。デフォルト０（元々システムインタフェースが０なので）
+void Adafruit_ILI9341::setIFControl(ILI9341_IFCTRL_WEMODE weMode, uint8_t EPF, uint8_t MDT, ILI9341_IFCTRL_ENDIAN endian, enum ILI9341_IFCTRL_DM dmMode, ILI9341_IFCTRL_RM rmMode, ILI9341_IFCTRL_RIM rimMode) {
+	uint8_t data[3];
+	data[0] = (uint8_t)weMode;
+	data[1] = ((uint8_t)EPF & 3) << 4 | (uint8_t)MDT;
+	data[2] = ((uint8_t)dmMode) << 2;
+	data[2] |= (endian == ENDIAN_LITTLE) ? 0x00100000 : 0;
+	data[2] |= (rmMode == RM_RGBIF) ? 0b00000010 : 0;
+	data[2] |= (rimMode == RIM_RBG6BIT) ? 0b00000001 : 0;
+
+	sendCommand(ILI9341_IFCTRL, data, 3);
+}
+
 /**************************************************************************/
 /*!
 	@brief  Read 8 bits of data from ILI9341 configuration memory. NOT from RAM!
@@ -358,7 +410,7 @@ uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index) {
 	return Adafruit_SPITFT::readcommand8(commandByte);
 }
 /**
- * @brief   サイズが１倍で、背景色が無く、ILI9341を使っているときは、文字の描画にウインドウを使用して高速に処理する
+ * @brief   サイズが１倍で、背景色が無く、ILI9341を使っているときは、文字の描画にウインドウを使用して高速に処理するPP
  * @param   x   描画開始位置の左上座標
  * @param   y   描画開始位置の左上座標
  * @param   w   描画するフォントビットマップの横ドット数
@@ -375,7 +427,7 @@ uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index) {
  * 実測で PICO_Wを使って１万文字表示で、Adafruitオリジナルで32秒、このルーチンで15秒と改善していると思われる。
  */
 void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
-	if (bUseWindow == true &&  size_x == 1 && size_y == 1 && color != bg) {
+	if (bUseWindow == true && size_x == 1 && size_y == 1 && color != bg) {
 		if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
 
 		uint8_t w_bytes = (w + 8 - 1) / 8;   // 横方向のバイト数
@@ -410,4 +462,3 @@ void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, cons
 		Adafruit_GFX::drawChar(x, y, w, h, bmpData, color, bg, size_x, size_y);
 	}
 }
-

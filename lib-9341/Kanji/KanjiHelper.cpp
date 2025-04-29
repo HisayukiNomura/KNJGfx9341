@@ -3,7 +3,7 @@
 #include <iconv.h>
 #include <stdlib.h>
 #include <string.h>
-#include "KanjiHelper.h"
+#include "Kanji/KanjiHelper.h"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
 const KanjiData *KanjiHelper::pKanjiData = nullptr;

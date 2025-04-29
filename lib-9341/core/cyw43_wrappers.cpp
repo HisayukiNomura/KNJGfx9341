@@ -16,9 +16,9 @@
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "defines.h"
+#include "misc/defines.h"
 #ifdef STD_SDK
-#include "../pins.h"
+	#include "misc/pins.h"
 #else
 
 #endif
@@ -36,7 +36,7 @@ extern "C" {
 	#include <hardware/gpio.h>
 	#include <hardware/adc.h>
 	#include <hardware/clocks.h>
-	#include "wiring_digital.h"
+	#include "core/wiring_digital.h"
 	
 
 	// From cyw43_ctrl.c

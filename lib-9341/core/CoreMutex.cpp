@@ -21,12 +21,13 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "PortingCommon.h"
-#include "CoreMutex.h"
+#include "misc/PortingCommon.h"
+
 #ifdef STD_SDK
-	#include "../pins.h"
-	#include "../debug.h"
-	using namespace ardPort::core;
+	#include "core/CoreMutex.h"
+	#include "misc/pins.h"
+	#include "misc/debug.h"
+using namespace ardPort::core;
 #endif
 
 CoreMutex::CoreMutex(mutex_t *mutex, uint8_t option) {

@@ -18,15 +18,16 @@
 */
 
 #pragma once
+
 #include <stdint.h>
 #include <stdbool.h>
+#ifndef ARDUINO
 
-#include "defines.h"
+	#include "../misc/defines.h"
 
-
-#ifdef __cplusplus
+	#ifdef __cplusplus
 extern "C"{
-#endif
+	#endif
 
 void yield(void);
 
@@ -196,3 +197,6 @@ void randomSeed(unsigned long);
 long map(long, long, long, long, long);
 
 #endif // __cplusplus
+#else
+#include <api/Common.h>
+#endif // ARDUINO

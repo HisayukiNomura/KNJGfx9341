@@ -18,10 +18,10 @@
 */
 
 #pragma once
-#include "defines.h"
+#include "misc/defines.h"
 
 #ifdef STD_SDK
-	#include <PortingCommon.h>
+	#include "misc/PortingCommon.h"
 	#include <pico/cyw43_driver.h>
     #include "Common.h"
 #else

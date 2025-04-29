@@ -19,11 +19,11 @@
 */
 
 #pragma once
-#include "../defines.h"
-
+#include "misc/defines.h"
+#include <stddef.h>
 #if defined(STD_SDK)
-#include <HardwareSPI.h>
-#include "SPIHelper.h"
+#include "core/HardwareSPI.h"
+#include "spi/SPIHelper.h"
 #else   
 #include <Arduino.h>
 #include <api/HardwareSPI.h>

@@ -21,10 +21,10 @@
  */
 
 #pragma once
-#include "defines.h"
+#include "../misc/defines.h"
 #ifdef STD_SDK
-	#include "PortingCommon.h"
-	#include <SPI.h>
+	#include "misc/PortingCommon.h"
+	#include "spi/SPI.h"
 
 	using namespace ardPort::core;
 	using namespace ardPort::spi;
