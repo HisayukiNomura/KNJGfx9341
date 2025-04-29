@@ -42,11 +42,10 @@ for /R %%F in (*.htxt) do (
 endlocal
 cd ../..
 
-
 echo  "---------- making zip archive and copy it to USERPROFILE% ----------" >> outlog.txt 2>&1
 7z a KNJGfx9341_ARD.zip KNJGfx9341_ARD -xr!*.bak  >> outlog.txt 2>&1
 rmdir /q /s KNJGfx9341_ARD  >> outlog.txt 2>&1
 copy  KNJGfx9341_ARD.zip %USERPROFILE%  >> outlog.txt 2>&1
-del KNJGfx9341_ARD.zip  >> outlog.txt 2>&1
+rem del KNJGfx9341_ARD.zip  >> outlog.txt 2>&1
 echo successfully created %USERPROFILE%\KNJGfx9341_ARD.zip
 echo   *If an error occurs, the execution log was saved in outlog.txt.
