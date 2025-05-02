@@ -117,7 +117,6 @@ int getTextByteLen(Adafruit_ILI9341 tft, const char* Text, int width = 0, int he
 /// @return タイムアウト終了した場合にはtrueを返す。タッチした場合にはfalseを返す。
 bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int timeout_ms, const char* message = nullptr) {
 	absolute_time_t start_time = get_absolute_time();  // 開始時間を取得
-	tft.displaySleep(true);
 	int count = 0;
 	int touchCount = 0;
 	while (true) {
@@ -160,7 +159,6 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 		}
 		sleep_ms(10);  // CPU負荷を下げるために少し待機
 	}
-	tft.displaySleep(false);
 
 	return false;  // タイムアウトせずにループを抜けたらfalseを返す
 }
@@ -1028,10 +1026,11 @@ void demoScrollEtc(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts) {
 		waitForTouchOrTimeout(tft, ts, 10000, "<< タッチで次へ >>");
 	}
 }
+Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
+XPT2046_Touchscreen ts(TOUCH_CS);
+
 int main() {  // タッチパネルのインスタンスを作成
 
-	Adafruit_ILI9341 tft = Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS, TFT_RST);  // ILI9341ディスプレイのインスタンスを作成
-	XPT2046_Touchscreen ts(TOUCH_CS);
 
 	long i = clockCyclesPerMicrosecond();
 
