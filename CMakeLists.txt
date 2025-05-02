@@ -30,8 +30,17 @@ set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
+
+# check board type
 # ====================================================================================
-set(PICO_BOARD pico_w CACHE STRING "Board type")
+set(PICO_BOARD pico2 CACHE STRING "Board type") 
+
+if (NOT DEFINED PICO_BOARD)
+    message(FATAL_ERROR "PICO_BOARD is not defined. Make sure to configure CMakeLists according to the target board.")
+else()
+    message (STATUS "PICO_BOARD = ${PICO_BOARD}")
+endif()
+# message(FATAL_ERROR "debug stop")
 
 # プログラム内で処理を分けられるように、マクロ値としてコンパイラに渡す
 if(PICO_BOARD STREQUAL "pico")
@@ -48,7 +57,6 @@ endif()
 add_compile_definitions(PICO_BOARD_VALUE=${PICO_BOARD_VALUE})
 
 
-
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -57,9 +65,12 @@ project(KNJGfx9341 C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+
+
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(KNJGfx9341   KNJGfx9341.cpp 
+set(SRC_FILES
+                            KNJGfx9341.cpp 
                             lib-9341/misc/defines.cpp
 
                             lib-9341/Adafruit_GFX_Library/Adafruit_GFX.cpp
@@ -69,7 +80,6 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
                             lib-9341/spi/spi.cpp
                             lib-9341/Kanji/KanjiHelper.cpp
                             lib-9341/core/PIOProgram.cpp
-                            lib-9341/core/cyw43_wrappers.cpp
                             lib-9341/core/delay.cpp
                             lib-9341/core/_freertos.cpp
                             lib-9341/core/CoreMutex.cpp
@@ -84,7 +94,17 @@ add_executable(KNJGfx9341   KNJGfx9341.cpp
                             lib-9341/XPT2046_Touchscreen/XPT2046_Touchscreen.cpp
 
                             lib-9341/misc/pins.cpp
-)   
+)
+if (PICO_BOARD_VALUE STREQUAL 3 OR PICO_BOARD_VALUE STREQUAL 4)
+    message(STATUS "Pico W detected. cyw43_wrappers.cpp will be included.")
+    list(APPEND SRC_FILES lib-9341/core/cyw43_wrappers.cpp)
+else()
+    message(STATUS "Pico W not detected. cyw43_wrappers.cpp will not be included.")
+endif()
+add_executable(KNJGfx9341 ${SRC_FILES})
+
+
+
 
 pico_set_program_name(KNJGfx9341 "KNJGfx9341")
 pico_set_program_version(KNJGfx9341 "0.1")
@@ -139,8 +159,7 @@ target_include_directories(KNJGfx9341 PRIVATE
 )
 
 # Add any user requested libraries
-target_link_libraries(KNJGfx9341 
-        hardware_spi
+set (LINK_LIB hardware_spi
         hardware_i2c
         hardware_dma
         hardware_pio
@@ -150,8 +169,13 @@ target_link_libraries(KNJGfx9341
         hardware_clocks
         hardware_exception
         hardware_adc
-#picoW の場合、cyw43の使用モードを設定する必要がある。使わない場合でも、noneを指定する。        
-        pico_cyw43_arch_none
-        )
+)
 
+if (PICO_BOARD_VALUE STREQUAL 3 OR PICO_BOARD_VALUE STREQUAL 4)
+    message(STATUS "Pico W detected. pico_cyw43_arch_none is temporary added to target_link_libraries. Please adjust it according to your required functionality.")
+    list(APPEND LINK_LIB pico_cyw43_arch_none)
+else()
+    message(STATUS "Pico W not detected. target_link_libraries will not change.")
+endif()
+target_link_libraries(KNJGfx9341 ${LINK_LIB})
 pico_add_extra_outputs(KNJGfx9341)

@@ -2,6 +2,17 @@
 
 #define STD_SDK
 
+// もし、Micropythonに組み込んで使用する場合、この設定を行う
+#ifdef MICROPY_BUILD_TYPE
+// #define PICO_BOARD_VALUE 1		// PICO
+// #define PICO_BOARD_VALUE 3  // PICO W
+// #define PICO_BOARD_VALUE 2	// PICO 2
+// #define PICO_BOARD_VALUE 4	// PICO 2W
+// #define PICO_BOARD_VALUE 0
+#ifndef PICO_BOARD_VALUE
+		#error "PICO_BOARD_VALUE must be defined in define.h when integrating with MicroPython"
+#endif
+#endif
 #ifndef ARDUINO
 
 	#ifdef __cplusplus
