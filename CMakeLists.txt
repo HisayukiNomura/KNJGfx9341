@@ -33,7 +33,7 @@ endif()
 
 # check board type
 # ====================================================================================
-set(PICO_BOARD pico2 CACHE STRING "Board type") 
+set(PICO_BOARD pico_w CACHE STRING "Board type") 
 
 if (NOT DEFINED PICO_BOARD)
     message(FATAL_ERROR "PICO_BOARD is not defined. Make sure to configure CMakeLists according to the target board.")

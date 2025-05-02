@@ -64,7 +64,11 @@ target_include_directories(KNJGfx9341 INTERFACE
         ${PICO_SDK_PATH}/lib/lwip/src/include
         ${PICO_SDK_PATH}/lib/lwip/src/include/iwip
         ${PICO_SDK_PATH}/lib/cyw43-driver/src/
-        ${PICO_SDK_PATH}/../lib/cyw43-driver/src/)
+        ${PICO_SDK_PATH}/../../lib/cyw43-driver/src/
+        ${PICO_SDK_PATH}/../
+    )
+        
+
 
 
 # ユーザーモジュールライブラリとしてリンクする

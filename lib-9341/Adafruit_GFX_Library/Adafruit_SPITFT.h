@@ -170,6 +170,9 @@ typedef uint32_t ADAGFX_PORT_t;  ///< PORT values are 32-bit
 
 		~Adafruit_SPITFT() {};
 
+		/// @brief  デフォルトコンストラクタでオブジェクトを作った時、後から必須の情報を設定するための関数
+		void constructObject(int8_t cs, int8_t dc, int8_t mosi, int8_t sck, int8_t rst, int8_t miso);
+		void constructObject(SPIClass*spiClass,int8_t cs, int8_t dc, int8_t rst);
 		// CLASS MEMBER FUNCTIONS ----------------------------------------------
 
 		// These first two functions MUST be declared by subclasses:

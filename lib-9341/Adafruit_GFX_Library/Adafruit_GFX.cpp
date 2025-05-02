@@ -1543,7 +1543,7 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const ui
 /*!
 	@brief  Print one byte/character of data, used to support print()
 	@param  c  The 8-bit ascii character to write
-
+*/
 /**************************************************************************/
 size_t Adafruit_GFX::write(uint8_t c) {
 	if (!gfxFont) {  // 'Classic' built-in font

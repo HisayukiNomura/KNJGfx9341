@@ -120,7 +120,7 @@ extern "C" void __digitalWrite(pin_size_t ulPin, PinStatus ulVal) {
 	}
 }
 
-extern "C" PinStatus digitalRead(pin_size_t ulPin) __attribute__((weak, alias("__digitalRead")));
+extern "C" PinStatus digitalRead(pin_size_t ulPin) __attribute__((weak, alias("__digitalRead"),nothrow));
 extern "C" PinStatus __digitalRead(pin_size_t ulPin) {
 	if (ulPin >= __GPIOCNT) {
 		DEBUGCORE("ERROR: Illegal pin in digitalRead (%d)\n", ulPin);

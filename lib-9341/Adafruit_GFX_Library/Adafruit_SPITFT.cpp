@@ -532,6 +532,24 @@ Adafruit_SPITFT::Adafruit_SPITFT(uint16_t w, uint16_t h, tftBusWidth busWidth,
 
 // end constructors -------
 
+void Adafruit_SPITFT::constructObject(int8_t cs, int8_t dc, int8_t mosi, int8_t sck, int8_t rst, int8_t miso) {
+	connection = TFT_SOFT_SPI;
+	_rst = rst;
+	_cs = cs;
+	_dc = dc;
+	swspi._sck = sck;
+	swspi._mosi = mosi;
+	swspi._miso = miso;
+}
+
+void Adafruit_SPITFT::constructObject(SPIClass* spiClass, int8_t dc, int8_t cs, int8_t rst) {
+	connection = TFT_HARD_SPI;
+	_rst = rst;
+	_cs = cs;
+	_dc = dc;
+	hwspi._spi = spiClass;
+}
+
 // CLASS MEMBER FUNCTIONS --------------------------------------------------
 
 // begin() and setAddrWindow() MUST be declared by any subclass.
@@ -1914,8 +1932,8 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int
 
 	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
 	startWrite();
-	setAddrWindow(x, y, w, h);    // Clipped area
-	
+	setAddrWindow(x, y, w, h);  // Clipped area
+
 	while (h--) {                 // For each (clipped) scanline...
 		writePixels(pcolors, w);  // Push one (clipped) row
 		pcolors += saveW;         // Advance pointer by one full (unclipped) line
@@ -1959,18 +1977,18 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int1
 
 	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
 	startWrite();
-	setAddrWindow(x, y, w, h);    // Clipped area
+	setAddrWindow(x, y, w, h);  // Clipped area
 	// 一行ずつ出力しているので、それに合わせる。
-	// 
-	while (h--) {                 // For each (clipped) scanline...
+	//
+	while (h--) {  // For each (clipped) scanline...
 		uint16_t *cvtBuf = (uint16_t *)alloca(w * 2);
 		uint16_t *pWk = cvtBuf;
 		for (int i = 0; i < w; i++) {
-			*pWk = convert8To565(*(pcolors+i));
+			*pWk = convert8To565(*(pcolors + i));
 			pWk++;
 		}
 		writePixels(cvtBuf, w);  // Push one (clipped) row
-		pcolors += saveW;         // Advance pointer by one full (unclipped) line
+		pcolors += saveW;        // Advance pointer by one full (unclipped) line
 	}
 	endWrite();
 }
@@ -1982,22 +2000,22 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint8_t *pcolors, int1
 			DMAでは、Little Endianにする必要があるので、最初に全画面分上位下位を入れ替えている。
 			DMA 109.6 μs (上位下位のスワップをやめても、77.0 μs)
 			通常描画  66.0 μs
-					
+
 */
 void Adafruit_SPITFT::drawDMABitmap(const uint16_t *pcolors) {
 	uint16_t chgEndien[WIDTH * HEIGHT];
-	
+
 	for (int i = 0; i < WIDTH * HEIGHT; i++) {
-		chgEndien[i] =  __builtin_bswap16(*(pcolors + i));
+		chgEndien[i] = __builtin_bswap16(*(pcolors + i));
 	}
 
 	startWrite();
-	setAddrWindow(0, 0,width(),height());    // Clipped area	
+	setAddrWindow(0, 0, width(), height());  // Clipped area
 	const uint dma_tx = dma_claim_unused_channel(true);
 	dma_channel_config c = dma_channel_get_default_config(dma_tx);
 	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
 	spi_inst_t *currentSPI = hwspi._spi == &SPI ? spi0 : spi1;
-	channel_config_set_dreq(&c, spi_get_dreq( currentSPI, true));
+	channel_config_set_dreq(&c, spi_get_dreq(currentSPI, true));
 	channel_config_set_write_increment(&c, false);
 	volatile void *pWriteAddr = &spi_get_hw(currentSPI)->dr;
 	dma_channel_configure(dma_tx, &c,
@@ -2043,8 +2061,8 @@ void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16
 	if (y2 >= _height)
 		h = _height - y;  // Clip bottom
 
-	unsigned int saveWBytes = (saveW + 7)/8;
-	unsigned int bx1Bytes = (bx1+7)/8;
+	unsigned int saveWBytes = (saveW + 7) / 8;
+	unsigned int bx1Bytes = (bx1 + 7) / 8;
 
 	pcolors += by1 * saveWBytes + bx1Bytes;  // Offset bitmap ptr to clipped top-left
 	startWrite();
@@ -2069,7 +2087,7 @@ void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16
 			}
 		}
 		writePixels(cvtBuf, w);  // Push one (clipped) row
-		pcolors += saveWBytes;        // Advance pointer by one full (unclipped) line
+		pcolors += saveWBytes;   // Advance pointer by one full (unclipped) line
 	}
 	endWrite();
 }
@@ -2085,8 +2103,7 @@ void Adafruit_SPITFT::drawBWBitmap(int16_t x, int16_t y, uint8_t *pcolors, int16
 	@param  h        Height of bitmap in pixels.
 	@param  colorTransparent  透過色
 */
-void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h,uint16_t colorTransparent) 
-{
+void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int16_t w, int16_t h, uint16_t colorTransparent) {
 	int16_t x2, y2;                  // Lower-right coord
 	if ((x >= _width) ||             // Off-edge right
 		(y >= _height) ||            // " top
@@ -2114,12 +2131,12 @@ void Adafruit_SPITFT::drawRGBBitmap(int16_t x, int16_t y, uint16_t *pcolors, int
 	pcolors += by1 * saveW + bx1;  // Offset bitmap ptr to clipped top-left
 	startWrite();
 
-	for (int iy = y ; iy < (y+h);iy++) {
-		for (int ix = x; ix < (x+w); ix++) {
-			uint32_t pictIdx = (by1 + (iy-y)) * saveW + bx1 + (ix-x);
+	for (int iy = y; iy < (y + h); iy++) {
+		for (int ix = x; ix < (x + w); ix++) {
+			uint32_t pictIdx = (by1 + (iy - y)) * saveW + bx1 + (ix - x);
 			uint16_t color = pcolors[pictIdx];
 			if (color != colorTransparent) {
-				drawPixel(ix,iy,color);
+				drawPixel(ix, iy, color);
 			}
 		}
 	}
@@ -2252,7 +2269,6 @@ void Adafruit_SPITFT::sendCommand16(uint16_t commandWord,
 		SPI_CS_HIGH();
 	SPI_END_TRANSACTION();
 }
-
 
 /*!
  @brief   Read 8 bits of data from display configuration memory (not RAM).

@@ -63,7 +63,7 @@ size_t Print::write(const uint8_t *buffer, size_t size) {
 	if (isKanji) {
 		int charCount = 0;
 		int i = 0;
-		while (i < size) {
+		while (i < (int)size) {
 			uint32_t utf8codes = 0;
 			uint8_t step = 0;
 			if ((buffer[i] & 0x80) == 0x00) {

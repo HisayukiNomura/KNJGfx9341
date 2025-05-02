@@ -98,6 +98,19 @@ using namespace ardPort;
 #define MADCTL_BGR 0x08  ///< Blue-Green-Red pixel order
 #define MADCTL_MH 0x04   ///< LCD refresh right to left
 
+/// @brief デフォルトコンストラクタ。MicroPythonから使うときのために用意
+Adafruit_ILI9341::Adafruit_ILI9341() : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, 0 ,0, 0, 0,-1,-1) {
+	bUseWindow = false;
+}
+
+void Adafruit_ILI9341::constructObject(int8_t cs, int8_t dc, int8_t mosi, int8_t sck, int8_t rst , int8_t miso )
+{
+	Adafruit_SPITFT::constructObject(cs, dc, mosi, sck, rst, miso);
+}
+void Adafruit_ILI9341::constructObject(SPIClass *spiClass, int8_t dc, int8_t cs, int8_t rst)
+{
+	Adafruit_SPITFT::constructObject(spiClass, dc, cs, rst);
+}
 /**************************************************************************/
 /*!
 	@brief  Instantiate Adafruit ILI9341 driver with software SPI
