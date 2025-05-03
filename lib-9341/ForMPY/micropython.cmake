@@ -1,6 +1,6 @@
 # Micropythonの拡張Cモジュールとしてビルドするときに使用する cmakeファイル。
 # C/C++から使用するときにはこのcmakeファイルは使われない。
-
+# ビルド時は、User C Moduleのcmakeファイルが存在する場所（ports/rp2/myModule等）に移動してビルドする。
 # インタフェースライブラリを作成する。
 add_library(KNJGfx9341 INTERFACE)
 
@@ -45,7 +45,7 @@ target_include_directories(KNJGfx9341 INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/Adafruit_GFX_Library
         ${CMAKE_CURRENT_LIST_DIR}/Adafruit_GFX_Library/Fonts
         ${CMAKE_CURRENT_LIST_DIR}/Adafruit_BusIO
-        ${CMAKE_CURRENT_LIST_DIR}/Adafruit_IL9341
+        ${CMAKE_CURRENT_LIST_DIR}/Adafruit_ILI9341
         ${CMAKE_CURRENT_LIST_DIR}/core
         ${CMAKE_CURRENT_LIST_DIR}/spi
         ${CMAKE_CURRENT_LIST_DIR}/variants

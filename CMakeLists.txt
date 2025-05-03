@@ -137,7 +137,7 @@ target_include_directories(KNJGfx9341 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library/Fonts
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_BusIO
-        ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_IL9341
+        ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_ILI9341
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/core
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/spi
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/variants
