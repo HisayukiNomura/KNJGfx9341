@@ -19,37 +19,27 @@
 */
 #include "../misc/defines.h"
 
-#ifdef STD_SDK
-	#include "misc/PortingCommon.h"
-	#include <map>
-	#include <hardware/spi.h>
-	#include <hardware/gpio.h>
-	#include <hardware/structs/iobank0.h>
-	#include <hardware/irq.h>
-	#include "core/hardwarespi.h"
-	#include "misc/debug.h"
-	#include "core/wiring_private.h"
-	using namespace ardPort::core;
-#else
-	#include <Arduino.h>
-	#include <map>
-	#include <hardware/spi.h>
-	#include <hardware/gpio.h>
-	#include <hardware/structs/iobank0.h>
-	#include <hardware/irq.h>
-#endif
-//#include "hardwarespi.h"
+#include "misc/PortingCommon.h"
+#include <map>
+#include <hardware/spi.h>
+#include <hardware/gpio.h>
+#include <hardware/structs/iobank0.h>
+#include <hardware/irq.h>
+#include "core/hardwarespi.h"
+#include "misc/debug.h"
+#include "core/wiring_private.h"
+using namespace ardPort::core;
+// #include "hardwarespi.h"
 
-#ifdef STD_SDK
 namespace ardPort::spi {
-#endif
 	using namespace ardPort::core;
 	/**
 		@brief Helper routined shared by SPI and SoftwareSPI
 	*/
 
-	class SPIHelper {
-	   public:
+	class SPIHelper
+	{
+	  public:
 		SPIHelper() { /* noop */ }
 		~SPIHelper() { /* noop */ }
 
@@ -61,7 +51,8 @@ namespace ardPort::spi {
 		*/
 
 		inline spi_cpol_t
-		cpol(const SPISettings &_spis) {
+		cpol(const SPISettings& _spis)
+		{
 			switch (_spis.getDataMode()) {
 				case SPI_MODE0:
 					return SPI_CPOL_0;
@@ -82,7 +73,8 @@ namespace ardPort::spi {
 			@param _spis SPISettings to parse
 			@returns SDK-defined CPHA value
 		*/
-		inline spi_cpha_t cpha(const SPISettings &_spis) {
+		inline spi_cpha_t cpha(const SPISettings& _spis)
+		{
 			switch (_spis.getDataMode()) {
 				case SPI_MODE0:
 					return SPI_CPHA_0;
@@ -103,7 +95,8 @@ namespace ardPort::spi {
 			@param b Input byte
 			@returns Bit-reversed byte
 		*/
-		inline uint8_t reverseByte(uint8_t b) {
+		inline uint8_t reverseByte(uint8_t b)
+		{
 			b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
 			b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
 			b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
@@ -116,89 +109,111 @@ namespace ardPort::spi {
 			@param w 16-b input value
 			@returns 16-bit reversed value
 		*/
-		inline uint16_t reverse16Bit(uint16_t w) {
+		inline uint16_t reverse16Bit(uint16_t w)
+		{
 			return (reverseByte(w & 0xff) << 8) | (reverseByte(w >> 8));
 		}
 
 #ifdef PICO_RP2350B
-	static constexpr int GPIOIRQREGS = 6;
+		static constexpr int GPIOIRQREGS = 6;
 #else
-	static constexpr int GPIOIRQREGS = 4;
+		static constexpr int GPIOIRQREGS = 4;
+#endif // POCO_RP2350B
+
+		/**
+			@brief Disables any GPIO interrupts registered before an SPI transaction begins
+		*/
+#if defined(MICROPY_BUILD_TYPE)
+		// Micropythonから使うときは、std::mapを使うとハングするのでここはコメントとする。
+		// 標準SDK buildでは IRQは使われず最初のifでfalseになるので、標準SDKの場合は常にこちらでも問題ないと思うのだが
+		void maskInterrupts() {}
+#else
+		// SPIのIRQを使うときは、SPIのIRQをマスクする。
+		// 使わないときは、GPIOのIRQをマスクする。
+		// どちらも、SPIのトランザクション中にGPIOのIRQが来ると、SPIのトランザクションが失敗するので、マスクする必要がある。
+		void maskInterrupts()
+		{
+			if (_usingIRQs.empty()) {
+				return;
+			}
+			noInterrupts(); // Avoid possible race conditions if IRQ comes in while main app is in middle of this
+			// Disable any IRQs that are being used for SPI
+			io_bank0_irq_ctrl_hw_t* irq_ctrl_base = get_core_num() ? &iobank0_hw->proc1_irq_ctrl : &iobank0_hw->proc0_irq_ctrl;
+			DEBUGSPI("SPI: IRQ masks before = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0],
+					 (unsigned)irq_ctrl_base->inte[1], (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3],
+					 (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0, (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
+			for (auto entry : _usingIRQs) {
+				int gpio = entry.first;
+
+				// There is no gpio_get_irq, so manually twiddle the register
+				io_rw_32* en_reg = &irq_ctrl_base->inte[gpio / 8];
+				uint32_t val = ((*en_reg) >> (4 * (gpio % 8))) & 0xf;
+				_usingIRQs.insert_or_assign(gpio, val);
+				DEBUGSPI("SPI: GPIO %d = %lu\n", gpio, val);
+				(*en_reg) ^= val << (4 * (gpio % 8));
+			}
+			DEBUGSPI("SPI: IRQ masks after = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0],
+					 (unsigned)irq_ctrl_base->inte[1], (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3],
+					 (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0, (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
+			interrupts();
+		}
 #endif
 
-	/**
-		@brief Disables any GPIO interrupts registered before an SPI transaction begins
-	*/
-	void maskInterrupts() {
-		if (_usingIRQs.empty()) {
-			return;
+		/**
+			@brief Restores GPIO interrupts masks after an SPI transaction completes
+		*/
+#ifdef MICROPY_BUILD_TYPE
+		// Micropythonから使うときは、std::mapを使うとハングするのでここはコメントとする。
+		// 標準SDK buildでは IRQは使われず最初のifでfalseになるので、標準SDKの場合は常にこちらでも問題ないと思うのだが
+		void unmaskInterrupts() {}
+#else
+		void unmaskInterrupts()
+		{
+			if (_usingIRQs.empty()) {
+				return;
+			}
+			noInterrupts(); // Avoid race condition so the GPIO IRQs won't come back until all state is restored
+			DEBUGSPI("SPI::endTransaction()\n");
+			// Re-enable IRQs
+			for (auto entry : _usingIRQs) {
+				int gpio = entry.first;
+				int mode = entry.second;
+				gpio_set_irq_enabled(gpio, mode, true);
+			}
+			io_bank0_irq_ctrl_hw_t* irq_ctrl_base = get_core_num() ? &iobank0_hw->proc1_irq_ctrl : &iobank0_hw->proc0_irq_ctrl;
+			(void)irq_ctrl_base;
+			DEBUGSPI("SPI: IRQ masks = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0], (unsigned)irq_ctrl_base->inte[1],
+					 (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3], (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0,
+					 (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
+			interrupts();
 		}
-		noInterrupts();  // Avoid possible race conditions if IRQ comes in while main app is in middle of this
-		// Disable any IRQs that are being used for SPI
-		io_bank0_irq_ctrl_hw_t *irq_ctrl_base = get_core_num() ? &iobank0_hw->proc1_irq_ctrl : &iobank0_hw->proc0_irq_ctrl;
-		DEBUGSPI("SPI: IRQ masks before = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0],
-				 (unsigned)irq_ctrl_base->inte[1], (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3],
-				 (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0, (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
-		for (auto entry : _usingIRQs) {
-			int gpio = entry.first;
+#endif
 
-			// There is no gpio_get_irq, so manually twiddle the register
-			io_rw_32 *en_reg = &irq_ctrl_base->inte[gpio / 8];
-			uint32_t val = ((*en_reg) >> (4 * (gpio % 8))) & 0xf;
-			_usingIRQs.insert_or_assign(gpio, val);
-			DEBUGSPI("SPI: GPIO %d = %lu\n", gpio, val);
-			(*en_reg) ^= val << (4 * (gpio % 8));
+		/**
+			@brief Adds an interrupt to be masked during SPI transactions
+
+			@param interruptNumber GPIO number to mask off
+		*/
+		void usingInterrupt(int interruptNumber)
+		{
+			_usingIRQs.insert({interruptNumber, 0});
 		}
-		DEBUGSPI("SPI: IRQ masks after = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0],
-				 (unsigned)irq_ctrl_base->inte[1], (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3],
-				 (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0, (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
-		interrupts();
-	}
 
-	/**
-		@brief Restores GPIO interrupts masks after an SPI transaction completes
-	*/
-	void unmaskInterrupts() {
-		if (_usingIRQs.empty()) {
-			return;
+		/**
+			@brief Removes an interrupt from the to-be-masked list for SPI transactions
+
+			@param interruptNumber GPIO number to remove
+		*/
+		void notUsingInterrupt(int interruptNumber)
+		{
+			_usingIRQs.erase(interruptNumber);
 		}
-		noInterrupts();  // Avoid race condition so the GPIO IRQs won't come back until all state is restored
-		DEBUGSPI("SPI::endTransaction()\n");
-		// Re-enable IRQs
-		for (auto entry : _usingIRQs) {
-			int gpio = entry.first;
-			int mode = entry.second;
-			gpio_set_irq_enabled(gpio, mode, true);
-		}
-		io_bank0_irq_ctrl_hw_t *irq_ctrl_base = get_core_num() ? &iobank0_hw->proc1_irq_ctrl : &iobank0_hw->proc0_irq_ctrl;
-		(void)irq_ctrl_base;
-		DEBUGSPI("SPI: IRQ masks = %08x %08x %08x %08x %08x %08x\n", (unsigned)irq_ctrl_base->inte[0], (unsigned)irq_ctrl_base->inte[1],
-				 (unsigned)irq_ctrl_base->inte[2], (unsigned)irq_ctrl_base->inte[3], (GPIOIRQREGS > 4) ? (unsigned)irq_ctrl_base->inte[4] : 0,
-				 (GPIOIRQREGS > 5) ? (unsigned)irq_ctrl_base->inte[5] : 0);
-		interrupts();
-	}
 
-	/**
-		@brief Adds an interrupt to be masked during SPI transactions
-
-		@param interruptNumber GPIO number to mask off
-	*/
-	void usingInterrupt(int interruptNumber) {
-		_usingIRQs.insert({interruptNumber, 0});
-	}
-
-	/**
-		@brief Removes an interrupt from the to-be-masked list for SPI transactions
-
-		@param interruptNumber GPIO number to remove
-	*/
-	void notUsingInterrupt(int interruptNumber) {
-		_usingIRQs.erase(interruptNumber);
-	}
-
-   private:
-	std::map<int, int> _usingIRQs;
-};
-#ifdef STD_SDK
-}
-#endif 
+	  private:
+#ifdef MICROPY_BUILD_TYPE
+		// mapを定義しない。
+#else
+		std::map<int, int> _usingIRQs;
+#endif
+	}; // SPIHelper
+} // namespace ardPort::spi

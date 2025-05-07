@@ -79,12 +79,10 @@ set(SRC_FILES
                             lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.cpp
                             lib-9341/spi/spi.cpp
                             lib-9341/Kanji/KanjiHelper.cpp
-                            lib-9341/core/PIOProgram.cpp
                             lib-9341/core/delay.cpp
                             lib-9341/core/_freertos.cpp
                             lib-9341/core/CoreMutex.cpp
                             lib-9341/core/Print.cpp
-                            lib-9341/core/RP2040Support.cpp
                             lib-9341/core/stdlib_noniso.cpp
                             lib-9341/core/WString.cpp
                             lib-9341/core/wiring_private.cpp
