@@ -6,7 +6,7 @@
 // See example.cpp for the definition.
 static MP_DEFINE_CONST_FUN_OBJ_2(cppfunc_obj, cppfunc);
 
-// #pragma region 初期化・設定関数
+//#pragma region 初期化・設定関数
 static MP_DEFINE_CONST_FUN_OBJ_1(initHW_obj, initHW);
 static MP_DEFINE_CONST_FUN_OBJ_0(loadDefaultKanjiFont_obj, loadDefaultKanjiFont);
 static MP_DEFINE_CONST_FUN_OBJ_0(loadDefaultAsciiFont_obj, loadDefaultAsciiFont);
@@ -14,8 +14,9 @@ static MP_DEFINE_CONST_FUN_OBJ_1(setDebugMode_obj, setDebugMode);
 static MP_DEFINE_CONST_FUN_OBJ_1(getTypeName_obj, getTypeName);
 static MP_DEFINE_CONST_FUN_OBJ_1(setRotation_obj, setRotation);
 static MP_DEFINE_CONST_FUN_OBJ_1(displaySleep_obj, displaySleep);
-// #pragma endregion
-//  基本描画関数 static MP_DEFINE_CONST_FUN_OBJ_2(_obj, );
+//#pragma endregion
+// 基本描画関数 static MP_DEFINE_CONST_FUN_OBJ_2(_obj, );
+
 
 #pragma region 特殊描画関数
 static MP_DEFINE_CONST_FUN_OBJ_1(invertDisplay_obj, invertDisplay);
@@ -32,7 +33,7 @@ static MP_DEFINE_CONST_FUN_OBJ_2(fillRect_obj, fillRect);
 static MP_DEFINE_CONST_FUN_OBJ_2(drawRect_obj, drawRect);
 static MP_DEFINE_CONST_FUN_OBJ_2(drawLine_obj, drawLine);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawCircle_obj, drawCircle);
-static MP_DEFINE_CONST_FUN_OBJ_3(fillCircle_obj, fillCircle);
+static MP_DEFINE_CONST_FUN_OBJ_3(fillCircle_obj, fillCircle);	
 static MP_DEFINE_CONST_FUN_OBJ_3(drawRoundRect_obj, drawRoundRect);
 static MP_DEFINE_CONST_FUN_OBJ_3(fillRoundRect_obj, fillRoundRect);
 static MP_DEFINE_CONST_FUN_OBJ_2(drawTriangle_obj, drawTriangle);
@@ -41,7 +42,7 @@ static MP_DEFINE_CONST_FUN_OBJ_2(fillTriangle_obj, fillTriangle);
 
 #pragma region テキスト描画関数
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setCursor_obj, 1, 2, setCursor);
-// static MP_DEFINE_CONST_FUN_OBJ_1(setCursor_obj, setCursor);
+//static MP_DEFINE_CONST_FUN_OBJ_1(setCursor_obj, setCursor);
 static MP_DEFINE_CONST_FUN_OBJ_1(print_obj, print);
 static MP_DEFINE_CONST_FUN_OBJ_1(setTextWrap_obj, setTextWrap);
 static MP_DEFINE_CONST_FUN_OBJ_1(setTextForegroundColor_obj, setTextForegroundColor);
@@ -49,6 +50,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(setTextBackgroundColor_obj, setTextBackgroundCo
 static MP_DEFINE_CONST_FUN_OBJ_2(setTextColor_obj, setTextColor);
 static MP_DEFINE_CONST_FUN_OBJ_1(setTextSize_obj, setTextSize);
 static MP_DEFINE_CONST_FUN_OBJ_1(setKanjiMode_obj, setKanjiMode);
+static MP_DEFINE_CONST_FUN_OBJ_2(setKanjiFont_obj, setKanjiFont);
 #pragma endregion
 
 /*
@@ -149,7 +151,7 @@ static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
 	{MP_ROM_QSTR(MP_QSTR_setTextColor), MP_ROM_PTR(&setTextColor_obj)},
 	{MP_ROM_QSTR(MP_QSTR_setTextSize), MP_ROM_PTR(&setTextSize_obj)},
 	{MP_ROM_QSTR(MP_QSTR_setKanjiMode), MP_ROM_PTR(&setKanjiMode_obj)},
-
+	{MP_ROM_QSTR(MP_QSTR_setKanjiFont), MP_ROM_PTR(&setKanjiFont_obj)},
 	// #pragma endregion
 };
 

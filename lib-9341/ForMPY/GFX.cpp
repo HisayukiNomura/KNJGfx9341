@@ -65,9 +65,9 @@ extern "C" {
 		if (iDebugLevel == 0) return;
 		va_list args;
 		va_start(args, format);
-		unsigned int reqLen = vsnprintf(errTxt, sizeof(errTxt) - 6, format, args);
+		unsigned int reqLen = vsnprintf(errTxt,sizeof(errTxt)-6,format, args);
 		va_end(args);
-		if (reqLen > (sizeof(errTxt) - 6)) {
+		if (reqLen > (sizeof(errTxt) -6) ) {
 			strcat(errTxt, "...\r\n");
 		}
 
@@ -650,7 +650,42 @@ extern "C" {
 		msg_OnDebug("setKanjiMode: %d\r\n", tf);
 		return mp_obj_new_int(1);
 	}
+
+	mp_obj_t setKanjiFont(mp_obj_t a_code , mp_obj_t a_bitmap) 
+	{
+		if (!mp_obj_is_type(a_code, &mp_type_bytes)) mp_raise_TypeError(MP_ERROR_TEXT ("Expected an array for 1st argument"));
+		if (!mp_obj_is_type(a_bitmap , &mp_type_bytes)) mp_raise_TypeError(MP_ERROR_TEXT("Expected an array for 2nd argument"));
+
+		
+		const uint8_t *data;
+		{
+				mp_buffer_info_t bufInfo;
+				mp_get_buffer_raise(a_bitmap, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
+
+				size_t len = bufInfo.len / sizeof(uint8_t); // データ長をバイト単位で計算
+				msg_OnDebug("setKanjiFont: dataLength= %d\r\n", len);
+				// バッファから uint8_t 型のポインタを取得
+				data = (uint8_t*)bufInfo.buf;
+		}
+		const KanjiData* pKanjiData;
+		{
+				mp_buffer_info_t bufInfo;	
+				mp_get_buffer_raise(a_code, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
+
+				size_t len = bufInfo.len / sizeof(KanjiData); // データ長をバイト単位で計算
+				msg_OnDebug("setKanjiFont: bufInfo.len = %d, size = %d\r\n", bufInfo.len, sizeof(KanjiData));
+				// バッファから uint8_t 型のポインタを取得
+				pKanjiData = (KanjiData*)bufInfo.buf;
+				for (int i = 0; i < 6;i++) {
+					msg_OnDebug("setKanjiFont[%d]: UTF8=%08X JIS=%04x WH=%x,%x OFFSET=%08X\r\n", i,pKanjiData[i].Unicode,pKanjiData[i].JIS,pKanjiData[i].width,pKanjiData[i].height,pKanjiData[i].offsetBMP);
+				}
+		}
+		tft.setFont(pKanjiData,data);
+		return mp_obj_new_int(1);
+	}
 #pragma endregion
+
+
 
 	/*
 		/// @brief グラフィックスオブジェクトを作成する。ソフトウェア関連の初期化を行う
@@ -660,7 +695,7 @@ extern "C" {
 	#ifdef TFT_ENABLE_FONTS
 			for (int i = 0; i < 16; i++)
 			{
-				fontList[i].name = NULL;
+				fontList[i].name = NULL;0
 				fontList[i].font = NULL;
 			}
 			fontList[0].font = &FreeMono9pt7b;

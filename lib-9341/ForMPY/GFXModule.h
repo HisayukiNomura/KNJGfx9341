@@ -5,6 +5,7 @@
 
 // Declare the function we'll make available in Python as cppexample.cppfunc().
 
+
 #pragma region 初期化・設定関数
 extern mp_obj_t initHW(mp_obj_t args);
 extern mp_obj_t getTypeName(mp_obj_t obj);
@@ -38,7 +39,7 @@ extern mp_obj_t fillTriangle(mp_obj_t a_xyxy, mp_obj_t a_color);
 #pragma endregion
 
 #pragma region テキスト描画関数
-// extern mp_obj_t setCursor(mp_obj_t a_xy);
+//extern mp_obj_t setCursor(mp_obj_t a_xy);
 extern mp_obj_t setCursor(size_t n_args, const mp_obj_t* args);
 extern mp_obj_t print(mp_obj_t a_str);
 extern mp_obj_t setTextWrap(mp_obj_t a_tf);
@@ -47,6 +48,7 @@ extern mp_obj_t setTextBackgroundColor(mp_obj_t a_color);
 extern mp_obj_t setTextColor(mp_obj_t a_color, mp_obj_t a_bgcolor);
 extern mp_obj_t setTextSize(mp_obj_t a_size);
 extern mp_obj_t setKanjiMode(mp_obj_t a_tf);
+extern mp_obj_t setKanjiFont(mp_obj_t a_code, mp_obj_t a_bitmap);
 
 // その他
 extern mp_obj_t cppfunc(mp_obj_t a_obj, mp_obj_t b_obj);

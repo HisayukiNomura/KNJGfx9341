@@ -1,5 +1,6 @@
 #pragma once
-struct KanjiData {
+
+struct __attribute__((packed)) KanjiData {
 	uint32_t Unicode;
 	uint16_t SJIS;
 	uint16_t JIS;
