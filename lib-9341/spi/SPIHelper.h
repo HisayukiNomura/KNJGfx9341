@@ -194,26 +194,38 @@ namespace ardPort::spi {
 
 			@param interruptNumber GPIO number to mask off
 		*/
+#ifdef MICROPY_BUILD_TYPE
+		// Micropythonから使うときは、std::mapを使うとハングするのでここはコメントとする。
+		// 標準SDK buildでは IRQは使われず最初のifでfalseになるので、標準SDKの場合は常にこちらでも問題ないと思うのだが
+		void usingInterrupt(int interruptNumber) {}
+#else
+
 		void usingInterrupt(int interruptNumber)
 		{
 			_usingIRQs.insert({interruptNumber, 0});
 		}
-
+#endif
 		/**
 			@brief Removes an interrupt from the to-be-masked list for SPI transactions
 
 			@param interruptNumber GPIO number to remove
 		*/
+#ifdef MICROPY_BUILD_TYPE
+		// Micropythonから使うときは、std::mapを使うとハングするのでここはコメントとする。
+		// 標準SDK buildでは IRQは使われず最初のifでfalseになるので、標準SDKの場合は常にこちらでも問題ないと思うのだが
+	  void notUsingInterrupt(int interruptNumber){}
+#else
 		void notUsingInterrupt(int interruptNumber)
 		{
 			_usingIRQs.erase(interruptNumber);
 		}
-
-	  private:
-#ifdef MICROPY_BUILD_TYPE
-		// mapを定義しない。
-#else
-		std::map<int, int> _usingIRQs;
 #endif
+
+		  private:
+	#ifdef MICROPY_BUILD_TYPE
+		// mapを定義しない。
+	#else
+		std::map<int, int> _usingIRQs;
+	#endif
 	}; // SPIHelper
 } // namespace ardPort::spi
