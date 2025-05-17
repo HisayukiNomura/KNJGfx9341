@@ -55,6 +55,8 @@ target_include_directories(KNJGfx9341 INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/variants
         ${CMAKE_CURRENT_LIST_DIR}/Kanji
         ${CMAKE_CURRENT_LIST_DIR}/XPT2046_Touchscreen    
+        ${CMAKE_CURRENT_LIST_DIR}/../../../py    
+
         ${PICO_SDK_PATH}/src/rp2_common/hardware_exception/include
         ${PICO_SDK_PATH}/src/rp2_common/pico_lwip/include
         ${PICO_SDK_PATH}/src/rp2_common/pico_cyw43_driver/include
@@ -75,6 +77,7 @@ target_include_directories(KNJGfx9341 INTERFACE
         ${PICO_SDK_PATH}/../
         ${PICO_SDK_PATH}/../lib/cyw43-driver/src/
         ${PICO_SDK_PATH}/../../py
+
         )
 
 

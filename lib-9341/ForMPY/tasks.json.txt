@@ -1,0 +1,114 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        // ************** Submodule のMAKE *************
+        {
+            "label": "Submodule のMake / PICO",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","ports/rp2","submodules"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },            
+        {
+            "label": "Submodule のMake / PICO W",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","ports/rp2","submodules", "BOARD=RPI_PICO_W"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },            
+        {
+            "label": "Submodule のMake / PICO2",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","ports/rp2","submodules", "BOARD=RPI_PICO2"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },            
+        {
+            "label": "Submodule のMake / PICO2 W",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","ports/rp2","submodules", "BOARD=RPI_PICO2_W"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },            
+         {
+            "label": "ユーザーモジュールなしSubmodule のMake / PICO",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","ports/rp2","submodules", "BOARD=RPI_PICO"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },  
+        // ************** ToolのMAKE　（ボードで共通） *************
+        {
+            "label": "ToolのMake",
+            "type": "shell",
+            "command": "make",
+            "args": ["-C","mpy-cross"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/"}, 
+            "group": "build"
+         },            
+        // ************** Python本体のMAKE　（ボードで共通） *************
+        {
+            "label": "PythonのMake / PICO",
+            "type": "shell",
+            "command": "make",
+            "args": [ "BOARD=RPI_PICO" ,"USER_C_MODULES=/e/Programing/Pico/Python9341/micropython/ports/rp2/myModule/micropython.cmake" , "PICO_BOARD_VALUE=1"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/ports/rp2"}, 
+            "group": "build"
+         },     
+
+        {
+            "label": "PythonのMake / PICO W",
+            "type": "shell",
+            "command": "make",
+            "args": [ "BOARD=RPI_PICO_W" ,"USER_C_MODULES=/e/Programing/Pico/Python9341/micropython/ports/rp2/myModule/micropython.cmake" , "PICO_BOARD_VALUE=3"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/ports/rp2"}, 
+            "group": "build"
+         },  
+        {
+            "label": "PytyhonのMake / PICO2",
+            "type": "shell",
+            "command": "make",
+            "args": ["BOARD=RPI_PICO2" ,"USER_C_MODULES=/e/Programing/Pico/Python9341/micropython/ports/rp2/myModule/micropython.cmake"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/ports/rp2"}, 
+            "group": "build"
+         },  
+
+        {
+            "label": "PythonのMake / PICO2 W",
+            "type": "shell",
+            "command": "make",
+            "args": ["--debug=" , "BOARD=RPI_PICO2_W" ,"USER_C_MODULES=/e/Programing/Pico/Python9341/micropython/ports/rp2/myModule/micropython.cmake"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/ports/rp2"}, 
+            "group": "build"
+         },  
+        {
+            "label": "ユーザーモジュールなしPythonのMake / PICO",
+            "type": "shell",
+            "command": "make",
+            "args": [ "BOARD=RPI_PICO"],
+            // cwdにはMakefileがあるディレクトリを指定
+            "options": {"cwd": "${workspaceFolder}/micropython/ports/rp2"}, 
+            "group": "build"
+         },           
+
+
+
+   ]
+}
