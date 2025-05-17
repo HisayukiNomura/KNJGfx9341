@@ -29,7 +29,7 @@
 	#include <hardware/structs/iobank0.h>
 	#include <hardware/irq.h>
 	#include "misc/pins.h"
-	using namespace ardPort::spi;
+using namespace ardPort::spi;
 #else
 	#include "SPI.h"
 	#include <hardware/dma.h>
@@ -48,11 +48,12 @@
 	#include <Adafruit_TinyUSB.h>
 #endif
 
-SPIClassRP2040::SPIClassRP2040(spi_inst_t *spi, pin_size_t rx, pin_size_t cs, pin_size_t sck, pin_size_t tx) {
+SPIClassRP2040::SPIClassRP2040(spi_inst_t* spi, pin_size_t rx, pin_size_t cs, pin_size_t sck, pin_size_t tx)
+{
 	_spi = spi;
 	_running = false;
 	_initted = false;
-	_spis = SPISettings(0, LSBFIRST, SPI_MODE0);  // Ensure spi_init called by setting current freq to 0
+	_spis = SPISettings(0, LSBFIRST, SPI_MODE0); // Ensure spi_init called by setting current freq to 0
 	_RX = rx;
 	_TX = tx;
 	_SCK = sck;
@@ -60,55 +61,59 @@ SPIClassRP2040::SPIClassRP2040(spi_inst_t *spi, pin_size_t rx, pin_size_t cs, pi
 }
 
 // The HW can't do LSB first, only MSB first, so need to bitreverse
-void SPIClassRP2040::adjustBuffer(const void *s, void *d, size_t cnt, bool by16) {
+void SPIClassRP2040::adjustBuffer(const void* s, void* d, size_t cnt, bool by16)
+{
 	if (_spis.getBitOrder() == MSBFIRST) {
 		memcpy(d, s, cnt * (by16 ? 2 : 1));
 	} else if (!by16) {
-		const uint8_t *src = (const uint8_t *)s;
-		uint8_t *dst = (uint8_t *)d;
+		const uint8_t* src = (const uint8_t*)s;
+		uint8_t* dst = (uint8_t*)d;
 		for (size_t i = 0; i < cnt; i++) {
 			*(dst++) = _helper.reverseByte(*(src++));
 		}
 	} else { /* by16 */
-		const uint16_t *src = (const uint16_t *)s;
-		uint16_t *dst = (uint16_t *)d;
+		const uint16_t* src = (const uint16_t*)s;
+		uint16_t* dst = (uint16_t*)d;
 		for (size_t i = 0; i < cnt; i++) {
 			*(dst++) = _helper.reverse16Bit(*(src++));
 		}
 	}
 }
 
-byte SPIClassRP2040::transfer(uint8_t data) {
+byte SPIClassRP2040::transfer(uint8_t data)
+{
 	uint8_t ret;
 	if (!_initted) {
 		return 0;
 	}
 	data = (_spis.getBitOrder() == MSBFIRST) ? data : _helper.reverseByte(data);
 	DEBUGSPI("SPI::transfer(%02x), cpol=%d, cpha=%d\n", data, _helper.cpol(_spis), _helper.cpha(_spis));
-	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS);  // Fast set to 8-bits
+	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS); // Fast set to 8-bits
 	spi_write_read_blocking(_spi, &data, &ret, 1);
 	ret = (_spis.getBitOrder() == MSBFIRST) ? ret : _helper.reverseByte(ret);
 	DEBUGSPI("SPI: read back %02x\n", ret);
 	return ret;
 }
 
-uint16_t SPIClassRP2040::transfer16(uint16_t data) {
+uint16_t SPIClassRP2040::transfer16(uint16_t data)
+{
 	uint16_t ret;
 	if (!_initted) {
 		return 0;
 	}
 	data = (_spis.getBitOrder() == MSBFIRST) ? data : _helper.reverse16Bit(data);
 	DEBUGSPI("SPI::transfer16(%04x), cpol=%d, cpha=%d\n", data, _helper.cpol(_spis), _helper.cpha(_spis));
-	hw_write_masked(&spi_get_hw(_spi)->cr0, (16 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS);  // Fast set to 16-bits
+	hw_write_masked(&spi_get_hw(_spi)->cr0, (16 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS); // Fast set to 16-bits
 	spi_write16_read16_blocking(_spi, &data, &ret, 1);
 	ret = (_spis.getBitOrder() == MSBFIRST) ? ret : _helper.reverse16Bit(ret);
 	DEBUGSPI("SPI: read back %02x\n", ret);
 	return ret;
 }
 
-void SPIClassRP2040::transfer(void *buf, size_t count) {
+void SPIClassRP2040::transfer(void* buf, size_t count)
+{
 	DEBUGSPI("SPI::transfer(%p, %d)\n", buf, count);
-	uint8_t *buff = reinterpret_cast<uint8_t *>(buf);
+	uint8_t* buff = reinterpret_cast<uint8_t*>(buf);
 	for (size_t i = 0; i < count; i++) {
 		*buff = transfer(*buff);
 		buff++;
@@ -116,24 +121,25 @@ void SPIClassRP2040::transfer(void *buf, size_t count) {
 	DEBUGSPI("SPI::transfer completed\n");
 }
 
-void SPIClassRP2040::transfer(const void *txbuf, void *rxbuf, size_t count) {
+void SPIClassRP2040::transfer(const void* txbuf, void* rxbuf, size_t count)
+{
 	if (!_initted) {
 		return;
 	}
 
-	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS);  // Fast set to 8-bits
+	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS); // Fast set to 8-bits
 
 	DEBUGSPI("SPI::transfer(%p, %p, %d)\n", txbuf, rxbuf, count);
-	const uint8_t *txbuff = reinterpret_cast<const uint8_t *>(txbuf);
-	uint8_t *rxbuff = reinterpret_cast<uint8_t *>(rxbuf);
+	const uint8_t* txbuff = reinterpret_cast<const uint8_t*>(txbuf);
+	uint8_t* rxbuff = reinterpret_cast<uint8_t*>(rxbuf);
 
 	// MSB version is easy!
 	if (_spis.getBitOrder() == MSBFIRST) {
-		if (rxbuf == nullptr) {  // transmit only!
+		if (rxbuf == nullptr) { // transmit only!
 			spi_write_blocking(_spi, txbuff, count);
 			return;
 		}
-		if (txbuf == nullptr) {  // receive only!
+		if (txbuf == nullptr) { // receive only!
 			spi_read_blocking(_spi, 0xFF, rxbuff, count);
 			return;
 		}
@@ -152,7 +158,8 @@ void SPIClassRP2040::transfer(const void *txbuf, void *rxbuf, size_t count) {
 	DEBUGSPI("SPI::transfer completed\n");
 }
 
-void SPIClassRP2040::beginTransaction(SPISettings settings) {
+void SPIClassRP2040::beginTransaction(SPISettings settings)
+{
 	DEBUGSPI("SPI::beginTransaction(clk=%lu, bo=%s)\n", settings.getClockFreq(), (settings.getBitOrder() == MSBFIRST) ? "MSB" : "LSB");
 	if (_initted && settings == _spis) {
 		DEBUGSPI("SPI: Reusing existing initted SPI\n");
@@ -174,15 +181,17 @@ void SPIClassRP2040::beginTransaction(SPISettings settings) {
 	_helper.maskInterrupts();
 }
 
-void SPIClassRP2040::endTransaction(void) {
+void SPIClassRP2040::endTransaction(void)
+{
 	DEBUGSPI("SPI::endTransaction()\n");
 	_helper.unmaskInterrupts();
 }
 
-bool SPIClassRP2040::transferAsync(const void *send, void *recv, size_t bytes) {
+bool SPIClassRP2040::transferAsync(const void* send, void* recv, size_t bytes)
+{
 	DEBUGSPI("SPI::transferAsync(%p, %p, %d)\n", send, recv, bytes);
-	const uint8_t *txbuff = reinterpret_cast<const uint8_t *>(send);
-	uint8_t *rxbuff = reinterpret_cast<uint8_t *>(recv);
+	const uint8_t* txbuff = reinterpret_cast<const uint8_t*>(send);
+	uint8_t* rxbuff = reinterpret_cast<uint8_t*>(recv);
 	_dummy = 0xffffffff;
 
 	if (!_initted || (!send && !recv)) {
@@ -200,7 +209,12 @@ bool SPIClassRP2040::transferAsync(const void *send, void *recv, size_t bytes) {
 	}
 
 	if (send && (_spis.getBitOrder() != MSBFIRST)) {
-		_dmaBuffer = (uint8_t *)malloc(bytes);
+#ifdef MICROPY_BUILD_TYPE
+		_dmaBuffer = (uint8_t*)mp_obj_new_bytearray(bytes, NULL);
+		//_dmaBuffer = (uint8_t*)malloc(bytes);
+#else
+		_dmaBuffer = (uint8_t*)malloc(bytes);
+#endif
 		if (!_dmaBuffer) {
 			dma_channel_unclaim(_channelDMA);
 			dma_channel_unclaim(_channelSendDMA);
@@ -213,34 +227,35 @@ bool SPIClassRP2040::transferAsync(const void *send, void *recv, size_t bytes) {
 	_dmaBytes = bytes;
 	_rxFinalBuffer = rxbuff;
 
-	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS);  // Fast set to 8-bits
+	hw_write_masked(&spi_get_hw(_spi)->cr0, (8 - 1) << SPI_SSPCR0_DSS_LSB, SPI_SSPCR0_DSS_BITS); // Fast set to 8-bits
 
 	dma_channel_config c = dma_channel_get_default_config(_channelSendDMA);
-	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);       // 8b transfers into SPI FIFO
-	channel_config_set_read_increment(&c, send ? true : false);  // Reading incrementing addresses
-	channel_config_set_write_increment(&c, false);               // Writing to the same FIFO address
-	channel_config_set_dreq(&c, spi_get_dreq(_spi, true));       // Wait for the TX FIFO specified
-	channel_config_set_chain_to(&c, _channelSendDMA);            // No chaining
-	channel_config_set_irq_quiet(&c, true);                      // No need for IRQ
-	dma_channel_configure(_channelSendDMA, &c, &spi_get_hw(_spi)->dr, !send ? (uint8_t *)&_dummy : (_spis.getBitOrder() != MSBFIRST ? _dmaBuffer : txbuff), bytes, false);
+	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);      // 8b transfers into SPI FIFO
+	channel_config_set_read_increment(&c, send ? true : false); // Reading incrementing addresses
+	channel_config_set_write_increment(&c, false);              // Writing to the same FIFO address
+	channel_config_set_dreq(&c, spi_get_dreq(_spi, true));      // Wait for the TX FIFO specified
+	channel_config_set_chain_to(&c, _channelSendDMA);           // No chaining
+	channel_config_set_irq_quiet(&c, true);                     // No need for IRQ
+	dma_channel_configure(_channelSendDMA, &c, &spi_get_hw(_spi)->dr, !send ? (uint8_t*)&_dummy : (_spis.getBitOrder() != MSBFIRST ? _dmaBuffer : txbuff), bytes, false);
 
 	c = dma_channel_get_default_config(_channelDMA);
-	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);        // 8b transfers into SPI FIFO
-	channel_config_set_read_increment(&c, false);                 // Reading same FIFO address
-	channel_config_set_write_increment(&c, recv ? true : false);  // Writing to the buffer
-	channel_config_set_dreq(&c, spi_get_dreq(_spi, false));       // Wait for the RX FIFO specified
-	channel_config_set_chain_to(&c, _channelDMA);                 // No chaining
-	channel_config_set_irq_quiet(&c, true);                       // No need for IRQ
-	dma_channel_configure(_channelDMA, &c, !recv ? (uint8_t *)&_dummy : rxbuff, &spi_get_hw(_spi)->dr, bytes, false);
+	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);       // 8b transfers into SPI FIFO
+	channel_config_set_read_increment(&c, false);                // Reading same FIFO address
+	channel_config_set_write_increment(&c, recv ? true : false); // Writing to the buffer
+	channel_config_set_dreq(&c, spi_get_dreq(_spi, false));      // Wait for the RX FIFO specified
+	channel_config_set_chain_to(&c, _channelDMA);                // No chaining
+	channel_config_set_irq_quiet(&c, true);                      // No need for IRQ
+	dma_channel_configure(_channelDMA, &c, !recv ? (uint8_t*)&_dummy : rxbuff, &spi_get_hw(_spi)->dr, bytes, false);
 
-	spi_get_hw(_spi)->dmacr = 1 | (1 << 1);  // TDMAE | RDMAE
+	spi_get_hw(_spi)->dmacr = 1 | (1 << 1); // TDMAE | RDMAE
 
 	dma_channel_start(_channelDMA);
 	dma_channel_start(_channelSendDMA);
 	return true;
 }
 
-bool SPIClassRP2040::finishedAsync() {
+bool SPIClassRP2040::finishedAsync()
+{
 	if (!_initted) {
 		return true;
 	}
@@ -262,7 +277,8 @@ bool SPIClassRP2040::finishedAsync() {
 	return true;
 }
 
-void SPIClassRP2040::abortAsync() {
+void SPIClassRP2040::abortAsync()
+{
 	if (!_initted) {
 		return;
 	}
@@ -275,7 +291,8 @@ void SPIClassRP2040::abortAsync() {
 	_dmaBuffer = nullptr;
 }
 
-bool SPIClassRP2040::setRX(pin_size_t pin) {
+bool SPIClassRP2040::setRX(pin_size_t pin)
+{
 #ifdef PICO_RP2350B
 	constexpr uint64_t valid[2] = {
 		__bitset({0, 4, 16, 20, 32, 26}) /* SPI0 */,
@@ -304,7 +321,8 @@ bool SPIClassRP2040::setRX(pin_size_t pin) {
 	return false;
 }
 
-bool SPIClassRP2040::setCS(pin_size_t pin) {
+bool SPIClassRP2040::setCS(pin_size_t pin)
+{
 #ifdef PICO_RP2350B
 	constexpr uint64_t valid[2] = {
 		__bitset({1, 5, 17, 21, 33, 37}) /* SPI0 */,
@@ -333,7 +351,8 @@ bool SPIClassRP2040::setCS(pin_size_t pin) {
 	return false;
 }
 
-bool SPIClassRP2040::setSCK(pin_size_t pin) {
+bool SPIClassRP2040::setSCK(pin_size_t pin)
+{
 #ifdef PICO_RP2350B
 	constexpr uint64_t valid[2] = {
 		__bitset({2, 6, 18, 22, 34, 38}) /* SPI0 */,
@@ -362,7 +381,8 @@ bool SPIClassRP2040::setSCK(pin_size_t pin) {
 	return false;
 }
 
-bool SPIClassRP2040::setTX(pin_size_t pin) {
+bool SPIClassRP2040::setTX(pin_size_t pin)
+{
 #ifdef PICO_RP2350B
 	constexpr uint64_t valid[2] = {
 		__bitset({3, 7, 19, 23, 35, 39}) /* SPI0 */,
@@ -391,7 +411,8 @@ bool SPIClassRP2040::setTX(pin_size_t pin) {
 	return false;
 }
 
-void SPIClassRP2040::begin(bool hwCS) {
+void SPIClassRP2040::begin(bool hwCS)
+{
 	DEBUGSPI("SPI::begin(%d), rx=%d, cs=%d, sck=%d, tx=%d\n", hwCS, _RX, _CS, _SCK, _TX);
 	gpio_set_function(_RX, GPIO_FUNC_SPI);
 	_hwCS = hwCS;
@@ -405,7 +426,8 @@ void SPIClassRP2040::begin(bool hwCS) {
 	endTransaction();
 }
 
-void SPIClassRP2040::end() {
+void SPIClassRP2040::end()
+{
 	DEBUGSPI("SPI::end()\n");
 	if (_initted) {
 		DEBUGSPI("SPI: deinitting currently active SPI\n");
@@ -421,20 +443,23 @@ void SPIClassRP2040::end() {
 	_spis = SPISettings(0, LSBFIRST, SPI_MODE0);
 }
 
-void SPIClassRP2040::setBitOrder(BitOrder order) {
+void SPIClassRP2040::setBitOrder(BitOrder order)
+{
 	_spis = SPISettings(_spis.getClockFreq(), order, _spis.getDataMode());
 	beginTransaction(_spis);
 	endTransaction();
 }
 
-void SPIClassRP2040::setDataMode(uint8_t uc_mode) {
+void SPIClassRP2040::setDataMode(uint8_t uc_mode)
+{
 	_spis = SPISettings(_spis.getClockFreq(), _spis.getBitOrder(), uc_mode);
 	beginTransaction(_spis);
 	endTransaction();
 }
 
-void SPIClassRP2040::setClockDivider(uint8_t uc_div) {
-	(void)uc_div;  // no-op
+void SPIClassRP2040::setClockDivider(uint8_t uc_div)
+{
+	(void)uc_div; // no-op
 }
 
 #ifndef __SPI0_DEVICE
@@ -445,20 +470,20 @@ void SPIClassRP2040::setClockDivider(uint8_t uc_div) {
 #endif
 
 #ifdef STD_SDK
-#ifdef PIN_SPI0_MISO
+	#ifdef PIN_SPI0_MISO
 ardPort::spi::SPIClassRP2040 SPI(__SPI0_DEVICE, PIN_SPI0_MISO, PIN_SPI0_SS, PIN_SPI0_SCK, PIN_SPI0_MOSI);
-#endif
+	#endif
 
-#ifdef PIN_SPI1_MISO
+	#ifdef PIN_SPI1_MISO
 ardPort::spi::SPIClassRP2040 SPI1(__SPI1_DEVICE, PIN_SPI1_MISO, PIN_SPI1_SS, PIN_SPI1_SCK, PIN_SPI1_MOSI);
-#endif
+	#endif
 
 #else
-#ifdef PIN_SPI0_MISO
+	#ifdef PIN_SPI0_MISO
 SPIClassRP2040 SPI(__SPI0_DEVICE, PIN_SPI0_MISO, PIN_SPI0_SS, PIN_SPI0_SCK, PIN_SPI0_MOSI);
-#endif
+	#endif
 
-#ifdef PIN_SPI1_MISO
+	#ifdef PIN_SPI1_MISO
 SPIClassRP2040 SPI1(__SPI1_DEVICE, PIN_SPI1_MISO, PIN_SPI1_SS, PIN_SPI1_SCK, PIN_SPI1_MOSI);
+	#endif
 #endif
-#endif 

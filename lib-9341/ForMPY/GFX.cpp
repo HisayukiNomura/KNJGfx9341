@@ -9,39 +9,37 @@
 #include "../Adafruit_ILI9341/Adafruit_ILI9341.h"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #define DEBUG_PRINT
-// デフォルトフォント。１２ドット教育漢字のみ。
+// デフォルトフォント。
+// 予定？では、python側でフォントをsetKanjiFont指定できるようにする予定にした。そのためデフォルトフォントは一番サイズが小さいものにしておくことにした。
+// 実際に実装しテストしてみると、様々な問題が発生した。
+// 1. フォントデータをバイナリにすると、thonyでラズピコに保存できない。（保存できるのは *.pyのみ）
+// 2. フォントデータをプログラムにすると、プログラムサイズが大きくなるためかthonyで保存してもハングする。（もしかしたら１～２日で完了するのかもしれないが）
+// 3. プログラムを、thony からでなく、rshell で直接ラズピコに保存し、実行すると漢字データを読み込むにはメモリが足りない。
+// 事実上、３が一番の問題で、pythonのユーザーCモジュール内や、SDKで作ったC++のプログラムでは漢字データをフラッシュメモリ（Picoで2Mbytes)に置けるので問題ないが、
+// pythonプログラムで漢字データを保持するとなると、ヒープに保存するしかなく、256MBytesしかないメモリでは足りなすぎる。
+//
+// バイナリデータとしてフラッシュ上にrshellから保存し、ユーザーCモジュール側でそれを少しずつ取り出して使う、というのも考えたが、デプロイの手順が複雑になるし
+// データの取り出しのオーバーヘッドなども考えると気が遠くなる。
+//
+// ということで、デフォルトフォントに頼らざるを得ない。
+
 #include "../Kanji/Fonts/KanjiFontStructure.h"
-#include "../Kanji/Fonts/JF-Dot-Shinonome12_12x12_SCHOOL.inc"
+
+// #include "../Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
+// #include "../Kanji/Fonts/JF-Dot-Shinonome14_14x14_LEVEL1.inc"
+// #include "../Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
+#include "../Kanji/Fonts/JF-Dot-Shinonome16_16x16_LEVEL1.inc"
+// #include "../Kanji/Fonts/ipaexg_24x24_ALL.inc"
+
 #include "../Adafruit_GFX_Library/Fonts/FreeSerif12pt7b.h"
 extern "C" {
-#include <py/objstr.h>
 #include "GFXModule.h"
 #include <py/mphal.h>
+#include <py/objstr.h>
 
-	static int iDebugLevel = 0;
+	static int iDebugLevel = 1;
 
 	using namespace ardPort;
-	// Here we implement the] function using C++ code, but since it's
-	// declaration has to be compatible with C everything goes in extern "C" scope.
-	mp_obj_t cppfunc(mp_obj_t a_obj, mp_obj_t b_obj)
-	{
-
-		// The following no-ops are just here to verify the static assertions used in
-		// the public API all compile with C++.
-		MP_STATIC_ASSERT_STR_ARRAY_COMPATIBLE;
-		if (mp_obj_is_type(a_obj, &mp_type_BaseException)) {
-		}
-
-		// Prove we have (at least) C++11 features.
-		const auto a = mp_obj_get_int(a_obj);
-		const auto b = mp_obj_get_int(b_obj);
-		const auto sum = [&]() {
-			return mp_obj_new_int(a + b);
-		}();
-		// Prove we're being scanned for QSTRs.
-		mp_obj_t tup[] = {sum, MP_ROM_QSTR(MP_QSTR_hellocpp)};
-		return mp_obj_new_tuple(2, tup);
-	}
 
 	// static HW HWObj;
 	// static ST7735 ST7735Obj;
@@ -59,15 +57,43 @@ extern "C" {
 	} fontList[16];
 #endif
 
+	void raise_mustTupple()
+	{
+		mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
+	}
+	void raise_mustInt()
+	{
+		mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+	}
+	void raise_mustArray()
+	{
+		mp_raise_TypeError(MP_ERROR_TEXT("Expected an array"));
+	}
+	void raise_mustBool()
+	{
+		mp_raise_TypeError(MP_ERROR_TEXT("Expected a bool"));
+	}
+	void raise_mustStr()
+	{
+		mp_raise_TypeError(MP_ERROR_TEXT("Expected a str"));
+	}
+	void raise_mustXYTupple()
+	{
+		mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
+	}
+	void raise_mustXYWHTupple()
+	{
+		mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+	}
 	/// @brief 文字列を表示する関数。デバッグ用
 	void msg_OnDebug(const char* format, ...)
 	{
 		if (iDebugLevel == 0) return;
 		va_list args;
 		va_start(args, format);
-		unsigned int reqLen = vsnprintf(errTxt,sizeof(errTxt)-6,format, args);
+		unsigned int reqLen = vsnprintf(errTxt, sizeof(errTxt) - 6, format, args);
 		va_end(args);
-		if (reqLen > (sizeof(errTxt) -6) ) {
+		if (reqLen > (sizeof(errTxt) - 6)) {
 			strcat(errTxt, "...\r\n");
 		}
 
@@ -83,25 +109,27 @@ extern "C" {
 	}
 
 #pragma region 初期化・設定関数
-
-	/// @brief ハードウェアの初期化処理
+	Adafruit_ILI9341* pTFT;
 	Adafruit_ILI9341 tft;
+	/// @brief ハードウェアの初期化処理
+
 	mp_obj_t initHW(mp_obj_t args)
 	{
+		// static Adafruit_ILI9341 tft;
+		// pTFT = NULL;
+		pTFT = &tft;
 
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(args, &mp_type_tuple)) {
-
-			mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		}
+		if (!mp_obj_is_type(args, &mp_type_tuple)) raise_mustTupple();
 		// タプルの要素を取得
 		mp_obj_tuple_get(args, &len, &items);
 		// 要素の数を確認
 		if (len != 7) {
 			mp_raise_ValueError(MP_ERROR_TEXT("Expected 7 elements in the tuple"));
 		}
+
 		// #define TFT_SCK 18   // 液晶表示の SCK
 		// #define TFT_MOSI 19 // 液晶表示の MOSI
 		// #define TFT_DC 20   // 液晶画面の DC
@@ -118,11 +146,23 @@ extern "C" {
 
 		// ハードウェア初期化
 		spi::SPIClassRP2040* pSPI = iSPIPortNo == 0 ? &SPI : &SPI1;
+		// spi::SPIClassRP2040* pSPI = NULL;
 
-		tft.constructObject(pSPI, iDC, iCS, iReset);
+		/*
+		このSPIとかが、静的に作られているの問題？　	m_new_obj(simpleclass_myclass_obj_t);　とかで動的確保できるか？ SPIに限らず、TFTもこの方法で作れれば良いのだが。
+		あるいは、static mp_obj_t PicoMath_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+			PicoMath_obj_t *self = mp_obj_malloc(PicoMath_obj_t,type);
+
+			return MP_OBJ_FROM_PTR(self);
+		}
+		か？
+		"https: // harlepengren.com/a-journey-to-creating-a-micropython-user-modules/"
+		*/
+
+		pTFT->constructObject(pSPI, iDC, iCS, iReset);
 		pSPI->setMOSI(iMOSI);
 		pSPI->setSCK(iSCK);
-		tft.begin(); // SPIの初期化を行う。引数はSPIの周波数。0はデフォルト値
+		pTFT->begin(); // SPIの初期化を行う。引数はSPIの周波数。0はデフォルト値
 
 		msg_OnDebug("initHW:PortNO=%d , DC=%d , CS=%d , SCK=%d , MOSI=%d , RESET=%d , DEBUG=%d\r\n", iSPIPortNo, iDC, iCS, iSCK, iMOSI, iReset, iDebug);
 
@@ -134,8 +174,8 @@ extern "C" {
 	/// @return 常に１
 	mp_obj_t setDebugMode(mp_obj_t a_level)
 	{
+		if (!mp_obj_is_int(a_level)) raise_mustInt();
 
-		if (!mp_obj_is_int(a_level)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int.  0 for disable, 1 for enable"));
 		iDebugLevel = mp_obj_get_int(a_level);
 		msg_OnDebug("setDebugMode: Debug Level = %d\r\n", iDebugLevel);
 		return mp_obj_new_int(1);
@@ -146,7 +186,12 @@ extern "C" {
 	mp_obj_t loadDefaultKanjiFont()
 	{
 		msg_OnDebug("loadDefaultKanjiFont\r\n");
-		tft.setFont(JFDotShinonome12_12x12_SCHOOL, JFDotShinonome12_12x12_SCHOOL_bitmap);
+		// pTFT->setFont(JFDotShinonome14_14x14_LEVEL1, JFDotShinonome14_14x14_LEVEL1_bitmap);
+		// pTFT->setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);
+		// pTFT->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap);
+		// pTFT->setFont(ipaexg_24x24_ALL, ipaexg_24x24_ALL_bitmap);
+		pTFT->setFont(JFDotShinonome16_16x16_LEVEL1, JFDotShinonome16_16x16_LEVEL1_bitmap);
+
 		return mp_obj_new_int(1);
 	}
 	/// @brief デフォルトのASCIIフォントを読み込む。
@@ -154,7 +199,7 @@ extern "C" {
 	mp_obj_t loadDefaultAsciiFont()
 	{
 		msg_OnDebug("loadDefaultAsciiFont\r\n");
-		tft.setFont(&FreeSerif12pt7b);
+		pTFT->setFont(&FreeSerif12pt7b);
 		return mp_obj_new_int(1);
 	}
 	/// @brief 	画面を回転する
@@ -162,13 +207,13 @@ extern "C" {
 	/// @return
 	mp_obj_t setRotation(mp_obj_t a_Rotation)
 	{
-		if (!mp_obj_is_int(a_Rotation)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_Rotation)) raise_mustInt();
 		int iRotation = mp_obj_get_int(a_Rotation);
 		if (iRotation < 0 || iRotation > 3) {
 			mp_raise_ValueError(MP_ERROR_TEXT("Value must be 0-3"));
 		}
-		tft.setRotation(iRotation);
-		msg_OnDebug("setRotation: %d\r\n", tft.getRotation());
+		pTFT->setRotation(iRotation);
+		msg_OnDebug("setRotation: %d\r\n", pTFT->getRotation());
 		return mp_obj_new_int(1);
 	}
 	/// @brief 画面のスリープモード
@@ -176,9 +221,9 @@ extern "C" {
 	/// @return
 	mp_obj_t displaySleep(mp_obj_t a_tf)
 	{
-		if (!mp_obj_is_bool(a_tf)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a bool"));
+		if (!mp_obj_is_bool(a_tf)) raise_mustBool();
 		bool tf = mp_obj_is_true(a_tf);
-		tft.displaySleep(tf);
+		pTFT->displaySleep(tf);
 		msg_OnDebug("displaySleep: %d\r\n", tf);
 		return mp_obj_new_int(1);
 	}
@@ -190,9 +235,9 @@ extern "C" {
 	/// @return
 	mp_obj_t invertDisplay(mp_obj_t a_tf)
 	{
-		if (!mp_obj_is_bool(a_tf)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a bool"));
+		if (!mp_obj_is_bool(a_tf)) raise_mustBool();
 		bool tf = mp_obj_is_true(a_tf);
-		tft.invertDisplay(tf);
+		pTFT->invertDisplay(tf);
 		msg_OnDebug("invertDisplay: %d\r\n", tf);
 		return mp_obj_new_int(1);
 	}
@@ -202,11 +247,11 @@ extern "C" {
 	/// @return
 	mp_obj_t setScrollMargins(mp_obj_t a_top, mp_obj_t a_bottom)
 	{
-		if (!mp_obj_is_int(a_top)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_bottom)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_top)) raise_mustInt();
+		if (!mp_obj_is_int(a_bottom)) raise_mustInt();
 		int top = mp_obj_get_int(a_top);
 		int bottom = mp_obj_get_int(a_bottom);
-		tft.setScrollMargins(top, bottom);
+		pTFT->setScrollMargins(top, bottom);
 		msg_OnDebug("setScrollMargins: %d , %d\r\n", top, bottom);
 		return mp_obj_new_int(1);
 	}
@@ -215,9 +260,9 @@ extern "C" {
 	/// @return
 	mp_obj_t scrollTo(mp_obj_t a_y)
 	{
-		if (!mp_obj_is_int(a_y)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_y)) raise_mustInt();
 		int y = mp_obj_get_int(a_y);
-		tft.scrollTo(y);
+		pTFT->scrollTo(y);
 		msg_OnDebug("scrollTo: %d\r\n", y);
 		return mp_obj_new_int(1);
 	}
@@ -231,7 +276,7 @@ extern "C" {
 	mp_obj_t fillScreen(mp_obj_t a_Color)
 	{
 		int color = mp_obj_get_int(a_Color);
-		tft.fillScreen(color);
+		pTFT->fillScreen(color);
 		msg_OnDebug("fillScreen:Color = %04X\r\n", color);
 		return mp_obj_new_int(color);
 	}
@@ -244,18 +289,18 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xy, &len, &items);
 		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
+		if (len != 2) raise_mustXYTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawPixel(x, y, c);
+		pTFT->drawPixel(x, y, c);
 		msg_OnDebug("drawPixel:x=%d , y=%d , color=%04X\r\n", x, y, c);
 		return mp_obj_new_int(1);
 	}
@@ -270,20 +315,20 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_h)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_h)) raise_mustInt();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xy, &len, &items);
 		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
+		if (len != 2) raise_mustXYTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int h = mp_obj_get_int(a_h);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawFastVLine(x, y, h, c);
+		pTFT->drawFastVLine(x, y, h, c);
 		msg_OnDebug("drawFastVLine:x=%d , y=%d , h=%d , color=%04X\r\n", x, y, h, c);
 		return mp_obj_new_int(1);
 	}
@@ -298,20 +343,20 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_w)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_w)) raise_mustInt();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xy, &len, &items);
 		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
+		if (len != 2) raise_mustXYTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int w = mp_obj_get_int(a_w);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawFastHLine(x, y, w, c);
+		pTFT->drawFastHLine(x, y, w, c);
 		msg_OnDebug("drawFastHLine:x=%d , y=%d , w=%d , color=%04X\r\n", x, y, w, c);
 		return mp_obj_new_int(1);
 	}
@@ -324,20 +369,20 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xywh, &len, &items);
 		// 要素の数を確認
-		if (len != 4) mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+		if (len != 4) raise_mustXYWHTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int w = mp_obj_get_int(items[2]);
 		int h = mp_obj_get_int(items[3]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.fillRect(x, y, w, h, c);
+		pTFT->fillRect(x, y, w, h, c);
 		msg_OnDebug("fillRect:x=%d , y=%d , w=%d , h=%d , color=%04X\r\n", x, y, w, h, c);
 		return mp_obj_new_int(1);
 	}
@@ -350,20 +395,20 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xywh, &len, &items);
 		// 要素の数を確認
-		if (len != 4) mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+		if (len != 4) raise_mustXYWHTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int w = mp_obj_get_int(items[2]);
 		int h = mp_obj_get_int(items[3]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawRect(x, y, w, h, c);
+		pTFT->drawRect(x, y, w, h, c);
 		msg_OnDebug("drawRect:x=%d , y=%d , w=%d , h=%d , color=%04X\r\n", x, y, w, h, c);
 		return mp_obj_new_int(1);
 	}
@@ -373,20 +418,20 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xyxy, &len, &items);
 		// 要素の数を確認
-		if (len != 4) mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+		if (len != 4) raise_mustXYWHTupple();
 		int x1 = mp_obj_get_int(items[0]);
 		int y1 = mp_obj_get_int(items[1]);
 		int x2 = mp_obj_get_int(items[2]);
 		int y2 = mp_obj_get_int(items[3]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawLine(x1, y1, x2, y2, c);
+		pTFT->drawLine(x1, y1, x2, y2, c);
 		msg_OnDebug("drawLine:x1=%d , y1=%d , x2=%d , y2=%d , color=%04X\r\n", x1, y1, x2, y2, c);
 		return mp_obj_new_int(1);
 	}
@@ -396,19 +441,19 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xy, &len, &items);
 		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y,r"));
+		if (len != 2) raise_mustXYTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int r = mp_obj_get_int(a_r);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawCircle(x, y, r, c);
+		pTFT->drawCircle(x, y, r, c);
 		msg_OnDebug("drawCircle:x=%d , y=%d , r=%d , color=%04X\r\n", x, y, r, c);
 		return mp_obj_new_int(1);
 	}
@@ -417,19 +462,19 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xy, &len, &items);
 		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y,r"));
+		if (len != 2) raise_mustXYTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int r = mp_obj_get_int(a_r);
 		int c = mp_obj_get_int(a_color);
 
-		tft.fillCircle(x, y, r, c);
+		pTFT->fillCircle(x, y, r, c);
 		msg_OnDebug("fillCircle:x=%d , y=%d , r=%d , color=%04X\r\n", x, y, r, c);
 		return mp_obj_new_int(1);
 	}
@@ -439,14 +484,15 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_radius)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_radius)) raise_mustInt();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xywh, &len, &items);
 		// 要素の数を確認
-		if (len != 4) mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+		if (len != 4) raise_mustXYWHTupple();
+
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int w = mp_obj_get_int(items[2]);
@@ -454,7 +500,7 @@ extern "C" {
 		int r = mp_obj_get_int(a_radius);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawRoundRect(x, y, w, h, r, c);
+		pTFT->drawRoundRect(x, y, w, h, r, c);
 		msg_OnDebug("drawRoundRect:x=%d , y=%d , w=%d , h=%d , r=%d , color=%04X\r\n", x, y, w, h, r, c);
 		return mp_obj_new_int(1);
 	}
@@ -464,14 +510,14 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_radius)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_radius)) raise_mustInt();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xywh, &len, &items);
 		// 要素の数を確認
-		if (len != 4) mp_raise_ValueError(MP_ERROR_TEXT("Expected 4 elements in the tuple containing x,y,w,h"));
+		if (len != 4) raise_mustXYWHTupple();
 		int x = mp_obj_get_int(items[0]);
 		int y = mp_obj_get_int(items[1]);
 		int w = mp_obj_get_int(items[2]);
@@ -479,7 +525,7 @@ extern "C" {
 		int r = mp_obj_get_int(a_radius);
 		int c = mp_obj_get_int(a_color);
 
-		tft.fillRoundRect(x, y, w, h, r, c);
+		pTFT->fillRoundRect(x, y, w, h, r, c);
 		msg_OnDebug("fillRoundRect:x=%d , y=%d , w=%d , h=%d , r=%d , color=%04X\r\n", x, y, w, h, r, c);
 		return mp_obj_new_int(1);
 	}
@@ -489,8 +535,8 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xyxy, &len, &items);
@@ -504,7 +550,7 @@ extern "C" {
 		int y3 = mp_obj_get_int(items[5]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.drawTriangle(x1, y1, x2, y2, x3, y3, c);
+		pTFT->drawTriangle(x1, y1, x2, y2, x3, y3, c);
 		msg_OnDebug("drawTriangle:x1=%d , y1=%d , x2=%d , y2=%d , x3=%d , y3=%d , color=%04X\r\n", x1, y1, x2, y2, x3, y3, c);
 		return mp_obj_new_int(1);
 	}
@@ -513,8 +559,8 @@ extern "C" {
 		// タプルを取得
 		size_t len;
 		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_type(a_xyxy, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 
 		// タプルの要素を取得
 		mp_obj_tuple_get(a_xyxy, &len, &items);
@@ -528,63 +574,46 @@ extern "C" {
 		int y3 = mp_obj_get_int(items[5]);
 		int c = mp_obj_get_int(a_color);
 
-		tft.fillTriangle(x1, y1, x2, y2, x3, y3, c);
+		pTFT->fillTriangle(x1, y1, x2, y2, x3, y3, c);
 		msg_OnDebug("fillTriangle:x1=%d , y1=%d , x2=%d , y2=%d , x3=%d , y3=%d , color=%04X\r\n", x1, y1, x2, y2, x3, y3, c);
 		return mp_obj_new_int(1);
 	}
 #pragma endregion
 
 #pragma region 文字描画関数
+
 	/// @brief カーソル設定。余りに毎回間違えるので、タプルでも独立変数でも受け取れるようにする。
 
 	/// @param a_xy
 	/// @return
+
 	mp_obj_t setCursor(size_t n_args, const mp_obj_t* args)
 	{
 		int x;
 		int y;
-		if (n_args == 1) {
+		if (n_args == 1) { // 引数が１つのとき
 			size_t len;
 			mp_obj_t* items;
-			if (!mp_obj_is_type(args[0], &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple or x , y"));
+			if (!mp_obj_is_type(args[0], &mp_type_tuple)) raise_mustTupple();
 			// タプルの要素を取得
 			mp_obj_tuple_get(args[0], &len, &items);
 			// 要素の数を確認
-			if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
+			if (len != 2) raise_mustXYTupple();
 			x = mp_obj_get_int(items[0]);
 			y = mp_obj_get_int(items[1]);
 			msg_OnDebug("setCursor(tupple):x=%d , y=%d\r\n", x, y);
 		} else if (n_args == 2) {
-			if (!mp_obj_is_int(args[0])) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int for 1st argment"));
-			if (!mp_obj_is_int(args[1])) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int for 2nd argment"));
+			if (!mp_obj_is_int(args[0])) raise_mustInt();
+			if (!mp_obj_is_int(args[1])) raise_mustInt();
 			x = mp_obj_get_int(args[0]);
 			y = mp_obj_get_int(args[1]);
 			msg_OnDebug("setCursor(x,y):x=%d , y=%d\r\n", x, y);
 		} else {
 			mp_raise_ValueError(MP_ERROR_TEXT("Expected 1 or 2 arguments"));
 		}
-		tft.setCursor(x, y);
+		pTFT->setCursor(x, y);
 		return mp_obj_new_int(1);
 	}
-	/*
-	mp_obj_t setCursor(mp_obj_t a_xy)
-	{
-		// タプルを取得
-		size_t len;
-		mp_obj_t* items;
-		if (!mp_obj_is_type(a_xy, &mp_type_tuple)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a tuple"));
-		// タプルの要素を取得
-		mp_obj_tuple_get(a_xy, &len, &items);
-		// 要素の数を確認
-		if (len != 2) mp_raise_ValueError(MP_ERROR_TEXT("Expected 2 elements in the tuple containing x,y"));
-		int x = mp_obj_get_int(items[0]);
-		int y = mp_obj_get_int(items[1]);
-
-		tft.setCursor(x, y);
-		msg_OnDebug("setCursor:x=%d , y=%d\r\n", x, y);
-		return mp_obj_new_int(1);
-	}
-	*/
 	/// @brief 文字を描画する。 printfは実装しない。python側でf-stringを使ったほうが高機能なので。
 	/// @param a_xy 画面の座標。タプルで指定する。x,yの順番
 	/// @param a_str 描画する文字列。str型
@@ -593,863 +622,133 @@ extern "C" {
 	{
 		// タプルを取得
 		size_t len;
-		if (!mp_obj_is_str(a_str)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a str"));
+		if (!mp_obj_is_str(a_str)) raise_mustStr();
 		const char* str = mp_obj_str_get_str(a_str);
 
-		tft.print(str);
+		pTFT->print(str);
 		msg_OnDebug("print:str=%s\r\n", str);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setTextWrap(mp_obj_t a_tf)
 	{
-		if (!mp_obj_is_bool(a_tf)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a bool"));
+		if (!mp_obj_is_bool(a_tf)) raise_mustBool();
 		bool tf = mp_obj_is_true(a_tf);
-		tft.setTextWrap(tf);
+		pTFT->setTextWrap(tf);
 		msg_OnDebug("setTextWrap: %d\r\n", tf);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setTextForegroundColor(mp_obj_t a_color)
 	{
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 		int color = mp_obj_get_int(a_color);
-		tft.setTextColor(color);
+		pTFT->setTextColor(color);
 		msg_OnDebug("setTextColor: %04X\r\n", color);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setTextBackgroundColor(mp_obj_t a_color)
 	{
-		if (!mp_obj_is_int(a_color)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_color)) raise_mustInt();
 		int color = mp_obj_get_int(a_color);
-		tft.setBackgroundColor(color);
+		pTFT->setBackgroundColor(color);
 		msg_OnDebug("setTextBGColor: %04X\r\n", color);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setTextColor(mp_obj_t a_fg, mp_obj_t a_bg)
 	{
-		if (!mp_obj_is_int(a_fg)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
-		if (!mp_obj_is_int(a_bg)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_fg)) raise_mustInt();
+		if (!mp_obj_is_int(a_bg)) raise_mustInt();
 		int fg = mp_obj_get_int(a_fg);
 		int bg = mp_obj_get_int(a_bg);
-		tft.setTextColor(fg, bg);
+		pTFT->setTextColor(fg, bg);
 		msg_OnDebug("setTextColor: %04X , %04X\r\n", fg, bg);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setTextSize(mp_obj_t a_size)
 	{
-		if (!mp_obj_is_int(a_size)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a int"));
+		if (!mp_obj_is_int(a_size)) raise_mustInt();
 		int size = mp_obj_get_int(a_size);
-		tft.setTextSize(size);
+		pTFT->setTextSize(size);
 		msg_OnDebug("setTextSize: %d\r\n", size);
 		return mp_obj_new_int(1);
 	}
 	mp_obj_t setKanjiMode(mp_obj_t a_tf)
 	{
-		if (!mp_obj_is_bool(a_tf)) mp_raise_TypeError(MP_ERROR_TEXT("Expected a bool"));
+		if (!mp_obj_is_bool(a_tf)) raise_mustBool();
 		bool tf = mp_obj_is_true(a_tf);
-		tft.KanjiMode(tf);
+		pTFT->KanjiMode(tf);
 		msg_OnDebug("setKanjiMode: %d\r\n", tf);
 		return mp_obj_new_int(1);
 	}
 
-	mp_obj_t setKanjiFont(mp_obj_t a_code , mp_obj_t a_bitmap) 
+	mp_obj_t setKanjiFont(mp_obj_t a_code, mp_obj_t a_bitmap)
 	{
-		if (!mp_obj_is_type(a_code, &mp_type_bytes)) mp_raise_TypeError(MP_ERROR_TEXT ("Expected an array for 1st argument"));
-		if (!mp_obj_is_type(a_bitmap , &mp_type_bytes)) mp_raise_TypeError(MP_ERROR_TEXT("Expected an array for 2nd argument"));
-
-		
-		const uint8_t *data;
-		{
-				mp_buffer_info_t bufInfo;
-				mp_get_buffer_raise(a_bitmap, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
-
-				size_t len = bufInfo.len / sizeof(uint8_t); // データ長をバイト単位で計算
-				msg_OnDebug("setKanjiFont: dataLength= %d\r\n", len);
-				// バッファから uint8_t 型のポインタを取得
-				data = (uint8_t*)bufInfo.buf;
-		}
-		const KanjiData* pKanjiData;
-		{
-				mp_buffer_info_t bufInfo;	
-				mp_get_buffer_raise(a_code, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
-
-				size_t len = bufInfo.len / sizeof(KanjiData); // データ長をバイト単位で計算
-				msg_OnDebug("setKanjiFont: bufInfo.len = %d, size = %d\r\n", bufInfo.len, sizeof(KanjiData));
-				// バッファから uint8_t 型のポインタを取得
-				pKanjiData = (KanjiData*)bufInfo.buf;
-				for (int i = 0; i < 6;i++) {
-					msg_OnDebug("setKanjiFont[%d]: UTF8=%08X JIS=%04x WH=%x,%x OFFSET=%08X\r\n", i,pKanjiData[i].Unicode,pKanjiData[i].JIS,pKanjiData[i].width,pKanjiData[i].height,pKanjiData[i].offsetBMP);
-				}
-		}
-		tft.setFont(pKanjiData,data);
 		return mp_obj_new_int(1);
 	}
 #pragma endregion
 
+#pragma region ビットマップ描画関数
+	mp_obj_t drawBitmap(mp_obj_t a_xywh, mp_obj_t a_bitmap)
+	{
+		// タプルを取得
+		size_t len;
+		mp_obj_t* items;
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_type(a_bitmap, &mp_type_array)) raise_mustArray();
 
+		// タプルの要素を取得
+		mp_obj_tuple_get(a_xywh, &len, &items);
+		// 要素の数を確認
+		if (len != 4) raise_mustXYWHTupple();
+		;
+		int x = mp_obj_get_int(items[0]);
+		int y = mp_obj_get_int(items[1]);
+		int w = mp_obj_get_int(items[2]);
+		int h = mp_obj_get_int(items[3]);
 
-	/*
-		/// @brief グラフィックスオブジェクトを作成する。ソフトウェア関連の初期化を行う
-		mp_obj_t CreateGFX(mp_obj_t a_pHW)
-		{
-			// フォント関連の初期化
-	#ifdef TFT_ENABLE_FONTS
-			for (int i = 0; i < 16; i++)
-			{
-				fontList[i].name = NULL;0
-				fontList[i].font = NULL;
-			}
-			fontList[0].font = &FreeMono9pt7b;
-			fontList[0].name = "FreeMono9pt7b";
-			fontList[1].font = &FreeMono18pt7b;
-			fontList[1].name = "FreeMono18pt7b";
-			fontList[2].font = &FreeMonoOblique12pt_sub;
-			fontList[2].name = "FreeMonoOblique12pt_sub";
-			fontList[3].font = &FreeMonoOblique12pt7b;
-			fontList[3].name = "FreeMonoOblique12pt7b";
+		mp_buffer_info_t bufInfo;
+		mp_get_buffer_raise(a_bitmap, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
 
-	#endif
+		size_t len2 = bufInfo.len / sizeof(uint8_t); // データ長をバイト単位で計算
+		msg_OnDebug("drawBitmap: dataLength= %d\r\n", len2);
+		const uint16_t* data = (uint16_t*)bufInfo.buf;
 
-			if (HWObj.portSPI == NULL)
-			{
-				mp_raise_ValueError("Must call InitHW before CreateGFX");
-				return mp_obj_new_int(0);
-			}
-			ST7735Obj.SetSPIHW(&HWObj);
-			if (ST7735Obj.pSpiHW == NULL)
-			{
-				mp_raise_ValueError("SPI HW Object is null");
-				return mp_obj_new_int(0);
-			}
+		pTFT->drawRGBBitmap(x, y, data, w, h);
 
-			return mp_obj_new_int(1);
-		}
+		return mp_obj_new_int(1);
+	}
+	/// @brief	ビットマップを描画する。背景の透過色を指定できる。
+	/// @param a_xywh
+	/// @param a_bitmap
+	/// @return
+	mp_obj_t drawBitmapWithKeyColor(mp_obj_t a_xywh, mp_obj_t a_bitmap, mp_obj_t a_transparent)
+	{
+		// タプルを取得
+		size_t len;
+		mp_obj_t* items;
+		if (!mp_obj_is_type(a_xywh, &mp_type_tuple)) raise_mustTupple();
+		if (!mp_obj_is_type(a_bitmap, &mp_type_array)) raise_mustArray();
+		if (!mp_obj_is_int(a_transparent)) raise_mustInt();
 
-		/// @brief ハードウェアに初期化命令を流す
-		mp_obj_t doInit()
-		{
-			ST7735Obj.doInit();
-			return mp_obj_new_int(1);
-		}
+		// タプルの要素を取得
+		mp_obj_tuple_get(a_xywh, &len, &items);
+		// 要素の数を確認
+		if (len != 4) raise_mustXYWHTupple();
+		int x = mp_obj_get_int(items[0]);
+		int y = mp_obj_get_int(items[1]);
+		int w = mp_obj_get_int(items[2]);
+		int h = mp_obj_get_int(items[3]);
+		int transparent = mp_obj_get_int(a_transparent);
 
-		/// @brief  テキストの折り返し有無を設定する
-		mp_obj_t setTextWrap(mp_obj_t a_tf)
-		{
-			if (!mp_obj_is_bool(a_tf))
-				mp_raise_TypeError("Expected a bool");
-			bool tf = mp_obj_is_true(a_tf);
-			ST7735Obj.setTextWrap(tf);
-			return mp_obj_new_int(1);
-		}
+		mp_buffer_info_t bufInfo;
+		mp_get_buffer_raise(a_bitmap, &bufInfo, MP_BUFFER_READ); // Pythonからバッファ取得
 
-		/// @brief 画面の回転角度を設定する
-		mp_obj_t setRotation(mp_obj_t a_Rotation)
-		{
-			if (!mp_obj_is_int(a_Rotation))
-				mp_raise_TypeError("Expected a int");
-			int iRotation = mp_obj_get_int(a_Rotation);
-			if (iRotation < 0 || iRotation > 3)
-			{
-				mp_raise_ValueError("Value must be 0-3");
-			}
-			ST7735_ROTATION rot = (ST7735_ROTATION)iRotation;
-			ST7735Obj.SetRotation(rot);
-			return mp_obj_new_int(1);
-		}
+		size_t len2 = bufInfo.len / sizeof(uint8_t); // データ長をバイト単位で計算
+		msg_OnDebug("drawBitmapWithKeyColor: dataLength= %d\r\n", len2);
+		const uint16_t* data = (uint16_t*)bufInfo.buf;
 
-		/// @brief 画面の横幅を求める
-		mp_obj_t getWidth() { return mp_obj_new_int(ST7735Obj.getWidth()); }
-		/// @brief 画面の高さを求める
-		mp_obj_t getHeight() { return mp_obj_new_int(ST7735Obj.getHeight()); }
+		pTFT->drawRGBBitmap(x, y, data, w, h, transparent);
 
-		/// @brief 画面を特定の色で塗りつぶす
-		mp_obj_t fillScreen(mp_obj_t a_Color)
-		{
-			int color = mp_obj_get_int(a_Color);
-			ST7735Obj.fillScreen(color);
-			return mp_obj_new_int(color);
-		}
+		return mp_obj_new_int(1);
+	}
 
-		/// @brief 画面の特定の場所を、特定の色で塗りつぶす。
-		mp_obj_t fillRectangle(mp_obj_t a_xywh, mp_obj_t a_color)
-		{
-			// タプルを取得
-			size_t len;
-			mp_obj_t *items;
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-
-			// タプルの要素を取得
-			mp_obj_tuple_get(a_xywh, &len, &items);
-			// 要素の数を確認
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-			// タプル内の要素をintに変換
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(items[2]);
-			int h = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-
-			ST7735Obj.fillRectangle(x, y, w, h, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 画面に文字を表示する
-		mp_obj_t drawText(mp_obj_t a_xyfbs, mp_obj_t a_str)
-		{
-	#if !defined(TFT_ENABLE_TEXT)
-			mp_raise_NotImplementedError("Since TFT_ENABLE_TEXT is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			// タプルを取得
-			size_t len;
-			mp_obj_t *items;
-			if (!mp_obj_is_type(a_xyfbs, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_str(a_str))
-				mp_raise_TypeError("Expected a string for 2nd argument");
-
-			// xy座標のタプルの要素を取得
-			int x, y, foreColor, backColor, isBig;
-			{
-				mp_obj_tuple_get(a_xyfbs, &len, &items);
-				if (len != 5)
-					mp_raise_ValueError("Expected 5 elements in the tuple containing x,y,forecolor,backcolor,isBigsize");
-				x = mp_obj_get_int(items[0]);
-				y = mp_obj_get_int(items[1]);
-				foreColor = mp_obj_get_int(items[2]);
-				backColor = mp_obj_get_int(items[3]);
-				if (!mp_obj_is_bool(items[4]))
-					mp_raise_TypeError("Expected a bool for isBigsize");
-				isBig = mp_obj_is_true(items[4]) ? 2 : 1;
-			}
-			// タプル内の要素をintに変換
-			const char *str = mp_obj_str_get_str(a_str);
-			ST7735Obj.drawText(x, y, str, foreColor, backColor, isBig);
-			return mp_obj_new_int(str[0]);
-	#endif
-		}
-
-		/// @brief 画面に漢字カナ（含む半角）文字を表示する
-		mp_obj_t drawTextKanji(mp_obj_t a_xyfbs, mp_obj_t a_str)
-		{
-	#if !defined(TFT_ENABLE_TEXT)
-			mp_raise_NotImplementedError("since TFT_ENABLE_TEXt is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#elif !defined(TFT_ENABLE_KANJI)
-			mp_raise_NotImplementedError("since TFT_ENABLE_KANJI is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			// タプルを取得
-			size_t len;
-			mp_obj_t *items;
-			if (!mp_obj_is_type(a_xyfbs, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_str(a_str))
-				mp_raise_TypeError("Expected a string for 2nd argument");
-
-			// xy座標のタプルの要素を取得
-			int x, y, foreColor, backColor, isBig;
-			{
-				mp_obj_tuple_get(a_xyfbs, &len, &items);
-				if (len != 5)
-					mp_raise_ValueError("Expected 5 elements in the tuple containing x,y,forecolor,backcolor,isBigsize");
-				x = mp_obj_get_int(items[0]);
-				y = mp_obj_get_int(items[1]);
-				foreColor = mp_obj_get_int(items[2]);
-				backColor = mp_obj_get_int(items[3]);
-				if (!mp_obj_is_bool(items[4]))
-					mp_raise_TypeError("Expected a bool for isBigsize");
-				isBig = mp_obj_is_true(items[4]) ? 2 : 1;
-			}
-			// タプル内の要素をintに変換
-			const char *str = mp_obj_str_get_str(a_str);
-			ST7735Obj.drawTextKanji(x, y, str, foreColor, backColor, isBig);
-			return mp_obj_new_int(strlen(str));
-	#endif
-		}
-		// void ST7735::setScrollDefinition(uint8_t top_fix_height, uint8_t bottom_fix_height, bool _scroll_direction)
-
-		/// @brief 画面のスクロール範囲を指定する
-		mp_obj_t setScrollDefinition(mp_obj_t a_top, mp_obj_t a_bottom, mp_obj_t a_direction)
-		{
-	#if !defined(TFT_ENABLE_SCROLL)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SCROLL is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_int(a_top))
-				mp_raise_TypeError("Expected a int for 1st argument");
-			if (!mp_obj_is_int(a_bottom))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_bool(a_direction))
-				mp_raise_TypeError("Expected a bool for 3rd argument");
-			int top = mp_obj_get_int(a_top);
-			int bottom = mp_obj_get_int(a_bottom);
-			bool dir = mp_obj_is_true(a_direction);
-			ST7735Obj.setScrollDefinition(top, bottom, dir);
-			return mp_obj_new_int(1);
-	#endif
-		}
-
-		/// @brief 画面をスクロールする
-		mp_obj_t verticalScroll(mp_obj_t a_scrCnt)
-		{
-	#if !defined(TFT_ENABLE_SCROLL)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SCROLL is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_int(a_scrCnt))
-				mp_raise_TypeError("Expected a int for 1st argument");
-			int scrCnt = mp_obj_get_int(a_scrCnt);
-			ST7735Obj.verticalScroll(scrCnt);
-			return mp_obj_new_int(scrCnt);
-	#endif
-		}
-
-		/// @brief フォント機能が有効な時、drawTextで使用されるフォントを名前で指定する
-		mp_obj_t setAsciiFont(mp_obj_t a_fontname)
-		{
-	#if !defined(TFT_ENABLE_TEXT)
-			mp_raise_NotImplementedError("since TFT_ENABLE_TEXT is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#elif !defined(TFT_ENABLE_FONTS)
-			mp_raise_NotImplementedError("since TFT_ENABLE_FONTS is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_str(a_fontname))
-				mp_raise_TypeError("Expected a string for 1st argument");
-			const char *str = mp_obj_str_get_str(a_fontname);
-			for (int i = 0; fontList[i].name != NULL; i++)
-			{
-				if (strcmp(str, fontList[i].name) == 0)
-				{
-					ST7735Obj.setFont(fontList[i].font);
-					return mp_obj_new_int(1);
-				}
-			}
-			mp_raise_ValueError("Font name {str} not found. Check the specified font name or define the font in the fontList structure in GFX.cpp");
-	#endif
-		}
-
-		/// @brief フォント機能が有効な時、drawTextで使用できるフォント名を返す
-		/// @return
-		mp_obj_t getAvaiableAsciiFonts()
-		{
-	#if !defined(TFT_ENABLE_TEXT)
-			mp_raise_NotImplementedError("since TFT_ENABLE_TEXT is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#elif !defined(TFT_ENABLE_FONTS)
-			mp_raise_NotImplementedError("since TFT_ENABLE_FONTS is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			mp_obj_t list = mp_obj_new_list(0, NULL);
-			for (int i = 0; fontList[i].name != NULL; i++)
-			{
-				mp_obj_list_append(list, mp_obj_new_str(fontList[i].name, strlen(fontList[i].name)));
-			}
-			return list;
-	#endif
-		}
-
-		/// @brief 基本的な描画処理関数…　横線
-		mp_obj_t drawFastHLine(mp_obj_t a_xy, mp_obj_t a_w, mp_obj_t a_c)
-		{
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_w))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_c))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xy, &len, &items);
-			if (len != 2)
-				mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(a_w);
-			int c = mp_obj_get_int(a_c);
-			ST7735Obj.drawFastHLine(x, y, w, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 基本的な描画処理関数 縦線
-		mp_obj_t drawFastVLine(mp_obj_t a_xy, mp_obj_t a_h, mp_obj_t a_c)
-		{
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_h))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_c))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xy, &len, &items);
-			if (len != 2)
-				mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int h = mp_obj_get_int(a_h);
-			int c = mp_obj_get_int(a_c);
-			ST7735Obj.drawFastVLine(x, y, h, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 描画関数 矩形、座標と大きさを指定
-		mp_obj_t drawRectWH(mp_obj_t a_xywh, mp_obj_t a_color)
-		{
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xywh, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(items[2]);
-			int h = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawRectWH(x, y, w, h, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 描画関数 矩形、座標ペアを指定
-		mp_obj_t drawRect(mp_obj_t a_xyxy, mp_obj_t a_color)
-		{
-			if (!mp_obj_is_type(a_xyxy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xyxy, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x0,y0,x1,y1");
-			int x0 = mp_obj_get_int(items[0]);
-			int y0 = mp_obj_get_int(items[1]);
-			int x1 = mp_obj_get_int(items[2]);
-			int y1 = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawRect(x0, y0, x1, y1, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 塗りつぶし矩形　座標と大きさを指定
-		mp_obj_t fillRectWH(mp_obj_t a_xywh, mp_obj_t a_color)
-		{
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xywh, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(items[2]);
-			int h = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.fillRectWH(x, y, w, h, c);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief 塗りつぶし矩形　座標ペアを指定
-		mp_obj_t fillRect(mp_obj_t a_xyxy, mp_obj_t a_color)
-		{
-			if (!mp_obj_is_type(a_xyxy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xyxy, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x0,y0,x1,y1");
-			int x0 = mp_obj_get_int(items[0]);
-			int y0 = mp_obj_get_int(items[1]);
-			int x1 = mp_obj_get_int(items[2]);
-			int y1 = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.fillRect(x0, y0, x1, y1, c);
-			return mp_obj_new_int(1);
-		}
-		/// @brief 点の描画
-		mp_obj_t drawPixel(mp_obj_t a_xy, mp_obj_t a_color)
-		{
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xy, &len, &items);
-			if (len != 2)
-				mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawPixel(x, y, c);
-			return mp_obj_new_int(1);
-		}
-		/// @brief 通常画面に戻す
-		mp_obj_t normalDisplay()
-		{
-			ST7735Obj.NormalDisplay();
-			return mp_obj_new_int(1);
-		}
-		/// @brief 画面を反転させる
-		mp_obj_t invertDisplay(mp_obj_t a_tf)
-		{
-			if (!mp_obj_is_bool(a_tf))
-				mp_raise_TypeError("Expected a bool");
-			bool tf = mp_obj_is_true(a_tf);
-			ST7735Obj.invertDisplay(tf);
-			return mp_obj_new_int(1);
-		}
-
-		/// @brief  円の描画
-		mp_obj_t drawCircle(mp_obj_t a_xy, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xy, &len, &items);
-			if (len != 2)
-				mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawCircle(x, y, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-		/// @brief  円の塗りつぶし描画
-		mp_obj_t fillCircle(mp_obj_t a_xy, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xy, &len, &items);
-			if (len != 2)
-				mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.fillCircle(x, y, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-		/// @brief 角丸矩形の描画・座標と大きさ
-		mp_obj_t drawRoundRectWH(mp_obj_t a_xywh, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xywh, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(items[2]);
-			int h = mp_obj_get_int(items[3]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawRoundRectWH(x, y, w, h, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-		/// @brief 角丸矩形の描画・座標ペア
-		mp_obj_t drawRountRect(mp_obj_t a_xyxy, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_type(a_xyxy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xyxy, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x0,y0,x1,y1");
-			int x0 = mp_obj_get_int(items[0]);
-			int y0 = mp_obj_get_int(items[1]);
-			int x1 = mp_obj_get_int(items[2]);
-			int y1 = mp_obj_get_int(items[3]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawRoundRect(x0, y0, x1, y1, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-
-		mp_obj_t fillRoundRectWH(mp_obj_t a_xywh, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xywh, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-			int x = mp_obj_get_int(items[0]);
-			int y = mp_obj_get_int(items[1]);
-			int w = mp_obj_get_int(items[2]);
-			int h = mp_obj_get_int(items[3]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.fillRoundRectWH(x, y, w, h, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-
-		mp_obj_t fillRoundRect(mp_obj_t a_xyxy, mp_obj_t a_r, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_type(a_xyxy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_r))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xyxy, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x0,y0,x1,y1");
-			int x0 = mp_obj_get_int(items[0]);
-			int y0 = mp_obj_get_int(items[1]);
-			int x1 = mp_obj_get_int(items[2]);
-			int y1 = mp_obj_get_int(items[3]);
-			int r = mp_obj_get_int(a_r);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.fillRoundRect(x0, y0, x1, y1, r, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-
-		mp_obj_t drawLine(mp_obj_t a_xyxy, mp_obj_t a_color)
-		{
-	#if !defined(TFT_ENABLE_SHAPES)
-			mp_raise_NotImplementedError("since TFT_ENABLE_SHAPES is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-			return mp_obj_new_int(0);
-	#else
-			if (!mp_obj_is_type(a_xyxy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_int(a_color))
-				mp_raise_TypeError("Expected a int for 2nd argument");
-			size_t len;
-			mp_obj_t *items;
-			mp_obj_tuple_get(a_xyxy, &len, &items);
-			if (len != 4)
-				mp_raise_ValueError("Expected 4 elements in the tuple containing x0,y0,x1,y1");
-			int x0 = mp_obj_get_int(items[0]);
-			int y0 = mp_obj_get_int(items[1]);
-			int x1 = mp_obj_get_int(items[2]);
-			int y1 = mp_obj_get_int(items[3]);
-			int c = mp_obj_get_int(a_color);
-			ST7735Obj.drawLine(x0, y0, x1, y1, c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-
-		// void ST7735::bmpDraw(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint16_t* , uint8_t direction)
-
-		mp_obj_t bmpDraw(mp_obj_t a_xywh, mp_obj_t a_bmpData, mp_obj_t a_direction)
-		{
-	#if !defined(TFT_ENABLE_BITMAP)
-			mp_raise_NotImplementedError("since TFT_ENABLE_BITMAP is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-	#else
-			if (!mp_obj_is_type(a_xywh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 1st argument");
-			if (!mp_obj_is_type(a_bmpData, &mp_type_array))
-				mp_raise_TypeError("Expected a array for 2nd argument");
-			if (!mp_obj_is_int(a_direction))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			int x, y, w, h, d;
-			{
-				size_t len;
-				mp_obj_t *items;
-				mp_obj_tuple_get(a_xywh, &len, &items);
-				if (len != 4)
-					mp_raise_ValueError("Expected 4 elements in the tuple containing x,y,w,h");
-				x = mp_obj_get_int(items[0]);
-				y = mp_obj_get_int(items[1]);
-				w = mp_obj_get_int(items[2]);
-				h = mp_obj_get_int(items[3]);
-				d = mp_obj_get_int(a_direction);
-			}
-			uint16_t *data;
-			{
-				mp_buffer_info_t bufInfo;
-				mp_get_buffer_raise(a_bmpData, &bufInfo, MP_BUFFER_READ);
-				size_t len = bufInfo.len / sizeof(uint16_t);
-
-				unsigned int dataCnt = w * h;
-				if (len != dataCnt)
-				{
-					snprintf(errTxt, sizeof(errTxt), "invalid data size. Expected %d words, actual %d words", dataCnt, len);
-					mp_raise_ValueError(errTxt);
-				}
-				data = (uint16_t *)bufInfo.buf;
-			}
-
-			ST7735Obj.bmpDraw(x, y, w, h, data, d);
-			return mp_obj_new_int(1);
-	#endif
-		}
-		struct
-		{
-			uint8_t w;
-			uint8_t h;
-			uint16_t *data;
-		} bmpData[16];
-
-		mp_obj_t registerBitmap(mp_obj_t a_idx, mp_obj_t a_wh, mp_obj_t a_bmpData)
-		{
-	#if !defined(TFT_ENABLE_BITMAP)
-			mp_raise_NotImplementedError("since TFT_ENABLE_BITMAP is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-	#else
-
-			if (!mp_obj_is_int(a_idx))
-				mp_raise_TypeError("Expected a int for 1st argument");
-			if (!mp_obj_is_type(a_wh, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 2nd argument");
-			if (!mp_obj_is_type(a_bmpData, &mp_type_array))
-				mp_raise_TypeError("Expected a array for 3rd argument");
-
-			int idx = mp_obj_get_int(a_idx);
-			int w, h;
-			{
-				size_t len;
-				mp_obj_t *items;
-				mp_obj_tuple_get(a_wh, &len, &items);
-				if (len != 2)
-					mp_raise_ValueError("Expected 2 elements in the tuple containing w,h");
-				w = mp_obj_get_int(items[0]);
-				h = mp_obj_get_int(items[1]);
-			}
-			bmpData[idx].w = w;
-			bmpData[idx].h = h;
-
-			uint16_t *data;
-			{
-				mp_buffer_info_t bufInfo;
-				mp_get_buffer_raise(a_bmpData, &bufInfo, MP_BUFFER_READ);
-				size_t len = bufInfo.len / sizeof(uint16_t);
-
-				unsigned int dataCnt = w * h;
-				if (len != dataCnt)
-				{
-					snprintf(errTxt, sizeof(errTxt), "invalid data size. Expected %d words, actual %d words", dataCnt, len);
-					mp_raise_ValueError(errTxt);
-				}
-				data = (uint16_t *)bufInfo.buf;
-			}
-			bmpData[idx].data = (uint16_t *)m_malloc(w * h * sizeof(uint16_t));
-			memcpy(bmpData[idx].data, data, w * h * sizeof(uint16_t));
-			return bmpData[idx].data;
-	#endif
-		}
-		mp_obj_t bmpRegDraw(mp_obj_t a_idx, mp_obj_t a_xy, mp_obj_t a_direction)
-		{
-			if (!mp_obj_is_int(a_idx))
-				mp_raise_TypeError("Expected a int for 1st argument");
-			if (!mp_obj_is_type(a_xy, &mp_type_tuple))
-				mp_raise_TypeError("Expected a tuple for 2nd argument");
-			if (!mp_obj_is_int(a_direction))
-				mp_raise_TypeError("Expected a int for 3rd argument");
-			int x, y;
-			{
-				size_t len;
-				mp_obj_t *items;
-				mp_obj_tuple_get(a_xy, &len, &items);
-				if (len != 2)
-					mp_raise_ValueError("Expected 2 elements in the tuple containing x,y");
-				x = mp_obj_get_int(items[0]);
-				y = mp_obj_get_int(items[1]);
-			}
-			int idx = mp_obj_get_int(a_idx);
-			int d = mp_obj_get_int(a_direction);
-
-			ST7735Obj.bmpDraw(x, y, bmpData[idx].w, bmpData[idx].h, bmpData[idx].data, d);
-
-			return mp_obj_new_int(1);
-		}
-		mp_obj_t bmpUseTransColor(mp_obj_t a_c)
-		{
-	#if !defined(TFT_ENABLE_BITMAP)
-			mp_raise_NotImplementedError("since TFT_ENABLE_BITMAP is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-	#else
-			if (!mp_obj_is_int(a_c))
-				mp_raise_TypeError("Expected a int for 1st argument");
-			int c = mp_obj_get_int(a_c);
-			ST7735Obj.bmpUseTransColor(c);
-			return mp_obj_new_int(1);
-	#endif
-		}
-		mp_obj_t bmpUnuseTransColor()
-		{
-	#if !defined(TFT_ENABLE_BITMAP)
-			mp_raise_NotImplementedError("since TFT_ENABLE_BITMAP is disabled during the build, this function cannot be used. Check ST7735_TFT.h ");
-	#else
-			ST7735Obj.bmpUnuseTransColor();
-			return mp_obj_new_int(1);
-		}
-	#endif
-
-	*/
-} //
+}	// namespace TFT

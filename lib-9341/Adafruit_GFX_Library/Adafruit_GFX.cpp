@@ -108,6 +108,11 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
 #endif
 
 #pragma region コンストラクタ
+Adafruit_GFX::Adafruit_GFX() :
+	WIDTH(0),
+	HEIGHT(0)
+{
+}
 /**************************************************************************/
 /*!
    @brief    Instatiate a GFX context for graphics! Can only be done by a
@@ -121,6 +126,18 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	HEIGHT(h) {
 	_width = WIDTH;
 	_height = HEIGHT;
+	rotation = 0;
+	cursor_y = cursor_x = 0;
+	textsize_x = textsize_y = 1;
+	textcolor = textbgcolor = 0xFFFF;
+	wrap = true;
+	_cp437 = false;
+	gfxFont = NULL;
+}
+void Adafruit_GFX::constructObject(int16_t w, int16_t h)
+{
+	_width = w;
+	_height = h;
 	rotation = 0;
 	cursor_y = cursor_x = 0;
 	textsize_x = textsize_y = 1;
