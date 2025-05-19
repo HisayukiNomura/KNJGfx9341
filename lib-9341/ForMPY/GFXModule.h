@@ -62,3 +62,12 @@ extern mp_obj_t createCanvas(mp_obj_t a_wh);
 extern mp_obj_t deleteCanvas(mp_obj_t a_canvasID);
 extern mp_obj_t setCanvasKeyColor(mp_obj_t a_canvasID, mp_obj_t a_keycolor);
 extern mp_obj_t resetCanvasKeyColor(mp_obj_t a_canvasID);
+
+#pragma endregion
+
+#pragma region タッチ関数
+extern mp_obj_t initTouchHW(mp_obj_t a_CS, mp_obj_t a_IRQ);
+extern mp_obj_t setTouchRotation(mp_obj_t a_Rotation);
+extern mp_obj_t beginTouch();
+extern mp_obj_t isTouch();
+#pragma endregion

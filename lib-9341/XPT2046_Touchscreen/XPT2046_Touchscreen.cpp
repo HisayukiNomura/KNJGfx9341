@@ -33,7 +33,16 @@ using namespace ardPort;
 #endif
 
 static XPT2046_Touchscreen 	*isrPinptr;
+
+void XPT2046_Touchscreen::constructObject(uint8_t cspin, uint8_t tirq)
+{
+	csPin = cspin;
+	tirqPin = tirq;
+}
+
 void isrPin(void);
+
+
 
 bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 {

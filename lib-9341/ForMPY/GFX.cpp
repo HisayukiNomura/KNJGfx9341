@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <stdarg.h>
 #include "../Adafruit_ILI9341/Adafruit_ILI9341.h"
+#include "../XPT2046_Touchscreen/XPT2046_Touchscreen.h"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC optimize("O0")
 #define DEBUG_PRINT
@@ -189,6 +190,7 @@ extern "C" {
 		//  結果を返す
 		return mp_obj_new_int(1);
 	}
+
 	/// @brief デバッグモードの設定
 	/// @param a_level デバッグモードのレベル。0は無効、1は有効
 	/// @return 常に１
@@ -249,6 +251,7 @@ extern "C" {
 		msg_OnDebug("setRotation(%d)\r\n", pTFT->getRotation());
 		return mp_obj_new_int(1);
 	}
+
 	/// @brief 画面のスリープモード
 	/// @param a_tf スリープモードに入るときはtrue、出るときはfalse
 	/// @return
@@ -260,6 +263,7 @@ extern "C" {
 		msg_OnDebug("displaySleep:(%s)\r\n", tf ? "True" : "False");
 		return mp_obj_new_int(1);
 	}
+
 #pragma endregion
 
 #pragma region 特殊描画関数
@@ -979,7 +983,7 @@ extern "C" {
 	/// @brief キャンバスを作成する。キャンバスは、描画領域を指定するためのもの。キャンバスのIDは、描画関数に渡す必要がある。
 	/// @param a_xywh
 	/// @return
-
+#pragma region キャンバス関数
 	mp_obj_t createCanvas(mp_obj_t a_wh)
 	{
 		// タプルの要素を取得
@@ -1039,5 +1043,46 @@ extern "C" {
 		msg_OnDebug("resetCanvasKeyColor(%d)\r\n", canvasID + 1);
 		return mp_obj_new_int(1);
 	}
+#pragma endregion
+
+#pragma region タッチ関連
+	XPT2046_Touchscreen* pTouch;
+	XPT2046_Touchscreen ts;
+	mp_obj_t initTouchHW(mp_obj_t a_CS, mp_obj_t a_IRQ)
+	{
+		pTouch = &ts;
+		if (!mp_obj_is_int(a_CS)) raise_mustInt();
+		if (!mp_obj_is_int(a_IRQ)) raise_mustInt();
+		int iCS = mp_obj_get_int(a_CS);
+		int iIRQ = mp_obj_get_int(a_IRQ);
+		pTouch->constructObject(iCS, iIRQ);
+		msg_OnDebug("initTouchHW(%d,%d)\r\n", iCS, iIRQ);
+		return mp_obj_new_int(1);
+	}
+
+	mp_obj_t setTouchRotation(mp_obj_t a_Rotation)
+	{
+		if (!mp_obj_is_int(a_Rotation)) raise_mustInt();
+		int iRotation = mp_obj_get_int(a_Rotation);
+		if (iRotation < 0 || iRotation > 3) raise_valueError();
+		pTouch->setRotation(iRotation);
+		msg_OnDebug("setTouchRotation(%d)\r\n", a_Rotation);
+		return mp_obj_new_int(1);
+	}
+
+	mp_obj_t beginTouch()
+	{
+		pTouch->begin();
+		msg_OnDebug("beginTouch()\r\n");
+		return mp_obj_new_int(1);
+	}
+
+	mp_obj_t isTouch()
+	{
+		bool tf = pTouch->touched();
+		msg_OnDebug("isTouch() -> %s\r\n", tf ? "True" : "False");
+		return mp_obj_new_bool(tf);
+	}
+#pragma endregion
 
 } //

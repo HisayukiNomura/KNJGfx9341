@@ -65,6 +65,7 @@ class TS_Point {
 
 class XPT2046_Touchscreen {
    public:
+   XPT2046_Touchscreen() {}
 	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255) :
 		csPin(cspin),
 		tirqPin(tirq) {}
@@ -72,6 +73,7 @@ class XPT2046_Touchscreen {
 #if defined(_FLEXIO_SPI_H_)
 	bool begin(FlexIOSPI &wflexspi);
 #endif
+	void constructObject(uint8_t cspin, uint8_t tirq = 255);
 
 	TS_Point getPoint();
 	bool tirqTouched();
