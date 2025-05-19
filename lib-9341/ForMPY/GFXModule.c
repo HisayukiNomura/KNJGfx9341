@@ -1,14 +1,15 @@
 /// @brief このファイルは、MicropythonのC拡張モジュールとして使用する場合に有効にする。
 
 #include "GFXModule.h"
+#include <obj.h>
 
 // Define a Python reference to the function we'll make available.
 // See example.cpp for the definition.
 
 // #pragma region 初期化・設定関数
 static MP_DEFINE_CONST_FUN_OBJ_1(initHW_obj, initHW);
-static MP_DEFINE_CONST_FUN_OBJ_0(loadDefaultKanjiFont_obj, loadDefaultKanjiFont);
-static MP_DEFINE_CONST_FUN_OBJ_0(loadDefaultAsciiFont_obj, loadDefaultAsciiFont);
+static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultKanjiFont_obj, loadDefaultKanjiFont);
+static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultAsciiFont_obj, loadDefaultAsciiFont);
 static MP_DEFINE_CONST_FUN_OBJ_1(setDebugMode_obj, setDebugMode);
 static MP_DEFINE_CONST_FUN_OBJ_1(getTypeName_obj, getTypeName);
 static MP_DEFINE_CONST_FUN_OBJ_1(setRotation_obj, setRotation);
@@ -23,37 +24,46 @@ static MP_DEFINE_CONST_FUN_OBJ_1(scrollTo_obj, scrollTo);
 #pragma endregion
 
 #pragma region 基本描画関数
-static MP_DEFINE_CONST_FUN_OBJ_1(fillScreen_obj, fillScreen);
-static MP_DEFINE_CONST_FUN_OBJ_2(drawPixel_obj, drawPixel);
+static MP_DEFINE_CONST_FUN_OBJ_2(fillScreen_obj, fillScreen);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawPixel_obj, drawPixel);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawFastHLine_obj, drawFastHLine);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawFastVLine_obj, drawFastVLine);
-static MP_DEFINE_CONST_FUN_OBJ_2(fillRect_obj, fillRect);
-static MP_DEFINE_CONST_FUN_OBJ_2(drawRect_obj, drawRect);
-static MP_DEFINE_CONST_FUN_OBJ_2(drawLine_obj, drawLine);
+static MP_DEFINE_CONST_FUN_OBJ_3(fillRect_obj, fillRect);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawRect_obj, drawRect);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawLine_obj, drawLine);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawCircle_obj, drawCircle);
 static MP_DEFINE_CONST_FUN_OBJ_3(fillCircle_obj, fillCircle);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawRoundRect_obj, drawRoundRect);
 static MP_DEFINE_CONST_FUN_OBJ_3(fillRoundRect_obj, fillRoundRect);
-static MP_DEFINE_CONST_FUN_OBJ_2(drawTriangle_obj, drawTriangle);
-static MP_DEFINE_CONST_FUN_OBJ_2(fillTriangle_obj, fillTriangle);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawTriangle_obj, drawTriangle);
+static MP_DEFINE_CONST_FUN_OBJ_3(fillTriangle_obj, fillTriangle);
 #pragma endregion
 
 #pragma region テキスト描画関数
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setCursor_obj, 1, 2, setCursor);
-// static MP_DEFINE_CONST_FUN_OBJ_1(setCursor_obj, setCursor);
-static MP_DEFINE_CONST_FUN_OBJ_1(print_obj, print);
-static MP_DEFINE_CONST_FUN_OBJ_1(setTextWrap_obj, setTextWrap);
-static MP_DEFINE_CONST_FUN_OBJ_1(setTextForegroundColor_obj, setTextForegroundColor);
-static MP_DEFINE_CONST_FUN_OBJ_1(setTextBackgroundColor_obj, setTextBackgroundColor);
-static MP_DEFINE_CONST_FUN_OBJ_2(setTextColor_obj, setTextColor);
-static MP_DEFINE_CONST_FUN_OBJ_1(setTextSize_obj, setTextSize);
-static MP_DEFINE_CONST_FUN_OBJ_1(setKanjiMode_obj, setKanjiMode);
-static MP_DEFINE_CONST_FUN_OBJ_2(setKanjiFont_obj, setKanjiFont);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(setCursor_obj, 2, 3, setCursor);
+static MP_DEFINE_CONST_FUN_OBJ_2(print_obj, print);
+static MP_DEFINE_CONST_FUN_OBJ_2(setTextWrap_obj, setTextWrap);
+static MP_DEFINE_CONST_FUN_OBJ_2(setTextForegroundColor_obj, setTextForegroundColor);
+static MP_DEFINE_CONST_FUN_OBJ_2(setTextBackgroundColor_obj, setTextBackgroundColor);
+static MP_DEFINE_CONST_FUN_OBJ_3(setTextColor_obj, setTextColor);
+static MP_DEFINE_CONST_FUN_OBJ_2(setTextSize_obj, setTextSize);
+static MP_DEFINE_CONST_FUN_OBJ_2(setKanjiMode_obj, setKanjiMode);
+static MP_DEFINE_CONST_FUN_OBJ_3(setKanjiFont_obj, setKanjiFont);
 #pragma endregion
 
 #pragma region ビットマップ関数
-static MP_DEFINE_CONST_FUN_OBJ_2(drawBitmap_obj, drawBitmap);
-static MP_DEFINE_CONST_FUN_OBJ_3(drawBitmapWithKeyColor_obj, drawBitmapWithKeyColor);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawBitmap_obj, drawBitmap);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawBitmapWithKeyColor_obj, 4, 4, drawBitmapWithKeyColor);
+// static MP_DEFINE_CONST_FUN_OBJ_4(drawBitmapWithKeyColor_obj, drawBitmapWithKeyColor);
+static MP_DEFINE_CONST_FUN_OBJ_3(drawBitmapFromCanvas_obj, drawBitmapFromCanvas);
+#pragma endregion
+
+#pragma region キャンバス関数
+static MP_DEFINE_CONST_FUN_OBJ_1(createCanvas_obj, createCanvas);
+static MP_DEFINE_CONST_FUN_OBJ_1(deleteCanvas_obj, deleteCanvas);
+static MP_DEFINE_CONST_FUN_OBJ_2(setCanvasKeyColor_obj, setCanvasKeyColor);
+static MP_DEFINE_CONST_FUN_OBJ_1(resetCanvasKeyColor_obj, resetCanvasKeyColor);
+
 #pragma endregion
 
 static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
@@ -107,6 +117,13 @@ static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
 	// #pragma region テキスト描画関数
 	{MP_ROM_QSTR(MP_QSTR_drawBitmap), MP_ROM_PTR(&drawBitmap_obj)},
 	{MP_ROM_QSTR(MP_QSTR_drawBitmapWithKeyColor), MP_ROM_PTR(&drawBitmapWithKeyColor_obj)},
+	{MP_ROM_QSTR(MP_QSTR_drawBitmapFromCanvas), MP_ROM_PTR(&drawBitmapFromCanvas_obj)},
+
+	{MP_ROM_QSTR(MP_QSTR_createCanvas), MP_ROM_PTR(&createCanvas_obj)},
+	{MP_ROM_QSTR(MP_QSTR_deleteCanvas), MP_ROM_PTR(&deleteCanvas_obj)},
+	{MP_ROM_QSTR(MP_QSTR_setCanvasKeyColor), MP_ROM_PTR(&setCanvasKeyColor_obj)},
+	{MP_ROM_QSTR(MP_QSTR_resetCanvasKeyColor), MP_ROM_PTR(&resetCanvasKeyColor_obj)},
+	// #pragma endregion
 
 	// #pragma ednregion
 };
