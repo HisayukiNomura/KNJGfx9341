@@ -118,6 +118,10 @@ int getTextByteLen(Adafruit_ILI9341 tft, const char* Text, int width = 0, int he
 /// @param timeout_ms 　タイムアウトまでの時間
 /// @param message 　表示するメッセージ。省略するとメッセージ無し
 /// @return タイムアウト終了した場合にはtrueを返す。タッチした場合にはfalseを返す。
+#define TOUCHX_MIN 432
+#define TOUCHX_MAX 3773
+#define TOUCHY_MIN 374
+#define TOUCHY_MAX 3638
 bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int timeout_ms, const char* message = nullptr)
 {
 	absolute_time_t start_time = get_absolute_time(); // 開始時間を取得
@@ -141,8 +145,8 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 		if (ts.touched()) {
 			touchCount++;
 			TS_Point tPoint = ts.getPoint();                          // タッチ座標を取得
-			int16_t x = (tPoint.x - 400) * TFT_WIDTH / (4095 - 550);  // タッチx座標をTFT画面の座標に換算
-			int16_t y = (tPoint.y - 230) * TFT_HEIGHT / (4095 - 420); // タッチy座標をTFT画面の座標に換算
+			int16_t x = (tPoint.x - TOUCHX_MIN) * TFT_WIDTH / (TOUCHX_MAX - TOUCHX_MIN); // タッチx座標をTFT画面の座標に換算
+			int16_t y = (tPoint.y - TOUCHY_MIN) * TFT_HEIGHT / (TOUCHY_MAX - TOUCHY_MIN); // タッチy座標をTFT画面の座標に換算
 
 			// 円の連続で線を描画
 			tft.drawCircle(x, y, touchCount * 2, rand() % 0xFFFF); // タッチ座標に塗り潰し円を描画

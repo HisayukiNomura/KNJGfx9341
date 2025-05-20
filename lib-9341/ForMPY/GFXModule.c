@@ -8,16 +8,12 @@
 
 // #pragma region 初期化・設定関数
 static MP_DEFINE_CONST_FUN_OBJ_1(initHW_obj, initHW);
-static MP_DEFINE_CONST_FUN_OBJ_2(initTouchHW_obj, initTouchHW);
 static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultKanjiFont_obj, loadDefaultKanjiFont);
 static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultAsciiFont_obj, loadDefaultAsciiFont);
 static MP_DEFINE_CONST_FUN_OBJ_1(setDebugMode_obj, setDebugMode);
 static MP_DEFINE_CONST_FUN_OBJ_1(getTypeName_obj, getTypeName);
 static MP_DEFINE_CONST_FUN_OBJ_1(setRotation_obj, setRotation);
-static MP_DEFINE_CONST_FUN_OBJ_1(setTouchRotation_obj, setTouchRotation);
 static MP_DEFINE_CONST_FUN_OBJ_1(displaySleep_obj, displaySleep);
-static MP_DEFINE_CONST_FUN_OBJ_0(beginTouch_obj, beginTouch);
-static MP_DEFINE_CONST_FUN_OBJ_0(isTouch_obj, isTouch);
 // #pragma endregion
 //  基本描画関数 static MP_DEFINE_CONST_FUN_OBJ_2(_obj, );
 
@@ -67,7 +63,16 @@ static MP_DEFINE_CONST_FUN_OBJ_1(createCanvas_obj, createCanvas);
 static MP_DEFINE_CONST_FUN_OBJ_1(deleteCanvas_obj, deleteCanvas);
 static MP_DEFINE_CONST_FUN_OBJ_2(setCanvasKeyColor_obj, setCanvasKeyColor);
 static MP_DEFINE_CONST_FUN_OBJ_1(resetCanvasKeyColor_obj, resetCanvasKeyColor);
+#pragma endregion
 
+#pragma region タッチ関連
+static MP_DEFINE_CONST_FUN_OBJ_2(initTouchHW_obj, initTouchHW);
+static MP_DEFINE_CONST_FUN_OBJ_1(setTouchCalibrationValue_obj, setTouchCalibrationValue);
+static MP_DEFINE_CONST_FUN_OBJ_0(beginTouch_obj, beginTouch);
+static MP_DEFINE_CONST_FUN_OBJ_0(isTouch_obj, isTouch);
+static MP_DEFINE_CONST_FUN_OBJ_1(setTouchRotation_obj, setTouchRotation);
+static MP_DEFINE_CONST_FUN_OBJ_0(getTouchRawXYZ_obj, getTouchRawXYZ);
+static MP_DEFINE_CONST_FUN_OBJ_0(getTouchXY_obj, getTouchXY);
 #pragma endregion
 
 static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
@@ -76,17 +81,13 @@ static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
 	//	{MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_KNJGfx)},
 	// 初期化関数
 	{MP_ROM_QSTR(MP_QSTR_initHW), MP_ROM_PTR(&initHW_obj)},
-	{MP_ROM_QSTR(MP_QSTR_initTouchHW), MP_ROM_PTR(&initTouchHW_obj)},
 
 	{MP_ROM_QSTR(MP_QSTR_loadDefaultKanjiFont), MP_ROM_PTR(&loadDefaultKanjiFont_obj)},
 	{MP_ROM_QSTR(MP_QSTR_loadDefaultAsciiFont), MP_ROM_PTR(&loadDefaultAsciiFont_obj)},
 	{MP_ROM_QSTR(MP_QSTR_setDebugMode), MP_ROM_PTR(&setDebugMode_obj)},
 	{MP_ROM_QSTR(MP_QSTR_getTypeName), MP_ROM_PTR(&getTypeName_obj)},
 	{MP_ROM_QSTR(MP_QSTR_setRotation), MP_ROM_PTR(&setRotation_obj)},
-	{MP_ROM_QSTR(MP_QSTR_setTouchRotation), MP_ROM_PTR(&setTouchRotation_obj)},
 	{MP_ROM_QSTR(MP_QSTR_displaySleep), MP_ROM_PTR(&displaySleep_obj)},
-	{MP_ROM_QSTR(MP_QSTR_beginTouch), MP_ROM_PTR(&beginTouch_obj)},
-	{MP_ROM_QSTR(MP_QSTR_isTouch), MP_ROM_PTR(&isTouch_obj)},
 	// #pragma endregion
 
 	// #pragma region 特殊描画関数
@@ -133,7 +134,13 @@ static const mp_rom_map_elem_t KNJGfx_globals_table[] = {
 	{MP_ROM_QSTR(MP_QSTR_setCanvasKeyColor), MP_ROM_PTR(&setCanvasKeyColor_obj)},
 	{MP_ROM_QSTR(MP_QSTR_resetCanvasKeyColor), MP_ROM_PTR(&resetCanvasKeyColor_obj)},
 	// #pragma endregion
-
+	{MP_ROM_QSTR(MP_QSTR_initTouchHW), MP_ROM_PTR(&initTouchHW_obj)},
+	{MP_ROM_QSTR(MP_QSTR_beginTouch), MP_ROM_PTR(&beginTouch_obj)},
+	{MP_ROM_QSTR(MP_QSTR_isTouch), MP_ROM_PTR(&isTouch_obj)},
+	{MP_ROM_QSTR(MP_QSTR_setTouchRotation), MP_ROM_PTR(&setTouchRotation_obj)},
+	{MP_ROM_QSTR(MP_QSTR_setTouchCalibrationValue), MP_ROM_PTR(&setTouchCalibrationValue_obj)},
+	{MP_ROM_QSTR(MP_QSTR_getTouchRawXYZ), MP_ROM_PTR(&getTouchRawXYZ_obj)},
+	{MP_ROM_QSTR(MP_QSTR_getTouchXY), MP_ROM_PTR(&getTouchXY_obj)},
 	// #pragma ednregion
 };
 

@@ -67,7 +67,10 @@ extern mp_obj_t resetCanvasKeyColor(mp_obj_t a_canvasID);
 
 #pragma region タッチ関数
 extern mp_obj_t initTouchHW(mp_obj_t a_CS, mp_obj_t a_IRQ);
+extern mp_obj_t setTouchCalibrationValue(mp_obj_t a_minmax);
 extern mp_obj_t setTouchRotation(mp_obj_t a_Rotation);
 extern mp_obj_t beginTouch();
 extern mp_obj_t isTouch();
+extern mp_obj_t getTouchRawXYZ();
+extern mp_obj_t getTouchXY();
 #pragma endregion

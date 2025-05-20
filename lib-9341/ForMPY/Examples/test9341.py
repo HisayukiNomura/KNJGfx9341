@@ -81,23 +81,69 @@ def getRandXYWH():
     H = y2 - y1  # 高さ
     return (x1, y1, W, H)
     
+    
+def Touch10():
+    count = 0
+    minx = 99999
+    miny = 99999
+    maxx = 0
+    maxy = 0
+    
+    while True:
+        if KNJGfx.isTouch():
+            rawpos = KNJGfx.getTouchRawXYZ()
+            pos = KNJGfx.getTouchXY()
+            KNJGfx.fillCircle(0,(pos[0],pos[1],5),random.randint(0,0xFFFF))
+            minx = rawpos[0] if (minx > rawpos[0]) else minx
+            miny = rawpos[1] if (miny > rawpos[1]) else miny
+            maxx = rawpos[0] if (maxx < rawpos[0]) else maxx
+            maxy = rawpos[1] if (maxy < rawpos[1]) else maxy
+            count = count + 1
+        #print(f"{count}") 
+        if count > 10 :
+            return [minx,miny,maxx,maxy]
+        time.sleep(0.1)    
+#
+# タッチパネルのキャリブレーションが必要になったら、これを呼びだして値を取得、スクリプトに反映させる
+#
+def calibrateTouch():
+    
+    KNJGfx.fillScreen(0, 0x00FF)
+    KNJGfx.setCursor(0,30,100)
+    KNJGfx.print(0, "Tap Upper Left corner few Times")
+    rawPos = Touch10()
+    #print(f"minx = {rawPos[0]}, miny = {rawPos[1]}")
+    minX = rawPos[0]
+    minY = rawPos[1]
+    KNJGfx.fillScreen(0, 0x00FF)
+    KNJGfx.setCursor(0,30,100)
+    KNJGfx.print(0, "Tap Bottom right corner few Times")
+    rawPos = Touch10()
+    #print(f"maxx = {rawPos[2]}, maxy = {rawPos[3]}")
+    maxX = rawPos[2]
+    maxY = rawPos[3]
 
-
-
-
-#printFlashSize()
-
+    print (f"min-max : {minX},{minY} - {maxX},{maxY}")
+    KNJGfx.setTouchCalibrationValue((minX,minY,maxX,maxY))
+    
 printFlashSize()
     
 KNJGfx.setDebugMode(1)
 KNJGfx.initHW((0,20,22,18,19,21,0))
 KNJGfx.setRotation(3)
-
+time.sleep(0.1)
 
 KNJGfx.fillScreen(0, 0x00FF)
 
+
+
+
+
+        
+
 KNJGfx.loadDefaultKanjiFont(0)
 KNJGfx.setCursor(0,10,30)
+
 KNJGfx.print(0,"TFTへの直接描画：各種図形など")
 time.sleep(5)
 
@@ -270,3 +316,28 @@ KNJGfx.deleteCanvas(textID1)
 KNJGfx.deleteCanvas(textID2)
 KNJGfx.deleteCanvas(hanaID1)
 KNJGfx.deleteCanvas(hanaID2)
+
+KNJGfx.fillScreen(0,0x1212)
+KNJGfx.loadDefaultKanjiFont(0)
+KNJGfx.setCursor(0,10,30)
+KNJGfx.print(0,"タッチパネル")
+
+KNJGfx.initTouchHW(17,255)
+KNJGfx.setTouchRotation(3)
+KNJGfx.beginTouch()
+
+# タッチパネルのキャリブレーション値を設定する。
+# 購入した液晶に現状合わせの数字が入っている。タッチするポイントと
+# 座標が大きくズレる用なら、calibrateTouchを呼びだして、キャリブレーションを
+# 実行する。
+# min-max : {minX},{minY} - {maxX},{maxY}") で、４つの値が表示されるので
+# その値を指定すること。
+# calibrateTouch()
+KNJGfx.setTouchCalibrationValue((432,374,3773,3638))
+while True:
+    if KNJGfx.isTouch():
+        pos = KNJGfx.getTouchXY()
+        
+        KNJGfx.fillCircle(0,(pos[0],pos[1],5),0xFFFF)
+    time.sleep(0.1)
+

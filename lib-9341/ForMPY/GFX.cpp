@@ -1048,6 +1048,12 @@ extern "C" {
 #pragma region タッチ関連
 	XPT2046_Touchscreen* pTouch;
 	XPT2046_Touchscreen ts;
+
+	uint16_t minX;
+	uint16_t minY;
+	uint16_t maxX;
+	uint16_t maxY;
+
 	mp_obj_t initTouchHW(mp_obj_t a_CS, mp_obj_t a_IRQ)
 	{
 		pTouch = &ts;
@@ -1056,10 +1062,30 @@ extern "C" {
 		int iCS = mp_obj_get_int(a_CS);
 		int iIRQ = mp_obj_get_int(a_IRQ);
 		pTouch->constructObject(iCS, iIRQ);
+		minX = 432;
+		minY = 374;
+		maxX = 3773;
+		maxY = 3638;
+
 		msg_OnDebug("initTouchHW(%d,%d)\r\n", iCS, iIRQ);
+
 		return mp_obj_new_int(1);
 	}
 
+	mp_obj_t setTouchCalibrationValue(mp_obj_t minmax)
+	{
+		if (!mp_obj_is_type(minmax, &mp_type_tuple)) raise_mustTupple();
+		size_t len;
+		mp_obj_t* items;
+		mp_obj_tuple_get(minmax, &len, &items);
+		if (len != 4) raise_must4Tupple();
+		minX = mp_obj_get_int(items[0]);
+		minY = mp_obj_get_int(items[1]);
+		maxX = mp_obj_get_int(items[2]);
+		maxY = mp_obj_get_int(items[3]);
+		msg_OnDebug("setTouchCalibrationValue(%d,%d,%d,%d)\r\n", minX, minY, maxX, maxY);
+		return mp_obj_new_int(1);
+	}
 	mp_obj_t setTouchRotation(mp_obj_t a_Rotation)
 	{
 		if (!mp_obj_is_int(a_Rotation)) raise_mustInt();
@@ -1082,6 +1108,31 @@ extern "C" {
 		bool tf = pTouch->touched();
 		msg_OnDebug("isTouch() -> %s\r\n", tf ? "True" : "False");
 		return mp_obj_new_bool(tf);
+	}
+
+	mp_obj_t getTouchRawXYZ()
+	{
+		TS_Point tPoint;
+		tPoint = pTouch->getPoint();
+		msg_OnDebug("getTouchRawXYZ() -> (%d,%d,%d)\r\n", tPoint.x, tPoint.y, tPoint.z);
+		mp_obj_t tuple_items[3]; // タプルの要素を格納する配列
+		tuple_items[0] = mp_obj_new_int(tPoint.x);
+		tuple_items[1] = mp_obj_new_int(tPoint.y);
+		tuple_items[2] = mp_obj_new_int(tPoint.z);
+		return mp_obj_new_tuple(3, tuple_items);
+	}
+	mp_obj_t getTouchXY()
+	{
+		TS_Point tPoint;
+		tPoint = pTouch->getPoint();
+		uint16_t x = (tPoint.x - minX) * pTFT->width() / (maxX - minX);
+		uint16_t y = (tPoint.y - minY) * pTFT->height() / (maxY - minY);
+		msg_OnDebug("getTouchXY() -> (%d,%d)\r\n", x, y);
+
+		mp_obj_t tuple_items[2]; // タプルの要素を格納する配列
+		tuple_items[0] = mp_obj_new_int(x);
+		tuple_items[1] = mp_obj_new_int(y);
+		return mp_obj_new_tuple(2, tuple_items);
 	}
 #pragma endregion
 
