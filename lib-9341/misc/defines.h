@@ -68,7 +68,7 @@ constexpr uint64_t __bitset(const int (&a)[N], size_t i = 0U) {
 
 	/// 漢字関連のシンボル
 	#define TFT_FORCE_HANKANA  // Unicodeの半角カナ文字を強制的に１バイトカナとして扱う
-
+	#pragma GCC diagnostic ignored "-Wunused-variable"
 	#pragma GCC optimize("O0")
 #else
 	/// 漢字関連のシンボル

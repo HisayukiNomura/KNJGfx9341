@@ -33,7 +33,7 @@ endif()
 
 # check board type
 # ====================================================================================
-set(PICO_BOARD pico2 CACHE STRING "Board type") 
+set(PICO_BOARD pico_w CACHE STRING "Board type") 
 
 if (NOT DEFINED PICO_BOARD)
     message(FATAL_ERROR "PICO_BOARD is not defined. Make sure to configure CMakeLists according to the target board.")
@@ -79,12 +79,10 @@ set(SRC_FILES
                             lib-9341/Adafruit_ILI9341/Adafruit_ILI9341.cpp
                             lib-9341/spi/spi.cpp
                             lib-9341/Kanji/KanjiHelper.cpp
-                            lib-9341/core/PIOProgram.cpp
                             lib-9341/core/delay.cpp
                             lib-9341/core/_freertos.cpp
                             lib-9341/core/CoreMutex.cpp
                             lib-9341/core/Print.cpp
-                            lib-9341/core/RP2040Support.cpp
                             lib-9341/core/stdlib_noniso.cpp
                             lib-9341/core/WString.cpp
                             lib-9341/core/wiring_private.cpp
@@ -137,7 +135,7 @@ target_include_directories(KNJGfx9341 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_GFX_Library/Fonts
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_BusIO
-        ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_IL9341
+        ${CMAKE_CURRENT_LIST_DIR}/lib-9341/Adafruit_ILI9341
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/core
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/spi
         ${CMAKE_CURRENT_LIST_DIR}/lib-9341/variants

@@ -31,9 +31,7 @@
 #include "SPIHelper.h"
 #endif
 
-#ifdef STD_SDK
 namespace ardPort::spi {
-#endif
 
 
 /**
@@ -275,8 +273,6 @@ private:
 };
 
 
-#ifdef STD_SDK
 }
-#endif
 extern ardPort::spi::SPIClassRP2040 SPI;
 extern ardPort::spi::SPIClassRP2040 SPI1;
