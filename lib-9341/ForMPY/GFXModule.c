@@ -6,7 +6,8 @@
 // Define a Python reference to the function we'll make available.
 // See example.cpp for the definition.
 
-// #pragma region 初期化・設定関数
+
+//#pragma region 初期化・設定関数
 static MP_DEFINE_CONST_FUN_OBJ_1(initHW_obj, initHW);
 static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultKanjiFont_obj, loadDefaultKanjiFont);
 static MP_DEFINE_CONST_FUN_OBJ_1(loadDefaultAsciiFont_obj, loadDefaultAsciiFont);
@@ -53,7 +54,7 @@ static MP_DEFINE_CONST_FUN_OBJ_3(setKanjiFont_obj, setKanjiFont);
 
 #pragma region ビットマップ関数
 static MP_DEFINE_CONST_FUN_OBJ_3(drawBitmap_obj, drawBitmap);
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawBitmapWithKeyColor_obj, 4, 4, drawBitmapWithKeyColor);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(drawBitmapWithKeyColor_obj, 4,4,drawBitmapWithKeyColor);
 // static MP_DEFINE_CONST_FUN_OBJ_4(drawBitmapWithKeyColor_obj, drawBitmapWithKeyColor);
 static MP_DEFINE_CONST_FUN_OBJ_3(drawBitmapFromCanvas_obj, drawBitmapFromCanvas);
 #pragma endregion
@@ -151,3 +152,6 @@ const mp_obj_module_t mp_module_KNJGfx = {
 	.globals = (mp_obj_dict_t*)&KNJGfx_module_globals,
 };
 MP_REGISTER_MODULE(MP_QSTR_KNJGfx, mp_module_KNJGfx);
+
+
+

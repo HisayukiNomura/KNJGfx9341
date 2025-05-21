@@ -27,11 +27,11 @@
 
 #include "../Kanji/Fonts/KanjiFontStructure.h"
 
-// #include "../Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc"
+//#include "../Kanji/Fonts/JF-Dot-Shinonome12_12x12_LEVEL1.inc"
 // #include "../Kanji/Fonts/JF-Dot-Shinonome14_14x14_LEVEL1.inc"
 // #include "../Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"
 #include "../Kanji/Fonts/JF-Dot-Shinonome16_16x16_LEVEL1.inc"
-// #include "../Kanji/Fonts/ipaexg_24x24_ALL.inc"
+//#include "../Kanji/Fonts/ipam_24x24_LEVEL1.inc"
 
 #include "../Adafruit_GFX_Library/Fonts/FreeSerif12pt7b.h"
 extern "C" {
@@ -191,6 +191,9 @@ extern "C" {
 		return mp_obj_new_int(1);
 	}
 
+
+
+
 	/// @brief デバッグモードの設定
 	/// @param a_level デバッグモードのレベル。0は無効、1は有効
 	/// @return 常に１
@@ -252,6 +255,8 @@ extern "C" {
 		return mp_obj_new_int(1);
 	}
 
+
+
 	/// @brief 画面のスリープモード
 	/// @param a_tf スリープモードに入るときはtrue、出るときはfalse
 	/// @return
@@ -264,6 +269,7 @@ extern "C" {
 		return mp_obj_new_int(1);
 	}
 
+	
 #pragma endregion
 
 #pragma region 特殊描画関数
@@ -1135,5 +1141,7 @@ extern "C" {
 		return mp_obj_new_tuple(2, tuple_items);
 	}
 #pragma endregion
+
+
 
 } //

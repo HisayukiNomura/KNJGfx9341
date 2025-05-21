@@ -477,7 +477,7 @@ namespace ardPort {
 	class GFXcanvas16 : public Adafruit_GFX
 	{
 	  public:
-		GFXcanvas16();												// デフォルトコンストラクタ	
+		GFXcanvas16();                                                     // デフォルトコンストラクタ
 		GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer = true);  // コンストラクタ
 		~GFXcanvas16(void);                                                // デストラクタ
 		GFXcanvas16(const GFXcanvas16* pSrc, bool allocate_buffer = true); // コピーコンストラクタ

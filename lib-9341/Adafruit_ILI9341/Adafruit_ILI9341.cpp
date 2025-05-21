@@ -98,8 +98,10 @@ using namespace ardPort;
 #define MADCTL_BGR 0x08 ///< Blue-Green-Red pixel order
 #define MADCTL_MH 0x04	///< LCD refresh right to left
 #ifdef MICROPY_BUILD_TYPE
-extern "C" void msg_OnDebug(const char* format, ...);
+	#define msg_OnDebug(fmt, ...)
+//extern "C" void msg_OnDebug(const char* format, ...);
 #endif
+
 /// @brief デフォルトコンストラクタ。MicroPythonから使うときのために用意
 Adafruit_ILI9341::Adafruit_ILI9341() : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, 0, 0, 0, 0, -1, -1)
 {

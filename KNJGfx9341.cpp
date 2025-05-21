@@ -72,11 +72,11 @@ using namespace ardPort::spi;
 #include "KanjiHelper.h"
 
 // 日本語フォントのインストール
-#include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc" // 東雲12x12、JIS第1+2+記号その他
+// #include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_ALL.inc" // 東雲12x12、JIS第1+2+記号その他
 // #include "Kanji/Fonts/misaki_gothic_2nd_08x08_ALL.inc"		// 美咲8x8、JIS第1+2+記号その他
 // #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_ALL.inc"		// 東雲14x14、JIS第1+2+記号その他
 // #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_ALL.inc"		// 東雲16x16、JIS第1+2+記号その他
-// #include "Kanji/Fonts/ipaexg_24x24_ALL.inc"								// IPA24x24、JIS第1+2+記号その他
+ #include "Kanji/Fonts/ipag_24x24_LEVEL1.inc"								// IPA24x24、JIS第1+2+記号その他
 
 #include "pictBackground.data" // 背景データ
 
@@ -800,7 +800,8 @@ void demoCanvas(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts)
 		pCanvas->setBuffer(screenbuffer);                                                // バッファの設定
 		pCanvas->fillScreen(STDCOLOR.DARK_BLUE);                                         // 背景色
 		pCanvas->setTextColor(STDCOLOR.WHITE, STDCOLOR.DARK_BLUE);                       // テキスト色
-		pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap); // 漢字フォントの設定
+		// pCanvas->setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap); // 漢字フォントの設定
+		pCanvas->setFont(ipag_24x24_LEVEL1, ipag_24x24_LEVEL1_bitmap); // 漢字フォントの設定
 		pCanvas->setCursor(30, 0);
 		pCanvas->print("キャンバス経由で描画");
 
@@ -1079,8 +1080,9 @@ int main()
 	tft.useWindowMode(true);
 
 	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
+	tft.setFont(ipag_24x24_LEVEL1, ipag_24x24_LEVEL1_bitmap); // 漢字フォントの設定
 
-	tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap); // 漢字フォントの設定
+	//tft.setFont(JFDotShinonome12_12x12_ALL, JFDotShinonome12_12x12_ALL_bitmap); // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome16_16x16_ALL, JFDotShinonome16_16x16_ALL_bitmap);  // 漢字フォントの設定
 	// tft.setFont(JFDotShinonome14_14x14_ALL, JFDotShinonome14_14x14_ALL_bitmap);
 	// tft.setFont(ipaexg_24x24_ALL,ipaexg_24x24_ALL_bitmap);  // 漢字フォントの設定
