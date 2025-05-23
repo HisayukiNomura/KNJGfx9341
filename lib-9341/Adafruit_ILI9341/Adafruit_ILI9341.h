@@ -175,13 +175,27 @@ namespace ardPort
 		RIM_RGB18OR16BIT = 0,
 		RIM_RBG6BIT = 1,
 	};
-	/**************************************************************************/
 	/*!
-	@brief Class to manage hardware interface with ILI9341 chipset (also seems to
-	work with ILI9340)
-	*/
-	/**************************************************************************/
+	  @brief
+		ILI9341コントローラ搭載TFTディスプレイ用のドライバクラス。
 
+	  @details
+		Adafruit_ILI9341クラスは、Adafruit_SPITFTクラスを継承し、ILI9341コントローラを搭載した
+		各種カラーTFTディスプレイ（SPI/パラレル接続対応）を制御するための機能を提供します。
+		このクラスは、ディスプレイの初期化、描画、スクロール、回転、色反転、アドレスウィンドウ設定など
+		ILI9341特有の制御コマンドをラップし、簡単に扱えるようにしています。
+
+		Adafruit_ILI9341はAdafruit_SPITFTを継承し、さらにAdafruit_SPITFTはAdafruit_GFXを継承しているため、
+		Adafruit_GFXで提供される全てのグラフィックスAPI（drawPixel, drawLine, drawRect, drawBitmap, setCursor, print等）が
+		Adafruit_ILI9341のインスタンスでもそのまま利用できます。
+		これは、Adafruit_GFXの仮想関数を本クラスや親クラスで実装しているため、すべての描画命令が
+		ILI9341ディスプレイ固有の処理に適切に転送される仕組みになっているためです。
+
+		また、SPIやパラレルの低レベル制御、DMA転送、ピクセル単位の高速描画、バッファ管理など
+		ディスプレイ制御に必要な共通機能も利用できます。
+		これにより、アプリケーション側はAdafruit_GFXのAPIを使うだけで、ILI9341ディスプレイを
+		簡単かつ高速に制御できます。
+	*/
 	class Adafruit_ILI9341 : public Adafruit_SPITFT
 	{
 	private:

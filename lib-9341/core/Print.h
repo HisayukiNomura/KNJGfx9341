@@ -43,7 +43,26 @@
 namespace ardPort::core {
 
 #endif
+	/*!
+	  @brief
+		文字列や数値などを出力するための基底クラス。
 
+	  @details
+		Printクラスは、print()やprintln()などのテキスト出力機能を提供する抽象基底クラスです。
+		Arduino環境の多くのクラス（シリアル通信、ディスプレイ、SDカードなど）はこのPrintクラスを継承しており、
+		共通の出力インターフェースを実現しています。
+
+		Printクラスは、文字列や数値、浮動小数点数、Printableインターフェースを実装したオブジェクトなどを
+		print()/println()で出力できるようにし、さらにprintfやUTF-8（漢字）対応の拡張も含まれています。
+		write()メソッドは純粋仮想関数として定義されており、派生クラスで実際の出力先（ディスプレイ、シリアルなど）に
+		応じて実装されます。
+
+		Adafruit_GFXクラスはPrintクラスを継承しているため、Adafruit_GFXを継承したディスプレイクラス
+		（例：Adafruit_ILI9341やAdafruit_SPITFTなど）でもprint()/println()によるテキスト出力が可能です。
+		これは、Printクラスのインターフェースを通じて、ディスプレイ上に直接テキストや数値を描画できるためです。
+
+		この設計により、ユーザーはSerialやディスプレイなど出力先を意識せず、同じAPIでテキスト出力を行うことができます。
+	*/
 	class Print {
 	   protected:
 		bool isKanji;  // 漢字フォントを使用するかのフラグ

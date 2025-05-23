@@ -116,19 +116,33 @@ namespace ardPort {
 
 	// CLASS DEFINITION --------------------------------------------------------
 
-	/*!
-	  @brief  Adafruit_SPITFT is an intermediary class between Adafruit_GFX
-			  and various hardware-specific subclasses for different displays.
-			  It handles certain operations that are common to a range of
-			  displays (address window, area fills, etc.). Originally these were
-			  all color TFT displays interfaced via SPI, but it's since expanded
-			  to include color OLEDs and parallel-interfaced TFTs. THE NAME HAS
-			  BEEN KEPT TO AVOID BREAKING A LOT OF SUBCLASSES AND EXAMPLE CODE.
-			  Many of the class member functions similarly live on with names
-			  that don't necessarily accurately describe what they're doing,
-			  again to avoid breaking a lot of other code. If in doubt, read
-			  the comments.
-	*/
+
+/*!
+  @brief
+	SPIやパラレル接続のカラーTFT・OLEDディスプレイ用の中間抽象クラス。
+
+  @details
+	Adafruit_SPITFTは、Adafruit_GFXクラスを継承し、SPIやパラレルインターフェースを持つ
+	各種カラーTFTディスプレイやOLEDディスプレイのための共通処理（アドレスウィンドウ設定、
+	高速描画、DMA転送、ピクセル単位の描画、バッファ管理など）を提供する中間クラスです。
+
+	このクラス自体は抽象クラスであり、実際のディスプレイドライバ（例：ILI9341, ST7735など）は
+	Adafruit_SPITFTを継承してハードウェア固有の初期化や描画処理を実装します。
+
+	Adafruit_SPITFTはAdafruit_GFXを継承しているため、Adafruit_GFXで提供される
+	すべてのグラフィックスAPI（drawPixel, drawLine, drawRect, drawBitmap, setCursor, print等）が
+	このクラスのインスタンスでもそのまま利用できます。
+	これは、Adafruit_GFXの仮想関数を本クラスやサブクラスで実装することで、
+	すべての描画命令がディスプレイ固有の処理に適切に転送されるためです。
+
+	さらに、Adafruit_SPITFTはSPIやパラレルの低レベル制御、DMA転送、ピクセル単位の高速描画、
+	バッファ管理など、ディスプレイ制御に必要な共通機能をまとめて提供します。
+	これにより、サブクラスはハードウェア固有の部分だけを実装すればよく、アプリケーション側は
+	Adafruit_GFXのAPIを使うだけで多様なディスプレイを簡単に扱うことができます。
+
+	なお、クラス名や一部の関数名は後方互換性のために残されており、実際にはパラレル接続や
+	カラーOLEDにも対応しています。
+*/
 	class Adafruit_SPITFT : public ardPort::Adafruit_GFX
 	{
 	  public:
