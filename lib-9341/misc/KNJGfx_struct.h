@@ -3,6 +3,13 @@
 #include <cstdint>
 namespace ardPort {
 
+	/**
+	 * @brief 標準カラー定数をまとめたクラス
+	 * @details
+	 * 16ビットRGB565形式で、明るい色・標準色・暗い色・超暗い色などのカラー定数を提供します。
+	 * グラフィックス描画時の色指定に利用できます。
+	 * 例: tft.fillScreen(STDCOLOR.BLACK); のようにSTDCOLOR経由で色定数を指定します。
+	 */
 	class {
 	   public:
 		// 明るい色
@@ -53,6 +60,12 @@ namespace ardPort {
 
 	} STDCOLOR;
 
+	/**
+	 * @brief TFTディスプレイの回転定数クラス
+	 * @details
+	 * TFTディスプレイの回転方向を指定するための定数をまとめています。
+	 * tft.setRotation(TFTROTATION.ROTATE_90); のように使用します。
+	 */
 	class {
 	   public:
 		const uint8_t NORMAL = 0;      // 接続端子を下
@@ -109,7 +122,12 @@ namespace ardPort {
 			setxyxy(rand() % xMax, rand() % yMax, rand() % xMax, rand() % yMax);
 		}
 	};
-
+	/**
+	 * @brief 2次元座標（x, y）を表す構造体
+	 * @details
+	 * 点や位置を管理します。Adafruit_GFX系のdrawPixelやdrawLineなどのメソッドでxy型引数として利用できます。
+	 * 例: tft.drawPixel(xy, color);
+	 */
 	class XY {
 	   public:
 		int16_t x;

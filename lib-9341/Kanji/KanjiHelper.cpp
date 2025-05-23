@@ -81,7 +81,15 @@ const KanjiData *KanjiHelper::FindKanji(uint32_t unicode) {
 const KanjiData *KanjiHelper::FindAscii(uint8_t targetCodeAscii) {
 	return (KanjiData *)&pKanjiData[targetCodeAscii];
 }
-
+/*!
+  @brief  指定したフォントデータに対応するビットマップデータへのポインタを取得する。
+  @param  pFont  取得対象のフォントデータ（KanjiData構造体へのポインタ）
+  @return ビットマップデータへのポインタ。pFontがNULLの場合はNULLを返す。
+  @details
+	フォントデータ（KanjiData構造体）のoffsetBMPメンバをもとに、ビットマップデータ領域の
+	該当位置へのポインタを返します。pFontがNULLの場合はNULLを返します。
+	取得したポインタは、文字描画時にビットマップデータとして利用できます。
+*/
 const uint8_t *KanjiHelper::getBmpData(const KanjiData *pFont) {
 	if (pFont == NULL) {
 		return NULL;

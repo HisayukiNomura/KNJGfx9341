@@ -115,6 +115,10 @@ inline uint8_t* pgm_read_bitmap_ptr(const GFXfont* gfxFont)
 #endif
 
 #pragma region コンストラクタ
+/*!
+   @brief  デフォルトコンストラクタ。
+   @details データ部分は別途constructObject()を呼び出して初期化する必要がある。
+*/
 Adafruit_GFX::Adafruit_GFX() :
 	WIDTH(0),
 	HEIGHT(0)
@@ -122,12 +126,12 @@ Adafruit_GFX::Adafruit_GFX() :
 }
 /**************************************************************************/
 /*!
-   @brief    Instatiate a GFX context for graphics! Can only be done by a
-   superclass
-   @param    w   Display width, in pixels
-   @param    h   Display height, in pixels
+  @brief   グラフィックス用のGFXコンテキストを生成します（スーパークラス専用）。
+  @param   w   ディスプレイの幅（ピクセル単位）
+  @param   h   ディスプレイの高さ（ピクセル単位）
 */
 /**************************************************************************/
+
 Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	WIDTH(w),
 	HEIGHT(h)
@@ -142,6 +146,12 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) :
 	_cp437 = false;
 	gfxFont = NULL;
 }
+/*!
+@bieif  データ部分を初期化する。
+@param w   ディスプレイの幅（ピクセル単位）
+@param h   ディスプレイの高さ（ピクセル単位）
+@details デフォルトコンストラクタを使用してインスタンスを生成した場合は、必ずこの関数を呼び出す必要がある。
+*/
 void Adafruit_GFX::constructObject(int16_t w, int16_t h)
 {
 	WIDTH = w;
@@ -160,12 +170,11 @@ void Adafruit_GFX::constructObject(int16_t w, int16_t h)
 
 #pragma region 設定関連
 
-/**************************************************************************/
 /*!
-	@brief      Set rotation setting for display
-	@param  x   0 thru 3 corresponding to 4 cardinal rotations
+  @brief   ディスプレイの回転設定を行います。
+  @param   x   0～3の値で、4方向の回転を指定
 */
-/**************************************************************************/
+
 void Adafruit_GFX::setRotation(uint8_t x)
 {
 	rotation = (x & 3);
@@ -219,12 +228,12 @@ void Adafruit_GFX::setFont(const KanjiData* a_pKanjiData, const uint8_t* a_pBmpD
 #pragma endregion
 
 #pragma region 特殊画面操作
-/**************************************************************************/
+
 /*!
-	@brief      Invert the display (ideally using built-in hardware command)
-	@param   i  True if you want to invert, false to make 'normal'
+  @brief   ディスプレイを反転表示にします（ハードウェアが対応している場合のみ）。
+  @param   i  trueで反転、falseで通常表示
+  @details 実際には、ハードウェア依存なのでAdafruit_ILI9341でオーバーロードされている
 */
-/**************************************************************************/
 void Adafruit_GFX::invertDisplay(bool i)
 {
 	// Do nothing, must be subclassed if supported by hardware
@@ -233,16 +242,15 @@ void Adafruit_GFX::invertDisplay(bool i)
 #pragma endregion
 
 #pragma region 描画機能
-/**************************************************************************/
 /*!
-   @brief    Write a line.  Bresenham's algorithm - thx wikpedia
-	@param    x0  Start point x coordinate
-	@param    y0  Start point y coordinate
-	@param    x1  End point x coordinate
-	@param    y1  End point y coordinate
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   線を描画します（Bresenhamのアルゴリズムを使用）。
+  @param   x0  開始点のx座標
+  @param   y0  開始点のy座標
+  @param   x1  終了点のx座標
+  @param   y1  終了点のy座標
+  @param   color  描画色（16ビットRGB565）
+  @details サブクラスで最適化する場合はオーバーライドしてください。
 */
-/**************************************************************************/
 void Adafruit_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 							 uint16_t color)
 {
@@ -287,36 +295,35 @@ void Adafruit_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Start a display-writing routine, overwrite in subclasses.
+  @brief   描画処理の開始。
+  @details 実際にはAdafruit_SPITFTでオーバーライドされている
 */
-/**************************************************************************/
 void Adafruit_GFX::startWrite() {}
 
-/**************************************************************************/
+
 /*!
-   @brief    Write a pixel, overwrite in subclasses if startWrite is defined!
-	@param   x   x coordinate
-	@param   y   y coordinate
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   ピクセルを描画します。startWriteを定義した場合はサブクラスでオーバーライドしてください。
+  @param   x     x座標
+  @param   y     y座標
+  @param   color 描画色（16ビットRGB565）
 */
-/**************************************************************************/
+
+
 void Adafruit_GFX::writePixel(int16_t x, int16_t y, uint16_t color)
 {
 	drawPixel(x, y, color);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Write a perfectly vertical line, overwrite in subclasses if
-   startWrite is defined!
-	@param    x   Top-most x coordinate
-	@param    y   Top-most y coordinate
-	@param    h   Height in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   垂直線を描画します。startWriteを定義した場合はサブクラスでオーバーライドしてください。
+  @param   x     線のx座標
+  @param   y     線の開始y座標
+  @param   h     線の長さ（ピクセル数）
+  @param   color 描画色（16ビットRGB565）
+  @details デフォルトではdrawFastVLineを呼び出します。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::writeFastVLine(int16_t x, int16_t y, int16_t h,
 								  uint16_t color)
 {
@@ -326,16 +333,15 @@ void Adafruit_GFX::writeFastVLine(int16_t x, int16_t y, int16_t h,
 	drawFastVLine(x, y, h, color);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Write a perfectly horizontal line, overwrite in subclasses if
-   startWrite is defined!
-	@param    x   Left-most x coordinate
-	@param    y   Left-most y coordinate
-	@param    w   Width in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   水平線を描画します。startWriteを定義した場合はサブクラスでオーバーライドしてください。
+  @param   x     線の開始x座標
+  @param   y     線のy座標
+  @param   w     線の長さ（ピクセル数）
+  @param   color 描画色（16ビットRGB565）
+  @details デフォルトではdrawFastHLineを呼び出します。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::writeFastHLine(int16_t x, int16_t y, int16_t w,
 								  uint16_t color)
 {
@@ -345,17 +351,15 @@ void Adafruit_GFX::writeFastHLine(int16_t x, int16_t y, int16_t w,
 	drawFastHLine(x, y, w, color);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Write a rectangle completely with one color, overwrite in
-   subclasses if startWrite is defined!
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    w   Width in pixels
-	@param    h   Height in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   矩形を塗りつぶします。startWriteを定義した場合はサブクラスでオーバーライドしてください。
+  @param   x     左上x座標
+  @param   y     左上y座標
+  @param   w     幅（ピクセル数）
+  @param   h     高さ（ピクセル数）
+  @param   color 塗りつぶし色（16ビットRGB565）
+  @details デフォルトではfillRectを呼び出します。
 */
-/**************************************************************************/
 void Adafruit_GFX::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 								 uint16_t color)
 {
@@ -363,24 +367,20 @@ void Adafruit_GFX::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 	fillRect(x, y, w, h, color);
 }
 
-/**************************************************************************/
 /*!
-   @brief    End a display-writing routine, overwrite in subclasses if
-   startWrite is defined!
+  @brief   描画処理の終了。startWriteを定義した場合はサブクラスでオーバーライドしてください。
 */
-/**************************************************************************/
 void Adafruit_GFX::endWrite() {}
 
-/**************************************************************************/
 /*!
-   @brief    Draw a perfectly vertical line (this is often optimized in a
-   subclass!)
-	@param    x   Top-most x coordinate
-	@param    y   Top-most y coordinate
-	@param    h   Height in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   垂直線を描画します。
+  @param   x   線のx座標（上端）
+  @param   y   線のy座標（上端）
+  @param   h   線の長さ（ピクセル数）
+  @param   color 描画色（16ビットRGB565）
+  @details サブクラスで最適化される場合があります。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h,
 								 uint16_t color)
 {
@@ -389,16 +389,15 @@ void Adafruit_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief    Draw a perfectly horizontal line (this is often optimized in a
-   subclass!)
-	@param    x   Left-most x coordinate
-	@param    y   Left-most y coordinate
-	@param    w   Width in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   水平線を描画します。
+  @param   x   線のx座標（左端）
+  @param   y   線のy座標（左端）
+  @param   w   線の長さ（ピクセル数）
+  @param   color 描画色（16ビットRGB565）
+  @details サブクラスで最適化される場合があります。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w,
 								 uint16_t color)
 {
@@ -407,17 +406,15 @@ void Adafruit_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief    Fill a rectangle completely with one color. Update in subclasses if
-   desired!
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    w   Width in pixels
-	@param    h   Height in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
+  @brief   矩形を塗りつぶします。
+  @param   x   左上x座標
+  @param   y   左上y座標
+  @param   w   幅（ピクセル数）
+  @param   h   高さ（ピクセル数）
+  @param   color 塗りつぶし色（16ビットRGB565）
+  @details サブクラスで最適化される場合があります。
 */
-/**************************************************************************/
 void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 							uint16_t color)
 {
@@ -428,28 +425,25 @@ void Adafruit_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief    Fill the screen completely with one color. Update in subclasses if
-   desired!
-	@param    color 16-bit 5-6-5 Color to fill with
+  @brief   画面全体を指定色で塗りつぶします。
+  @param   color 塗りつぶし色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::fillScreen(uint16_t color)
 {
 	fillRect(0, 0, _width, _height, color);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Draw a line
-	@param    x0  Start point x coordinate
-	@param    y0  Start point y coordinate
-	@param    x1  End point x coordinate
-	@param    y1  End point y coordinate
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   線分を描画します。
+  @param   x0  開始点x座標
+  @param   y0  開始点y座標
+  @param   x1  終了点x座標
+  @param   y1  終了点y座標
+  @param   color 描画色（16ビットRGB565）
+  @details 垂直線・水平線の場合は高速描画関数を使用します。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 							uint16_t color)
 {
@@ -469,15 +463,14 @@ void Adafruit_GFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Draw a circle outline
-	@param    x0   Center-point x coordinate
-	@param    y0   Center-point y coordinate
-	@param    r   Radius of circle
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   円の輪郭を描画します。
+  @param   x0   中心x座標
+  @param   y0   中心y座標
+  @param   r    半径
+  @param   color 描画色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r,
 							  uint16_t color)
 {
@@ -518,17 +511,16 @@ void Adafruit_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-	@brief    Quarter-circle drawer, used to do circles and roundrects
-	@param    x0   Center-point x coordinate
-	@param    y0   Center-point y coordinate
-	@param    r   Radius of circle
-	@param    cornername  Mask bit #1 or bit #2 to indicate which quarters of
-   the circle we're doing
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   円の一部（1/4）を描画します。
+  @param   x0   中心x座標
+  @param   y0   中心y座標
+  @param   r    半径
+  @param   cornername  描画するクォーターの指定ビット
+  @param   color 描画色（16ビットRGB565）
+  @details 円や角丸矩形の描画に利用されます。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
 									uint8_t cornername, uint16_t color)
 {
@@ -566,15 +558,15 @@ void Adafruit_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
 	}
 }
 
-/**************************************************************************/
+
 /*!
-   @brief    Draw a circle with filled color
-	@param    x0   Center-point x coordinate
-	@param    y0   Center-point y coordinate
-	@param    r   Radius of circle
-	@param    color 16-bit 5-6-5 Color to fill with
+  @brief   円を塗りつぶします。
+  @param   x0   中心x座標
+  @param   y0   中心y座標
+  @param   r    半径
+  @param   color 塗りつぶし色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::fillCircle(int16_t x0, int16_t y0, int16_t r,
 							  uint16_t color)
 {
@@ -584,17 +576,17 @@ void Adafruit_GFX::fillCircle(int16_t x0, int16_t y0, int16_t r,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-	@brief  Quarter-circle drawer with fill, used for circles and roundrects
-	@param  x0       Center-point x coordinate
-	@param  y0       Center-point y coordinate
-	@param  r        Radius of circle
-	@param  corners  Mask bits indicating which quarters we're doing
-	@param  delta    Offset from center-point, used for round-rects
-	@param  color    16-bit 5-6-5 Color to fill with
+  @brief   塗りつぶし付きクォーターサークルを描画します。
+  @param   x0      中心x座標
+  @param   y0      中心y座標
+  @param   r       半径
+  @param   corners 描画するクォーターの指定ビット
+  @param   delta   オフセット（角丸矩形用）
+  @param   color   塗りつぶし色（16ビットRGB565）
+  @details 円や角丸矩形の塗りつぶしに利用されます。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 									uint8_t corners, int16_t delta,
 									uint16_t color)
@@ -637,16 +629,15 @@ void Adafruit_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a rectangle with no fill color
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    w   Width in pixels
-	@param    h   Height in pixels
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   枠のみの矩形を描画します。
+  @param   x   左上x座標
+  @param   y   左上y座標
+  @param   w   幅（ピクセル数）
+  @param   h   高さ（ピクセル数）
+  @param   color 描画色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
 							uint16_t color)
 {
@@ -658,17 +649,17 @@ void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
 	endWrite();
 }
 
-/**************************************************************************/
+
 /*!
-   @brief   Draw a rounded rectangle with no fill color
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    w   Width in pixels
-	@param    h   Height in pixels
-	@param    r   Radius of corner rounding
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   角丸矩形（枠のみ）を描画します。
+  @param   x   左上x座標
+  @param   y   左上y座標
+  @param   w   幅（ピクセル数）
+  @param   h   高さ（ピクセル数）
+  @param   r   角の半径
+  @param   color 描画色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
 								 int16_t r, uint16_t color)
 {
@@ -689,17 +680,16 @@ void Adafruit_GFX::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a rounded rectangle with fill color
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    w   Width in pixels
-	@param    h   Height in pixels
-	@param    r   Radius of corner rounding
-	@param    color 16-bit 5-6-5 Color to draw/fill with
+  @brief   角丸矩形（塗りつぶし）を描画します。
+  @param   x   左上x座標
+  @param   y   左上y座標
+  @param   w   幅（ピクセル数）
+  @param   h   高さ（ピクセル数）
+  @param   r   角の半径
+  @param   color 塗りつぶし色（16ビットRGB565）
 */
-/**************************************************************************/
+
 void Adafruit_GFX::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
 								 int16_t r, uint16_t color)
 {
@@ -717,14 +707,14 @@ void Adafruit_GFX::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
 
 /**************************************************************************/
 /*!
-   @brief   Draw a triangle with no fill color
-	@param    x0  Vertex #0 x coordinate
-	@param    y0  Vertex #0 y coordinate
-	@param    x1  Vertex #1 x coordinate
-	@param    y1  Vertex #1 y coordinate
-	@param    x2  Vertex #2 x coordinate
-	@param    y2  Vertex #2 y coordinate
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   三角形（枠のみ）を描画します。
+  @param   x0  頂点0のx座標
+  @param   y0  頂点0のy座標
+  @param   x1  頂点1のx座標
+  @param   y1  頂点1のy座標
+  @param   x2  頂点2のx座標
+  @param   y2  頂点2のy座標
+  @param   color 描画色（16ビットRGB565）
 */
 /**************************************************************************/
 void Adafruit_GFX::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
@@ -737,14 +727,15 @@ void Adafruit_GFX::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 
 /**************************************************************************/
 /*!
-   @brief     Draw a triangle with color-fill
-	@param    x0  Vertex #0 x coordinate
-	@param    y0  Vertex #0 y coordinate
-	@param    x1  Vertex #1 x coordinate
-	@param    y1  Vertex #1 y coordinate
-	@param    x2  Vertex #2 x coordinate
-	@param    y2  Vertex #2 y coordinate
-	@param    color 16-bit 5-6-5 Color to fill/draw with
+  @brief   三角形（塗りつぶし）を描画します。
+  @param   x0  頂点0のx座標
+  @param   y0  頂点0のy座標
+  @param   x1  頂点1のx座標
+  @param   y1  頂点1のy座標
+  @param   x2  頂点2のx座標
+  @param   y2  頂点2のy座標
+  @param   color 塗りつぶし色（16ビットRGB565）
+  @details Y座標でソートし、走査線ごとに水平線を描画します。
 */
 /**************************************************************************/
 void Adafruit_GFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
@@ -836,18 +827,16 @@ void Adafruit_GFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 
 // BITMAP / XBITMAP / GRAYSCALE / RGB BITMAP FUNCTIONS ---------------------
 
-/**************************************************************************/
 /*!
-   @brief      Draw a PROGMEM-resident 1-bit image at the specified (x,y)
-   position, using the specified foreground color (unset bits are transparent).
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with monochrome bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   指定座標に1ビットビットマップ画像を描画します。()
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap モノクロビットマップ配列(プログラムメモリ)
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @param   color  描画色（16ビットRGB565）
+  @details ビットが0の部分は透明として描画されません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 							  int16_t w, int16_t h, uint16_t color)
 {
@@ -868,20 +857,18 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief      Draw a PROGMEM-resident 1-bit image at the specified (x,y)
-   position, using the specified foreground (for set bits) and background (unset
-   bits) colors.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with monochrome bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
-	@param    color 16-bit 5-6-5 Color to draw pixels with
-	@param    bg 16-bit 5-6-5 Color to draw background with
+  @brief   指定座標に1ビットビットマップ画像を描画します（前景色・背景色）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap モノクロビットマップ配列(プログラムメモリ)
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @param   color  描画色（16ビットRGB565）
+  @param   bg     背景色（16ビットRGB565）
+  @details ビットが0の部分も背景色で塗りつぶします。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 							  int16_t w, int16_t h, uint16_t color,
 							  uint16_t bg)
@@ -902,18 +889,16 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief      Draw a RAM-resident 1-bit image at the specified (x,y) position,
-   using the specified foreground color (unset bits are transparent).
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with monochrome bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
-	@param    color 16-bit 5-6-5 Color to draw with
+  @brief   指定座標に1ビットビットマップ画像を描画します
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap モノクロビットマップ配列(RAM)
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @param   color  描画色（16ビットRGB565）
+  @details ビットが0の部分は透明として描画されません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
 							  int16_t h, uint16_t color)
 {
@@ -934,20 +919,17 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief      Draw a RAM-resident 1-bit image at the specified (x,y) position,
-   using the specified foreground (for set bits) and background (unset bits)
-   colors.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with monochrome bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
-	@param    color 16-bit 5-6-5 Color to draw pixels with
-	@param    bg 16-bit 5-6-5 Color to draw background with
+  @brief   指定座標に1ビットビットマップ画像を描画します
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap モノクロビットマップ配列(RAM)
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @param   color  描画色（16ビットRGB565）
+  @param   bg     背景色（16ビットRGB565）
+  @details ビットが0の部分も背景色で塗りつぶします。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
 							  int16_t h, uint16_t color, uint16_t bg)
 {
@@ -967,21 +949,17 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t* bitmap, int16_t w,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief      Draw PROGMEM-resident XBitMap Files (*.xbm), exported from GIMP.
-   Usage: Export from GIMP to *.xbm, rename *.xbm to *.c and open in editor.
-   C Array can be directly used with this function.
-   There is no RAM-resident version of this function; if generating bitmaps
-   in RAM, use the format defined by drawBitmap() and call that instead.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with monochrome bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
-	@param    color 16-bit 5-6-5 Color to draw pixels with
+  @brief   GIMPからエクスポートしたXBM形式のビットマップ画像を描画します（PROGMEM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap モノクロビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @param   color  描画色（16ビットRGB565）
+  @details RAM格納版はありません。RAMの場合はdrawBitmap()を使用してください。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 							   int16_t w, int16_t h, uint16_t color)
 {
@@ -1004,18 +982,15 @@ void Adafruit_GFX::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 8-bit image (grayscale) at the specified
-   (x,y) pos. Specifically for 8-bit display devices such as IS31FL3731; no
-   color reduction/expansion is performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with grayscale bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   指定座標に8ビットグレースケール画像を描画します（PROGMEM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap グレースケールビットマップ配列(プログラムメモリ）
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details 8ビットディスプレイ向け。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 									   const uint8_t bitmap[], int16_t w,
 									   int16_t h)
@@ -1029,18 +1004,15 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a RAM-resident 8-bit image (grayscale) at the specified (x,y)
-   pos. Specifically for 8-bit display devices such as IS31FL3731; no color
-   reduction/expansion is performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with grayscale bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   指定座標に8ビットグレースケール画像を描画します（RAM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap グレースケールビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details 8ビットディスプレイ向け。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t* bitmap,
 									   int16_t w, int16_t h)
 {
@@ -1053,21 +1025,16 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t* bitmap,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 8-bit image (grayscale) with a 1-bit mask
-   (set bits = opaque, unset bits = clear) at the specified (x,y) position.
-   BOTH buffers (grayscale and mask) must be PROGMEM-resident.
-   Specifically for 8-bit display devices such as IS31FL3731; no color
-   reduction/expansion is performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with grayscale bitmap
-	@param    mask  byte array with mask bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   1ビットマスク付き8ビットグレースケール画像を描画します（PROGMEM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap グレースケールビットマップ配列
+  @param   mask   マスクビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details マスクのビットが1の部分のみ描画します。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 									   const uint8_t bitmap[],
 									   const uint8_t mask[], int16_t w,
@@ -1090,21 +1057,18 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 	endWrite();
 }
 
-/**************************************************************************/
+
 /*!
-   @brief   Draw a RAM-resident 8-bit image (grayscale) with a 1-bit mask
-   (set bits = opaque, unset bits = clear) at the specified (x,y) position.
-   BOTH buffers (grayscale and mask) must be RAM-residentt, no mix-and-match
-   Specifically for 8-bit display devices such as IS31FL3731; no color
-   reduction/expansion is performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with grayscale bitmap
-	@param    mask  byte array with mask bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   1ビットマスク付き8ビットグレースケール画像を描画します（RAM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap グレースケールビットマップ配列
+  @param   mask   マスクビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details マスクのビットが1の部分のみ描画します。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t* bitmap,
 									   uint8_t* mask, int16_t w, int16_t h)
 {
@@ -1125,17 +1089,15 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t* bitmap,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 16-bit image (RGB 5/6/5) at the specified
-   (x,y) position. For 16-bit display devices; no color reduction performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with 16-bit color bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   指定座標に16ビットRGB565画像を描画します（PROGMEM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap 16ビットカラーのワードマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details 16ビットディスプレイ向け。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
 								 int16_t w, int16_t h)
 {
@@ -1148,17 +1110,15 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a RAM-resident 16-bit image (RGB 5/6/5) at the specified (x,y)
-   position. For 16-bit display devices; no color reduction performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with 16-bit color bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   指定座標に16ビットRGB565画像を描画します（RAM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap 16ビットカラーのワードマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details 16ビットディスプレイ向け。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t* bitmap,
 								 int16_t w, int16_t h)
 {
@@ -1232,20 +1192,16 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint8_t* bitmap,
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 16-bit image (RGB 5/6/5) with a 1-bit mask
-   (set bits = opaque, unset bits = clear) at the specified (x,y) position. BOTH
-   buffers (color and mask) must be PROGMEM-resident. For 16-bit display
-   devices; no color reduction performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with 16-bit color bitmap
-	@param    mask  byte array with monochrome mask bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   1ビットマスク付き16ビットRGB565画像を描画します（PROGMEM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap 16ビットカラーのビットマップ配列
+  @param   mask   モノクロマスクビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details カラービットマップとマスクの両方がPROGMEM格納である必要があります。マスクのビットが1の部分のみ描画します。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
 								 const uint8_t mask[], int16_t w, int16_t h)
 {
@@ -1266,20 +1222,16 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[],
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-   @brief   Draw a RAM-resident 16-bit image (RGB 5/6/5) with a 1-bit mask (set
-   bits = opaque, unset bits = clear) at the specified (x,y) position. BOTH
-   buffers (color and mask) must be RAM-resident. For 16-bit display devices; no
-   color reduction performed.
-	@param    x   Top left corner x coordinate
-	@param    y   Top left corner y coordinate
-	@param    bitmap  byte array with 16-bit color bitmap
-	@param    mask  byte array with monochrome mask bitmap
-	@param    w   Width of bitmap in pixels
-	@param    h   Height of bitmap in pixels
+  @brief   1ビットマスク付き16ビットRGB565画像を描画します（RAM格納）。
+  @param   x      左上x座標
+  @param   y      左上y座標
+  @param   bitmap 16ビットカラーのビットマップ配列
+  @param   mask   モノクロマスクビットマップ配列
+  @param   w      幅（ピクセル数）
+  @param   h      高さ（ピクセル数）
+  @details カラービットマップとマスクの両方がRAM格納である必要があります。マスクのビットが1の部分のみ描画します。色変換は行いません。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t* bitmap,
 								 uint8_t* mask, int16_t w, int16_t h)
 {
@@ -1410,18 +1362,15 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, GFXcanvas1* pCanvas)
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
 // Draw a character
-/**************************************************************************/
 /*!
-   @brief   Draw a single character
-	@param    x   Bottom left corner x coordinate
-	@param    y   Bottom left corner y coordinate
-	@param    c   The 8-bit font-indexed character (likely ascii)
-	@param    color 16-bit 5-6-5 Color to draw chraracter with
-	@param    bg 16-bit 5-6-5 Color to fill background with (if same as color,
-   no background)
-	@param    size  Font magnification level, 1 is 'original' size
+  @brief   1文字を描画します。
+  @param   x   左下隅のx座標
+  @param   y   左下隅のy座標
+  @param   c   8ビットのフォントインデックス文字（通常はASCII）
+  @param   color  描画色（16ビットRGB565）
+  @param   bg     背景色（16ビットRGB565、colorと同じ場合は背景なし）
+  @param   size   フォント拡大率（1で等倍）
 */
-/**************************************************************************/
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 							uint16_t color, uint16_t bg, uint8_t size)
 {
@@ -1429,19 +1378,17 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 }
 
 // Draw a character
-/**************************************************************************/
 /*!
-   @brief   Draw a single character
-	@param    x   Bottom left corner x coordinate
-	@param    y   Bottom left corner y coordinate
-	@param    c   The 8-bit font-indexed character (likely ascii)
-	@param    color 16-bit 5-6-5 Color to draw chraracter with
-	@param    bg 16-bit 5-6-5 Color to fill background with (if same as color,
-   no background)
-	@param    size_x  Font magnification level in X-axis, 1 is 'original' size
-	@param    size_y  Font magnification level in Y-axis, 1 is 'original' size
+  @brief   1文字を描画します。
+  @param   x   左下隅のx座標
+  @param   y   左下隅のy座標
+  @param   c   8ビットのフォントインデックス文字（通常はASCII）
+  @param   color  描画色（16ビットRGB565）
+  @param   bg     背景色（16ビットRGB565、colorと同じ場合は背景なし）
+  @param   size_x 横方向の拡大率（1で等倍）
+  @param   size_y 縦方向の拡大率（1で等倍）
+  @details カスタムフォントの場合、背景色はサポートされません。背景を消したい場合はgetTextBounds()で範囲を取得しfillRect()で消去してください。
 */
-/**************************************************************************/
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 							uint16_t color, uint16_t bg, uint8_t size_x,
 							uint8_t size_y)
@@ -1562,8 +1509,8 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const ui
 {
 	// 表示するデータの上下左右が、表示可能領域を超えていたら何もしない。クリッピング処理
 	// 元々の判断そのままだが、すこしオカシイ気がする。
-	// たとえば、表示領域を左にはみ出さないかの判断を、 x > _width　としているが、これだと描画開始地点（文字の左）が横幅を超えるかの判断しかしていない。
-	// 本来、表示領域の左側と、表示する文字の右側を比較する必要があるのでは？ x > _width ではなく、 (x+w) >= _width と判断すべきでは？
+	// たとえば、表示領域を右にはみ出さないかの判断を、 x > _width　としているが、これだと描画開始地点（文字の左）が横幅を超えるかの判断しかしていない。
+	// 本来、表示領域の右と、表示する文字の右側を比較する必要があるのでは？ x > _width ではなく、 (x+w) >= _width と判断すべきでは？
 	if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
 
 	uint8_t w_bytes = (w + 8 - 1) / 8;  // 横方向のバイト数
@@ -1611,12 +1558,11 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const ui
 	endWrite();
 }
 
-/**************************************************************************/
 /*!
-	@brief  Print one byte/character of data, used to support print()
-	@param  c  The 8-bit ascii character to write
+	@brief  ASCII１文字を画面に表示する。printなどで使用される
+	@param  c  ８ビットのアスキー文字
 */
-/**************************************************************************/
+
 size_t Adafruit_GFX::write(uint8_t c)
 {
 	if (!gfxFont) { // 'Classic' built-in font
@@ -1665,7 +1611,7 @@ size_t Adafruit_GFX::write(uint8_t c)
 }
 /// @brief 32bitで渡された文字（UTF)を表示する。
 /// @param utf8Code 表示するUTF-8文字
-/// @return
+/// @return 表示された文字数。常に１
 size_t Adafruit_GFX::write(uint32_t utf8Code)
 {
 
@@ -1708,50 +1654,39 @@ size_t Adafruit_GFX::write(uint32_t utf8Code)
 
 	return 0;
 }
-/**************************************************************************/
 /*!
-	@brief   Set text 'magnification' size. Each increase in s makes 1 pixel
+	@brief  文字の倍率を設定する
    that much bigger.
-	@param  s  Desired text size. 1 is default 6x8, 2 is 12x16, 3 is 18x24, etc
+	@param  s  期待されるテキストサイズ。１がデフォルト、２が２倍、３が３倍
 */
-/**************************************************************************/
 void Adafruit_GFX::setTextSize(uint8_t s)
 {
 	setTextSize(s, s);
 }
 
-/**************************************************************************/
 /*!
-	@brief   Set text 'magnification' size. Each increase in s makes 1 pixel
-   that much bigger.
-	@param  s_x  Desired text width magnification level in X-axis. 1 is default
-	@param  s_y  Desired text width magnification level in Y-axis. 1 is default
+  @brief   テキストの拡大率を設定します。
+  @param   s_x  横方向の拡大率（1が標準）
+  @param   s_y  縦方向の拡大率（1が標準）
 */
-/**************************************************************************/
 void Adafruit_GFX::setTextSize(uint8_t s_x, uint8_t s_y)
 {
 	textsize_x = (s_x > 0) ? s_x : 1;
 	textsize_y = (s_y > 0) ? s_y : 1;
 }
 
-/**************************************************************************/
 /*!
-	@brief  Helper to determine size of a character with current font/size.
-			Broke this out as it's used by both the PROGMEM- and RAM-resident
-			getTextBounds() functions.
-	@param  c     The ASCII character in question
-	@param  x     Pointer to x location of character. Value is modified by
-				  this function to advance to next character.
-	@param  y     Pointer to y location of character. Value is modified by
-				  this function to advance to next character.
-	@param  minx  Pointer to minimum X coordinate, passed in to AND returned
-				  by this function -- this is used to incrementally build a
-				  bounding rectangle for a string.
-	@param  miny  Pointer to minimum Y coord, passed in AND returned.
-	@param  maxx  Pointer to maximum X coord, passed in AND returned.
-	@param  maxy  Pointer to maximum Y coord, passed in AND returned.
+  @brief   現在のフォント・サイズで1文字のサイズを取得します。
+  @param   c     対象のASCII文字
+  @param   x     文字のx座標（次の文字位置に更新されます）
+  @param   y     文字のy座標（次の文字位置に更新されます）
+  @param   minx  最小X座標（更新されます）
+  @param   miny  最小Y座標（更新されます）
+  @param   maxx  最大X座標（更新されます）
+  @param   maxy  最大Y座標（更新されます）
+  @details 文字列のバウンディングボックス計算に利用されます。
 */
-/**************************************************************************/
+
 void Adafruit_GFX::charBounds(unsigned char c, int16_t* x, int16_t* y,
 							  int16_t* minx, int16_t* miny, int16_t* maxx,
 							  int16_t* maxy)
@@ -1815,19 +1750,16 @@ void Adafruit_GFX::charBounds(unsigned char c, int16_t* x, int16_t* y,
 	}
 }
 
-/**************************************************************************/
 /*!
-	@brief  Helper to determine size of a string with current font/size.
-			Pass string and a cursor position, returns UL corner and W,H.
-	@param  str  The ASCII string to measure
-	@param  x    The current cursor X
-	@param  y    The current cursor Y
-	@param  x1   The boundary X coordinate, returned by function
-	@param  y1   The boundary Y coordinate, returned by function
-	@param  w    The boundary width, returned by function
-	@param  h    The boundary height, returned by function
+  @brief   現在のフォント・サイズで文字列のバウンディングボックスを取得します。
+  @param   str  対象のASCII文字列
+  @param   x    カーソルのX座標
+  @param   y    カーソルのY座標
+  @param   x1   バウンディングボックスの左上X座標（返却値）
+  @param   y1   バウンディングボックスの左上Y座標（返却値）
+  @param   w    バウンディングボックスの幅（返却値）
+  @param   h    バウンディングボックスの高さ（返却値）
 */
-/**************************************************************************/
 void Adafruit_GFX::getTextBounds(const char* str, int16_t x, int16_t y,
 								 int16_t* x1, int16_t* y1, uint16_t* w,
 								 uint16_t* h)
@@ -1856,19 +1788,16 @@ void Adafruit_GFX::getTextBounds(const char* str, int16_t x, int16_t y,
 	}
 }
 
-/**************************************************************************/
 /*!
-	@brief    Helper to determine size of a string with current font/size. Pass
-   string and a cursor position, returns UL corner and W,H.
-	@param    str    The ascii string to measure (as an arduino String() class)
-	@param    x      The current cursor X
-	@param    y      The current cursor Y
-	@param    x1     The boundary X coordinate, set by function
-	@param    y1     The boundary Y coordinate, set by function
-	@param    w      The boundary width, set by function
-	@param    h      The boundary height, set by function
+  @brief   現在のフォント・サイズでPROGMEM文字列のバウンディングボックスを取得します。
+  @param   str  PROGMEM格納のASCII文字列
+  @param   x    カーソルのX座標
+  @param   y    カーソルのY座標
+  @param   x1   バウンディングボックスの左上X座標（返却値）
+  @param   y1   バウンディングボックスの左上Y座標（返却値）
+  @param   w    バウンディングボックスの幅（返却値）
+  @param   h    バウンディングボックスの高さ（返却値）
 */
-/**************************************************************************/
 void Adafruit_GFX::getTextBounds(const String& str, int16_t x, int16_t y,
 								 int16_t* x1, int16_t* y1, uint16_t* w,
 								 uint16_t* h)
@@ -1878,19 +1807,17 @@ void Adafruit_GFX::getTextBounds(const String& str, int16_t x, int16_t y,
 	}
 }
 
-/**************************************************************************/
 /*!
-	@brief    Helper to determine size of a PROGMEM string with current
-   font/size. Pass string and a cursor position, returns UL corner and W,H.
-	@param    str     The flash-memory ascii string to measure
-	@param    x       The current cursor X
-	@param    y       The current cursor Y
-	@param    x1      The boundary X coordinate, set by function
-	@param    y1      The boundary Y coordinate, set by function
-	@param    w      The boundary width, set by function
-	@param    h      The boundary height, set by function
+  @brief   現在のフォント・サイズでPROGMEM文字列のバウンディングボックスを取得します。
+  @param   str  PROGMEM格納のASCII文字列
+  @param   x    カーソルのX座標
+  @param   y    カーソルのY座標
+  @param   x1   バウンディングボックスの左上X座標（返却値）
+  @param   y1   バウンディングボックスの左上Y座標（返却値）
+  @param   w    バウンディングボックスの幅（返却値）
+  @param   h    バウンディングボックスの高さ（返却値）
+  @details 文字列とカーソル位置を指定すると、左上座標と幅・高さを返します。
 */
-/**************************************************************************/
 void Adafruit_GFX::getTextBounds(const __FlashStringHelper* str, int16_t x,
 								 int16_t y, int16_t* x1, int16_t* y1,
 								 uint16_t* w, uint16_t* h)
@@ -1921,29 +1848,30 @@ void Adafruit_GFX::getTextBounds(const __FlashStringHelper* str, int16_t x,
 #pragma region ボタン描画機能 - Adafruit_GFX_Button
 /**************************************************************************/
 /*!
-   @brief    Create a simple drawn button UI element
+  @brief   ボタンUI要素のデフォルトコンストラクタ。
+  @details メンバー変数の初期化のみ行います。
 */
-/**************************************************************************/
+
 Adafruit_GFX_Button::Adafruit_GFX_Button(void)
 {
 	_gfx = 0;
 }
 
-/**************************************************************************/
 /*!
-   @brief    Initialize button with our desired color/size/settings
-   @param    gfx     Pointer to our display so we can draw to it!
-   @param    x       The X coordinate of the center of the button
-   @param    y       The Y coordinate of the center of the button
-   @param    w       Width of the buttton
-   @param    h       Height of the buttton
-   @param    outline  Color of the outline (16-bit 5-6-5 standard)
-   @param    fill  Color of the button fill (16-bit 5-6-5 standard)
-   @param    textcolor  Color of the button label (16-bit 5-6-5 standard)
-   @param    label  Ascii string of the text inside the button
-   @param    textsize The font magnification of the label text
+  @brief   ボタンの色・サイズ・設定を初期化します（中心座標指定）。
+  @param   gfx        描画先ディスプレイのポインタ
+  @param   x          ボタン中心のX座標
+  @param   y          ボタン中心のY座標
+  @param   w          ボタンの幅
+  @param   h          ボタンの高さ
+  @param   outline    枠線色（16ビットRGB565）
+  @param   fill       塗りつぶし色（16ビットRGB565）
+  @param   textcolor  ラベル文字色（16ビットRGB565）
+  @param   label      ボタン内に表示するASCII文字列
+  @param   textsize   ラベルの拡大率
+  @details 座標はボタンの中心を基準とします。内部的には左上座標へ変換して処理します。
 */
-/**************************************************************************/
+
 // Classic initButton() function: pass center & size
 void Adafruit_GFX_Button::initButton(Adafruit_GFX* gfx, int16_t x, int16_t y,
 									 uint16_t w, uint16_t h, uint16_t outline,
@@ -1955,22 +1883,21 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX* gfx, int16_t x, int16_t y,
 				 label, textsize);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Initialize button with our desired color/size/settings
-   @param    gfx     Pointer to our display so we can draw to it!
-   @param    x       The X coordinate of the center of the button
-   @param    y       The Y coordinate of the center of the button
-   @param    w       Width of the buttton
-   @param    h       Height of the buttton
-   @param    outline  Color of the outline (16-bit 5-6-5 standard)
-   @param    fill  Color of the button fill (16-bit 5-6-5 standard)
-   @param    textcolor  Color of the button label (16-bit 5-6-5 standard)
-   @param    label  Ascii string of the text inside the button
-   @param    textsize_x The font magnification in X-axis of the label text
-   @param    textsize_y The font magnification in Y-axis of the label text
+  @brief   ボタンの色・サイズ・設定を初期化します（中心座標指定、ラベル拡大率個別指定）。
+  @param   gfx        描画先ディスプレイのポインタ
+  @param   x          ボタン中心のX座標
+  @param   y          ボタン中心のY座標
+  @param   w          ボタンの幅
+  @param   h          ボタンの高さ
+  @param   outline    枠線色（16ビットRGB565）
+  @param   fill       塗りつぶし色（16ビットRGB565）
+  @param   textcolor  ラベル文字色（16ビットRGB565）
+  @param   label      ボタン内に表示するASCII文字列
+  @param   textsize_x ラベルの横方向拡大率
+  @param   textsize_y ラベルの縦方向拡大率
+  @details 座標はボタンの中心を基準とします。内部的には左上座標へ変換して処理します。
 */
-/**************************************************************************/
 // Classic initButton() function: pass center & size
 void Adafruit_GFX_Button::initButton(Adafruit_GFX* gfx, int16_t x, int16_t y,
 									 uint16_t w, uint16_t h, uint16_t outline,
@@ -1983,22 +1910,20 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX* gfx, int16_t x, int16_t y,
 				 label, textsize_x, textsize_y);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Initialize button with our desired color/size/settings, with
-   upper-left coordinates
-   @param    gfx     Pointer to our display so we can draw to it!
-   @param    x1       The X coordinate of the Upper-Left corner of the button
-   @param    y1       The Y coordinate of the Upper-Left corner of the button
-   @param    w       Width of the buttton
-   @param    h       Height of the buttton
-   @param    outline  Color of the outline (16-bit 5-6-5 standard)
-   @param    fill  Color of the button fill (16-bit 5-6-5 standard)
-   @param    textcolor  Color of the button label (16-bit 5-6-5 standard)
-   @param    label  Ascii string of the text inside the button
-   @param    textsize The font magnification of the label text
+  @brief   ボタンの色・サイズ・設定を初期化します（左上座標指定）。
+  @param   gfx        描画先ディスプレイのポインタ
+  @param   x1         ボタン左上のX座標
+  @param   y1         ボタン左上のY座標
+  @param   w          ボタンの幅
+  @param   h          ボタンの高さ
+  @param   outline    枠線色（16ビットRGB565）
+  @param   fill       塗りつぶし色（16ビットRGB565）
+  @param   textcolor  ラベル文字色（16ビットRGB565）
+  @param   label      ボタン内に表示するASCII文字列
+  @param   textsize   ラベルの拡大率
+  @details 座標はボタンの左上を基準とします。
 */
-/**************************************************************************/
 void Adafruit_GFX_Button::initButtonUL(Adafruit_GFX* gfx, int16_t x1,
 									   int16_t y1, uint16_t w, uint16_t h,
 									   uint16_t outline, uint16_t fill,
@@ -2009,23 +1934,21 @@ void Adafruit_GFX_Button::initButtonUL(Adafruit_GFX* gfx, int16_t x1,
 				 textsize);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Initialize button with our desired color/size/settings, with
-   upper-left coordinates
-   @param    gfx     Pointer to our display so we can draw to it!
-   @param    x1       The X coordinate of the Upper-Left corner of the button
-   @param    y1       The Y coordinate of the Upper-Left corner of the button
-   @param    w       Width of the buttton
-   @param    h       Height of the buttton
-   @param    outline  Color of the outline (16-bit 5-6-5 standard)
-   @param    fill  Color of the button fill (16-bit 5-6-5 standard)
-   @param    textcolor  Color of the button label (16-bit 5-6-5 standard)
-   @param    label  Ascii string of the text inside the button
-   @param    textsize_x The font magnification in X-axis of the label text
-   @param    textsize_y The font magnification in Y-axis of the label text
+  @brief   ボタンの色・サイズ・設定を初期化します（左上座標指定、ラベル拡大率個別指定）。
+  @param   gfx        描画先ディスプレイのポインタ
+  @param   x1         ボタン左上のX座標
+  @param   y1         ボタン左上のY座標
+  @param   w          ボタンの幅
+  @param   h          ボタンの高さ
+  @param   outline    枠線色（16ビットRGB565）
+  @param   fill       塗りつぶし色（16ビットRGB565）
+  @param   textcolor  ラベル文字色（16ビットRGB565）
+  @param   label      ボタン内に表示するASCII文字列
+  @param   textsize_x ラベルの横方向拡大率
+  @param   textsize_y ラベルの縦方向拡大率
+  @details 座標はボタンの左上を基準とします。
 */
-/**************************************************************************/
 void Adafruit_GFX_Button::initButtonUL(Adafruit_GFX* gfx, int16_t x1,
 									   int16_t y1, uint16_t w, uint16_t h,
 									   uint16_t outline, uint16_t fill,
@@ -2047,13 +1970,11 @@ void Adafruit_GFX_Button::initButtonUL(Adafruit_GFX* gfx, int16_t x1,
 				   // When 'label' is >9 characters, _label is not terminated.
 }
 
-/**************************************************************************/
 /*!
-   @brief    Draw the button on the screen
-   @param    inverted Whether to draw with fill/text swapped to indicate
-   'pressed'
+  @brief   ボタンを画面に描画します。
+  @param   inverted  trueで押下状態（塗り色と文字色を反転）で描画
+  @details 角丸矩形でボタンを描画し、ラベルを中央に表示します。
 */
-/**************************************************************************/
 void Adafruit_GFX_Button::drawButton(bool inverted)
 {
 	uint16_t fill, outline, text;
@@ -2079,38 +2000,34 @@ void Adafruit_GFX_Button::drawButton(bool inverted)
 	_gfx->print(_label);
 }
 
-/**************************************************************************/
 /*!
-	@brief    Helper to let us know if a coordinate is within the bounds of the
-   button
-	@param    x       The X coordinate to check
-	@param    y       The Y coordinate to check
-	@returns  True if within button graphics outline
+  @brief   指定座標がボタン内かどうかを判定します。
+  @param   x  判定するX座標
+  @param   y  判定するY座標
+  @retval  true  ボタン内
+  @retval  false ボタン外
 */
-/**************************************************************************/
 bool Adafruit_GFX_Button::contains(int16_t x, int16_t y)
 {
 	return ((x >= _x1) && (x < (int16_t)(_x1 + _w)) && (y >= _y1) &&
 			(y < (int16_t)(_y1 + _h)));
 }
 
-/**************************************************************************/
 /*!
-   @brief    Query whether the button was pressed since we last checked state
-   @returns  True if was not-pressed before, now is.
+  @brief   前回未押下→今回押下となったかを判定します。
+  @retval  true  押下イベント発生
+  @retval  false 変化なし
 */
-/**************************************************************************/
 bool Adafruit_GFX_Button::justPressed()
 {
 	return (currstate && !laststate);
 }
 
-/**************************************************************************/
 /*!
-   @brief    Query whether the button was released since we last checked state
-   @returns  True if was pressed before, now is not.
+  @brief   前回押下→今回未押下となったかを判定します。
+  @retval  true  離上イベント発生
+  @retval  false 変化なし
 */
-/**************************************************************************/
 bool Adafruit_GFX_Button::justReleased()
 {
 	return (!currstate && laststate);
@@ -2904,17 +2821,13 @@ GFXcanvas16::GFXcanvas16() : // デフォルトコンストラクタ
 	buffer = nullptr;
 }
 
-/**************************************************************************/
 /*!
-   @brief    Instatiate a GFX 16-bit canvas context for graphics
-   @param    w   Display width, in pixels
-   @param    h   Display height, in pixels
-   @param    allocate_buffer If true, a buffer is allocated with malloc. If
-   false, the subclass must initialize the buffer before any drawing operation,
-   and free it in the destructor. If false (the default), the buffer is
-   allocated and freed by the library.
+  @brief  16ビットカラーキャンバスを生成するコンストラクタ。
+  @param  w   キャンバスの幅（ピクセル単位）
+  @param  h   キャンバスの高さ（ピクセル単位）
+  @param  allocate_buffer  trueの場合は内部バッファを確保、falseの場合はサブクラスでバッファ管理
+  @details allocate_bufferがtrueなら内部でバッファをmallocし、falseならバッファは外部で用意・解放する必要があります。
 */
-/**************************************************************************/
 GFXcanvas16::GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer) :
 	Adafruit_GFX(w, h),
 	buffer_owned(allocate_buffer)
@@ -2937,26 +2850,28 @@ GFXcanvas16::GFXcanvas16(uint16_t w, uint16_t h, bool allocate_buffer) :
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Delete the canvas, free memory
+  @brief  16ビットカラーキャンバスのメモリを解放するデストラクタ。
+  @details
+	インスタンス生成時に内部バッファを確保していた場合（buffer_ownedがtrue）、
+	デストラクタでバッファのメモリを解放します。
+	外部管理バッファの場合は解放処理を行いません。
 */
-/**************************************************************************/
 GFXcanvas16::~GFXcanvas16(void)
 {
 	if (buffer && buffer_owned)
 		free(buffer);
 }
 
-/**************************************************************************/
 /*!
-   @brief    コピーコンストラクタ
-   @param    pSrc  複製元のキャンバスへのポインタ
-   @param    allocate_buffer Trueの場合、画像のバッファはこのクラス内でmallocされ、
-   デストラクタでfreeされる。
-   Falseの場合、バッファはコピーコンストラクタのバッファを共有する。
+  @brief    コピーコンストラクタ（GFXcanvas16）。
+  @param    pSrc  複製元のキャンバスへのポインタ
+  @param    allocate_buffer trueの場合は新たにバッファを確保して内容をコピー、falseの場合はバッファを共有
+  @details
+	allocate_bufferがtrueの場合、pSrcの内容を新しいバッファにコピーし、デストラクタで解放します。
+	falseの場合はpSrcのバッファを共有し、解放は行いません。
+	背景色や透過色の設定も複製されます。
 */
-/**************************************************************************/
 GFXcanvas16::GFXcanvas16(const GFXcanvas16* pSrc, bool allocate_buffer) :
 	Adafruit_GFX(pSrc->width(), pSrc->height()),
 	buffer_owned(allocate_buffer)
@@ -2979,7 +2894,15 @@ GFXcanvas16::GFXcanvas16(const GFXcanvas16* pSrc, bool allocate_buffer) :
 		buffer = pSrc->buffer;
 	}
 }
-
+/*!
+  @brief  オブジェクト初期化し、バッファを確保または設定する。デフォルトコンストラクタで作成した場合にはこれを使って初期化する。
+  @param  w   キャンバスの幅（ピクセル単位）
+  @param  h   キャンバスの高さ（ピクセル単位）
+  @param  allocate_buffer  trueの場合は内部バッファを確保、falseの場合は外部でバッファを管理
+  @details
+	Adafruit_GFXのメンバも再初期化します。allocate_bufferがtrueなら内部でバッファを確保しゼロクリアします。
+	falseの場合はbufferをnullptrに設定し、外部でバッファの用意・解放が必要です。
+*/
 void GFXcanvas16::constructObject(uint16_t w, uint16_t h, bool allocate_buffer)
 {
 	Adafruit_GFX::constructObject(w, h);
@@ -3001,6 +2924,13 @@ void GFXcanvas16::constructObject(uint16_t w, uint16_t h, bool allocate_buffer)
 		buffer = nullptr;
 	}
 }
+/*!
+  @brief  オブジェクトを破棄し、バッファを解放する。
+  @details
+	buffer_ownedがtrueの場合は内部バッファを解放します。
+	falseの場合はバッファの解放は行いません。
+	バッファ解放後、ポインタをnullptrにリセットします。
+*/
 void GFXcanvas16::destructObject()
 {
 	if (buffer && buffer_owned) {
@@ -3013,23 +2943,38 @@ void GFXcanvas16::destructObject()
 #endif
 	}
 }
-/**
- * @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
- */
+/*!
+  @brief  背景色を設定する。この色はビットマップ描画の際に透明となる。
+  @param  color  透過色として扱う16ビットカラー値（RGB565）
+  @details
+	isBackgroundフラグを有効化し、bckColorに指定色を設定します。
+	以降の描画でこの色が背景色（透明色）として扱われます。
+*/
 void GFXcanvas16::useTransparentColor(uint16_t color)
 {
 	isBackground = true;
 	bckColor = color;
 }
-/**
- * @brief  背景色を無効にする。
- */
+/*!
+  @brief  背景色を無効にする。
+  @details
+	isBackgroundフラグを無効化し、bckColorを0にリセットします。
+	以降の描画で背景色（透明色）は適用されません。
+*/
 void GFXcanvas16::unUseTransparentColor()
 {
 	isBackground = false;
 	bckColor = 0;
 }
-
+/*!
+  @brief  他のGFXcanvas16インスタンスの内容をこのキャンバスにコピーする。
+  @param  src  コピー元のGFXcanvas16インスタンス
+  @return コピーに成功した場合は自身のポインタ、サイズ不一致時はNULL
+  @details
+    キャンバスサイズ（幅・高さ）が一致している場合のみ、srcのバッファ内容を
+    このインスタンスのバッファにmemcpyでコピーします。
+    サイズが異なる場合は何もせずNULLを返します。
+*/
 GFXcanvas16* GFXcanvas16::deepCopy(const GFXcanvas16* src)
 {
 	if (WIDTH != src->width() || HEIGHT != src->height()) {
@@ -3039,14 +2984,15 @@ GFXcanvas16* GFXcanvas16::deepCopy(const GFXcanvas16* src)
 	return this;
 }
 
-/**************************************************************************/
 /*!
-	@brief  Draw a pixel to the canvas framebuffer
-	@param  x   x coordinate
-	@param  y   y coordinate
-	@param  color 16-bit 5-6-5 Color to fill with
+  @brief  キャンバスの指定座標にピクセルを描画する。
+  @param  x     描画するX座標
+  @param  y     描画するY座標
+  @param  color 描画色（16ビットRGB565）
+  @details
+	座標がキャンバス範囲外の場合は何も行いません。
+	キャンバスの回転設定に応じて座標変換を行い、バッファにピクセルを書き込みます。
 */
-/**************************************************************************/
 void GFXcanvas16::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
 	if (buffer) {
@@ -3075,14 +3021,15 @@ void GFXcanvas16::drawPixel(int16_t x, int16_t y, uint16_t color)
 	}
 }
 
-/**********************************************************************/
 /*!
-		@brief    Get the pixel color value at a given coordinate
-		@param    x   x coordinate
-		@param    y   y coordinate
-		@returns  The desired pixel's 16-bit 5-6-5 color value
+  @brief  指定座標のピクセル色を取得する。
+  @param  x   取得するX座標
+  @param  y   取得するY座標
+  @return 指定座標の16ビットRGB565カラー値
+  @details
+	キャンバスの回転設定に応じて座標変換を行い、バッファからピクセル値を取得します。
+	範囲外の場合は0を返します。
 */
-/**********************************************************************/
 uint16_t GFXcanvas16::getPixel(int16_t x, int16_t y) const
 {
 	int16_t t;
@@ -3105,16 +3052,16 @@ uint16_t GFXcanvas16::getPixel(int16_t x, int16_t y) const
 	return getRawPixel(x, y);
 }
 
-/**********************************************************************/
 /*!
-		@brief    Get the pixel color value at a given, unrotated coordinate.
-			  This method is intended for hardware drivers to get pixel value
-			  in physical coordinates.
-		@param    x   x coordinate
-		@param    y   y coordinate
-		@returns  The desired pixel's 16-bit 5-6-5 color value
+  @brief  指定座標（回転なし）にあるピクセルの色を取得する。
+  @param  x   取得するX座標（バッファ座標系、回転なし）
+  @param  y   取得するY座標（バッファ座標系、回転なし）
+  @return 指定座標の16ビットRGB565カラー値
+  @details
+	座標がキャンバス範囲外の場合は0を返します。
+	バッファが有効な場合はbuffer[x + y * WIDTH]の値を返します。
+	この関数は回転変換を行わず、物理バッファ上の座標を直接参照します。
 */
-/**********************************************************************/
 uint16_t GFXcanvas16::getRawPixel(int16_t x, int16_t y) const
 {
 	if ((x < 0) || (y < 0) || (x >= WIDTH) || (y >= HEIGHT))
@@ -3125,12 +3072,13 @@ uint16_t GFXcanvas16::getRawPixel(int16_t x, int16_t y) const
 	return 0;
 }
 
-/**************************************************************************/
 /*!
-	@brief  Fill the framebuffer completely with one color
-	@param  color 16-bit 5-6-5 Color to fill with
+  @brief  フレームバッファ全体を指定色で塗りつぶす。
+  @param  color 塗りつぶし色（16ビットRGB565）
+  @details
+	バッファが有効な場合、全ピクセルをcolorで塗りつぶします。
+	上位バイトと下位バイトが同じ場合はmemsetによる高速化を行います。
 */
-/**************************************************************************/
 void GFXcanvas16::fillScreen(uint16_t color)
 {
 	if (buffer) {
@@ -3146,19 +3094,15 @@ void GFXcanvas16::fillScreen(uint16_t color)
 	}
 }
 
-/**************************************************************************/
 /*!
-	@brief  Reverses the "endian-ness" of each 16-bit pixel within the
-			canvas; little-endian to big-endian, or big-endian to little.
-			Most microcontrollers (such as SAMD) are little-endian, while
-			most displays tend toward big-endianness. All the drawing
-			functions (including RGB bitmap drawing) take care of this
-			automatically, but some specialized code (usually involving
-			DMA) can benefit from having pixel data already in the
-			display-native order. Note that this does NOT convert to a
-			SPECIFIC endian-ness, it just flips the bytes within each word.
+  @brief  キャンバス内の各16ビットピクセルのエンディアンを反転する。
+  @details
+	キャンバス内の全ピクセルについて、リトルエンディアンとビッグエンディアンを相互に変換します。
+	ほとんどのマイコン（例：SAMD）はリトルエンディアンですが、多くのディスプレイはビッグエンディアンです。
+	通常の描画処理（RGBビットマップ描画など）では自動的にエンディアン変換が行われますが、
+	DMA転送などでディスプレイのネイティブな順序に合わせたい場合に有効です。
+	この関数は特定のエンディアンに変換するのではなく、各16ビット値のバイト順を単純に入れ替えます。
 */
-/**************************************************************************/
 void GFXcanvas16::byteSwap(void)
 {
 	if (buffer) {
@@ -3168,15 +3112,16 @@ void GFXcanvas16::byteSwap(void)
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Speed optimized vertical line drawing
-   @param    x   Line horizontal start point
-   @param    y   Line vertical start point
-   @param    h   length of vertical line to be drawn, including first point
-   @param    color   color 16-bit 5-6-5 Color to draw line with
+  @brief  垂直線を高速に描画する。
+  @param  x     線の開始x座標
+  @param  y     線の開始y座標
+  @param  h     線の長さ（ピクセル数）
+  @param  color 描画色（16ビットRGB565）
+  @details
+	回転やクリッピング処理を行い、キャンバスバッファに垂直線を高速に描画します。
+	座標や長さが範囲外の場合は自動的にクリッピングされます。
 */
-/**************************************************************************/
 void GFXcanvas16::drawFastVLine(int16_t x, int16_t y, int16_t h,
 								uint16_t color)
 {
@@ -3224,15 +3169,16 @@ void GFXcanvas16::drawFastVLine(int16_t x, int16_t y, int16_t h,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief  Speed optimized horizontal line drawing
-   @param  x      Line horizontal start point
-   @param  y      Line vertical start point
-   @param  w      Length of horizontal line to be drawn, including 1st point
-   @param  color  Color 16-bit 5-6-5 Color to draw line with
+  @brief  水平線を高速に描画する。
+  @param  x     線の開始x座標
+  @param  y     線のy座標
+  @param  w     線の長さ（ピクセル数）
+  @param  color 描画色（16ビットRGB565）
+  @details
+	回転やクリッピング処理を行い、キャンバスバッファに水平線を高速に描画します。
+	座標や長さが範囲外の場合は自動的にクリッピングされます。
 */
-/**************************************************************************/
 void GFXcanvas16::drawFastHLine(int16_t x, int16_t y, int16_t w,
 								uint16_t color)
 {
@@ -3280,15 +3226,16 @@ void GFXcanvas16::drawFastHLine(int16_t x, int16_t y, int16_t w,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Speed optimized vertical line drawing into the raw canvas buffer
-   @param    x   Line horizontal start point
-   @param    y   Line vertical start point
-   @param    h   length of vertical line to be drawn, including first point
-   @param    color   color 16-bit 5-6-5 Color to draw line with
+  @brief  キャンバスバッファに高速に垂直線を描画する。
+  @param  x     線の開始x座標（バッファ座標系、回転なし）
+  @param  y     線のy座標（バッファ座標系、回転なし）
+  @param  h     描画する線の長さ（ピクセル数）
+  @param  color 描画色（16ビットRGB565）
+  @details
+	バッファ上の指定位置からhピクセル分、colorで塗りつぶします。
+	x, yは回転変換前のバッファ座標で、クリッピングや座標変換は呼び出し元で行う必要があります。
 */
-/**************************************************************************/
 void GFXcanvas16::drawFastRawVLine(int16_t x, int16_t y, int16_t h,
 								   uint16_t color)
 {
@@ -3300,15 +3247,16 @@ void GFXcanvas16::drawFastRawVLine(int16_t x, int16_t y, int16_t h,
 	}
 }
 
-/**************************************************************************/
 /*!
-   @brief    Speed optimized horizontal line drawing into the raw canvas buffer
-   @param    x   Line horizontal start point
-   @param    y   Line vertical start point
-   @param    w   length of horizontal line to be drawn, including first point
-   @param    color   color 16-bit 5-6-5 Color to draw line with
+  @brief  キャンバスバッファに高速に水平線を描画する。
+  @param  x     線の開始x座標（バッファ座標系、回転なし）
+  @param  y     線のy座標（バッファ座標系、回転なし）
+  @param  w     描画する線の長さ（ピクセル数）
+  @param  color 描画色（16ビットRGB565）
+  @details
+	バッファ上の指定位置からwピクセル分、colorで塗りつぶします。
+	座標変換やクリッピングは呼び出し元で行う必要があります。
 */
-/**************************************************************************/
 void GFXcanvas16::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 								   uint16_t color)
 {
@@ -3318,15 +3266,19 @@ void GFXcanvas16::drawFastRawHLine(int16_t x, int16_t y, int16_t w,
 		buffer[i] = color;
 	}
 }
-/**************************************************************************/
 /*!
-   @brief ビットマップをキャンバスにコピーする。 ビットマップは565フォーマットとする。
-   @param  x      X座標
-   @param  y      Y座標
-   @param  w      ビットマップの幅
-   @param  h      ビットマップの高さ
-   @param  picBuf ビットマップデータのポインタ。RGB565フォーマット
-   @note   ビットマップはキャンバスの左上に配置される。
+  @brief  16ビットRGB565ビットマップをキャンバスの指定位置にコピーする。
+  @param  x        コピー先キャンバスのX座標
+  @param  y        コピー先キャンバスのY座標
+  @param  w        コピーするビットマップの幅
+  @param  h        コピーするビットマップの高さ
+  @param  picBuf   コピー元ビットマップデータのポインタ（RGB565フォーマット）
+  @param  bufWidth  コピー元ビットマップ全体の幅
+  @param  bufHeight コピー元ビットマップ全体の高さ
+  @details
+	指定した座標(x, y)からw×hサイズ分、picBufからキャンバスのバッファへ転送します。
+	コピー元ビットマップはbufWidth×bufHeightサイズで、picBuf[(y + i) * bufWidth + x + j]の値を
+	buffer[i * w + j]にコピーします。
 */
 void GFXcanvas16::copyRGBBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t* picBuf, uint16_t bufWidth, uint16_t bufHeight)
 {

@@ -5,7 +5,6 @@
 
 // Declare the function we'll make available in Python as cppexample.cppfunc().
 
-
 #pragma region 初期化・設定関数
 extern mp_obj_t initHW(mp_obj_t args);
 extern mp_obj_t getTypeName(mp_obj_t obj);
@@ -25,21 +24,21 @@ extern mp_obj_t scrollTo(mp_obj_t a_y);
 #pragma region 基本描画関数
 extern mp_obj_t fillScreen(mp_obj_t a_Target, mp_obj_t a_color);
 extern mp_obj_t drawPixel(mp_obj_t a_Target, mp_obj_t a_xy, mp_obj_t a_color);
-extern mp_obj_t drawFastHLine(mp_obj_t a_Target, mp_obj_t a_xyl,mp_obj_t a_c);
+extern mp_obj_t drawFastHLine(mp_obj_t a_Target, mp_obj_t a_xyl, mp_obj_t a_c);
 extern mp_obj_t drawFastVLine(mp_obj_t a_Target, mp_obj_t a_xyl, mp_obj_t a_c);
-extern mp_obj_t fillRect(mp_obj_t a_Target, mp_obj_t a_xyxy, mp_obj_t a_color);
-extern mp_obj_t drawRect(mp_obj_t a_Target, mp_obj_t a_xyxy, mp_obj_t a_color);
+extern mp_obj_t fillRect(mp_obj_t a_Target, mp_obj_t a_xywh, mp_obj_t a_color);
+extern mp_obj_t drawRect(mp_obj_t a_Target, mp_obj_t a_xywh, mp_obj_t a_color);
 extern mp_obj_t drawLine(mp_obj_t a_Target, mp_obj_t a_xyxy, mp_obj_t a_color);
 extern mp_obj_t drawCircle(mp_obj_t a_Target, mp_obj_t a_xyr, mp_obj_t a_color);
 extern mp_obj_t fillCircle(mp_obj_t a_Target, mp_obj_t a_xyr, mp_obj_t a_color);
-extern mp_obj_t drawRoundRect(mp_obj_t a_Target, mp_obj_t a_xyxyr,mp_obj_t a_color);
-extern mp_obj_t fillRoundRect(mp_obj_t a_Target, mp_obj_t a_xyxyr, mp_obj_t a_color);
-extern mp_obj_t drawTriangle(mp_obj_t a_Target, mp_obj_t a_xyxy, mp_obj_t a_color);
-extern mp_obj_t fillTriangle(mp_obj_t a_Target, mp_obj_t a_xyxy, mp_obj_t a_color);
+extern mp_obj_t drawRoundRect(mp_obj_t a_Target, mp_obj_t a_xywhr, mp_obj_t a_color);
+extern mp_obj_t fillRoundRect(mp_obj_t a_Target, mp_obj_t a_xywhr, mp_obj_t a_color);
+extern mp_obj_t drawTriangle(mp_obj_t a_Target, mp_obj_t a_xyxyxy, mp_obj_t a_color);
+extern mp_obj_t fillTriangle(mp_obj_t a_Target, mp_obj_t a_xyxyxy, mp_obj_t a_color);
 #pragma endregion
 
 #pragma region テキスト描画関数
-//extern mp_obj_t setCursor(mp_obj_t a_xy);
+// extern mp_obj_t setCursor(mp_obj_t a_xy);
 extern mp_obj_t setCursor(size_t n_args, const mp_obj_t* args);
 extern mp_obj_t print(mp_obj_t a_Target, mp_obj_t a_str);
 extern mp_obj_t setTextWrap(mp_obj_t a_Target, mp_obj_t a_tf);
@@ -49,14 +48,14 @@ extern mp_obj_t setTextColor(mp_obj_t a_Target, mp_obj_t a_color, mp_obj_t a_bgc
 extern mp_obj_t setTextSize(mp_obj_t a_Target, mp_obj_t a_size);
 extern mp_obj_t setKanjiMode(mp_obj_t a_Target, mp_obj_t a_tf);
 extern mp_obj_t setKanjiFont(mp_obj_t a_Target, mp_obj_t a_code, mp_obj_t a_bitmap);
-#pragma endregion 
+#pragma endregion
 
 #pragma region ビットマップ関数
 extern mp_obj_t drawBitmap(mp_obj_t a_Target, mp_obj_t a_xywh, mp_obj_t a_bitmap);
 extern mp_obj_t drawBitmapWithKeyColor(size_t n_args, const mp_obj_t* args);
-//extern mp_obj_t drawBitmapWithKeyColor(mp_obj_t a_Target, mp_obj_t a_xywh, mp_obj_t a_bitmap, mp_obj_t a_keycolor);
+// extern mp_obj_t drawBitmapWithKeyColor(mp_obj_t a_Target, mp_obj_t a_xywh, mp_obj_t a_bitmap, mp_obj_t a_keycolor);
 extern mp_obj_t drawBitmapFromCanvas(mp_obj_t a_Target, mp_obj_t a_xy, mp_obj_t a_canvasID);
-#pragma endregion 
+#pragma endregion
 
 #pragma region キャンバス関数
 extern mp_obj_t createCanvas(mp_obj_t a_wh);

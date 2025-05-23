@@ -169,6 +169,7 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 		sleep_ms(10); // CPU負荷を下げるために少し待機
 	}
 
+	
 	return false; // タイムアウトせずにループを抜けたらfalseを返す
 }
 /// @brief ビットマップ表示のデモ
@@ -527,7 +528,7 @@ void demoAlphabetText(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts)
 	tft.fillScreen(STDCOLOR.BLACK); // 背景色
 
 	tft.setCursor(10, 20);
-
+	
 	tft.print("英文の表示");
 	tft.setCursor(10, 60);
 	tft.print("この部分は、オリジナルのAdafruitのコードそのままで実装されています。英文字は、フットプリントが小さいので複数のフォントをプログラムに同時に組み込むことも現実的に可能です。\n\nこのデモでは、複数のフォントを切り替えて画面に表示しています。\n\nフォントが指定されない場合、システムに組み込まれている5x7ドットの文字が表示されます。。\n\n");

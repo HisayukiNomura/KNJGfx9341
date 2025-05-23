@@ -1,7 +1,7 @@
 /*!
  * @file Adafruit_ILI9341.cpp
  *
- * @mainpage Adafruit ILI9341 TFT Displays
+ * #mainpage Adafruit ILI9341 TFT Displays
  *
  * @section intro_sec Introduction
  *
@@ -39,159 +39,127 @@
  * @section author Author
  *
  * Written by Limor "ladyada" Fried for Adafruit Industries.
+ * Modified by Hisayuki Nomura to support Japanese multibyte (aka. Kanji)
  *
  * @section license License
  *
  * BSD license, all text here must be included in any redistribution.
  *
  */
-#include "misc/defines.h"
+#include "defines.h"
 
 #ifdef STD_SDK
-#include "Adafruit_ILI9341/Adafruit_ILI9341.h"
-#include "misc/pins.h"
-#ifndef pgm_read_byte
-#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-#endif
-#ifndef pgm_read_word
-#define pgm_read_word(addr) (*(const unsigned short *)(addr))
-#endif
-#ifndef pgm_read_dword
-#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
-#endif
+	#include "Adafruit_ILI9341.h"
+	#include "misc/pins.h"
+	#ifndef pgm_read_byte
+		#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+	#endif
+	#ifndef pgm_read_word
+		#define pgm_read_word(addr) (*(const unsigned short *)(addr))
+	#endif
+	#ifndef pgm_read_dword
+		#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
+	#endif
 using namespace ardPort;
 #else
-#include "Adafruit_ILI9341.h"
-#ifndef ARDUINO_STM32_FEATHER
-#include "pins_arduino.h"
-#ifndef RASPI
-#include "wiring_private.h"
-#endif
-#endif
+	#include "Adafruit_ILI9341.h"
+	#ifndef ARDUINO_STM32_FEATHER
+		#include "pins_arduino.h"
+		#ifndef RASPI
+			#include "wiring_private.h"
+		#endif
+	#endif
 #endif
 
 #include <limits.h>
 
 #if defined(ARDUINO_ARCH_ARC32) || defined(ARDUINO_MAXIM)
-#define SPI_DEFAULT_FREQ 16000000
+	#define SPI_DEFAULT_FREQ 16000000
 // Teensy 3.0, 3.1/3.2, 3.5, 3.6
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || \
 	defined(__MK64FX512__) || defined(__MK66FX1M0__)
-#define SPI_DEFAULT_FREQ 40000000
+	#define SPI_DEFAULT_FREQ 40000000
 #elif defined(__AVR__) || defined(TEENSYDUINO)
-#define SPI_DEFAULT_FREQ 8000000
+	#define SPI_DEFAULT_FREQ 8000000
 #elif defined(ESP8266) || defined(ESP32)
-#define SPI_DEFAULT_FREQ 40000000
+	#define SPI_DEFAULT_FREQ 40000000
 #elif defined(RASPI)
-#define SPI_DEFAULT_FREQ 80000000
+	#define SPI_DEFAULT_FREQ 80000000
 #elif defined(ARDUINO_ARCH_STM32F1)
-#define SPI_DEFAULT_FREQ 36000000
+	#define SPI_DEFAULT_FREQ 36000000
 #else
-#define SPI_DEFAULT_FREQ 24000000 ///< Default SPI data clock frequency
+	#define SPI_DEFAULT_FREQ 24000000  ///< Default SPI data clock frequency
 #endif
 
-#define MADCTL_MY 0x80	///< Bottom to top
-#define MADCTL_MX 0x40	///< Right to left
-#define MADCTL_MV 0x20	///< Reverse Mode
-#define MADCTL_ML 0x10	///< LCD refresh Bottom to top
-#define MADCTL_RGB 0x00 ///< Red-Green-Blue pixel order
-#define MADCTL_BGR 0x08 ///< Blue-Green-Red pixel order
-#define MADCTL_MH 0x04	///< LCD refresh right to left
-#ifdef MICROPY_BUILD_TYPE
-	#define msg_OnDebug(fmt, ...)
-//extern "C" void msg_OnDebug(const char* format, ...);
-#endif
+#define MADCTL_MY 0x80   ///< Bottom to top
+#define MADCTL_MX 0x40   ///< Right to left
+#define MADCTL_MV 0x20   ///< Reverse Mode
+#define MADCTL_ML 0x10   ///< LCD refresh Bottom to top
+#define MADCTL_RGB 0x00  ///< Red-Green-Blue pixel order
+#define MADCTL_BGR 0x08  ///< Blue-Green-Red pixel order
+#define MADCTL_MH 0x04   ///< LCD refresh right to left
 
-/// @brief デフォルトコンストラクタ。MicroPythonから使うときのために用意
-Adafruit_ILI9341::Adafruit_ILI9341() : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, 0, 0, 0, 0, -1, -1)
-{
-	#ifdef MICROPY_BUILD_TYPE
-	msg_OnDebug("Adafruit_ILI9341::Adafruit_ILI9341()\r\n ");
-	#endif
-		bUseWindow = false;
-}
-
-void Adafruit_ILI9341::constructObject(int8_t cs, int8_t dc, int8_t mosi, int8_t sck, int8_t rst, int8_t miso)
-{
-#ifdef MICROPY_BUILD_TYPE
-	msg_OnDebug("Adafruit_ILI9341::Adafruit_SPITFT::constructObject_1 \r\n");
-#endif
-	Adafruit_SPITFT::constructObject(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, mosi, sck, rst, miso);
-}
-void Adafruit_ILI9341::constructObject(SPIClass *spiClass, int8_t dc, int8_t cs, int8_t rst)
-{
-#ifdef MICROPY_BUILD_TYPE
-	msg_OnDebug("Adafruit_ILI9341::Adafruit_SPITFT::constructObject \r\n");
-#endif
-
-	Adafruit_SPITFT::constructObject(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, spiClass, dc, cs, rst);
-}
 /**************************************************************************/
 /*!
-	@brief  Instantiate Adafruit ILI9341 driver with software SPI
-	@param    cs    Chip select pin #
-	@param    dc    Data/Command pin #
-	@param    mosi  SPI MOSI pin #
-	@param    sclk  SPI Clock pin #
-	@param    rst   Reset pin # (optional, pass -1 if unused)
-	@param    miso  SPI MISO pin # (optional, pass -1 if unused)
+	@brief  ソフトウェアSPIを使ってAdafruit ILI9341ドライバを初期化する
+	@param    cs    チップセレクトピン番号
+	@param    dc    データ/コマンドピン番号
+	@param    mosi  SPI MOSIピン番号
+	@param    sclk  SPIクロックピン番号
+	@param    rst   リセットピン番号（省略可、未使用なら-1）
+	@param    miso  SPI MISOピン番号（省略可、未使用なら-1）
 */
 /**************************************************************************/
-Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi, int8_t sclk, int8_t rst, int8_t miso) : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, mosi, sclk, rst, miso)
-{
+Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi, int8_t sclk, int8_t rst, int8_t miso) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, mosi, sclk, rst, miso) {
 	bUseWindow = false;
 }
 
 /**************************************************************************/
 /*!
-	@brief  Instantiate Adafruit ILI9341 driver with hardware SPI using the
-			default SPI peripheral.
-	@param  cs   Chip select pin # (OK to pass -1 if CS tied to GND).
-	@param  dc   Data/Command pin # (required).
-	@param  rst  Reset pin # (optional, pass -1 if unused).
+	@brief  ハードウェアSPI（デフォルトSPI）を使ってAdafruit ILI9341ドライバを初期化する
+	@param  cs   チップセレクトピン番号（GNDに接続している場合は-1でOK）
+	@param  dc   データ/コマンドピン番号（必須）
+	@param  rst  リセットピン番号（省略可、未使用なら-1）
 */
 /**************************************************************************/
-Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, rst)
-{
+Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, cs, dc, rst) {
 	bUseWindow = false;
 }
 
-	#if !defined(ESP8266)
+#if !defined(ESP8266)
 /**************************************************************************/
 /*!
-	@brief  Instantiate Adafruit ILI9341 driver with hardware SPI using
-			a specific SPI peripheral (not necessarily default).
-	@param  spiClass  Pointer to SPI peripheral (e.g. &SPI or &SPI1).
-	@param  dc        Data/Command pin # (required).
-	@param  cs        Chip select pin # (optional, pass -1 if unused and
-					  CS is tied to GND).
-	@param  rst       Reset pin # (optional, pass -1 if unused).
+	@brief  特定のSPIクラスを使ってAdafruit ILI9341ドライバを初期化する
+	@param  spiClass  SPIクラスへのポインタ（例: &SPIや&SPI1）
+	@param  dc        データ/コマンドピン番号（必須）
+	@param  cs        チップセレクトピン番号（省略可、未使用なら-1かつCSはGNDに接続）
+	@param  rst       リセットピン番号（省略可、未使用なら-1）
 */
 /**************************************************************************/
-Adafruit_ILI9341::Adafruit_ILI9341(SPIClass *spiClass, int8_t dc, int8_t cs, int8_t rst) : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, spiClass, cs, dc, rst)
-{
+Adafruit_ILI9341::Adafruit_ILI9341(SPIClass *spiClass, int8_t dc, int8_t cs, int8_t rst) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, spiClass, cs, dc, rst) {
 	bUseWindow = false;
 }
-	#endif // end !ESP8266
+#endif  // end !ESP8266
 
 /**************************************************************************/
 /*!
-	@brief  Instantiate Adafruit ILI9341 driver using parallel interface.
-	@param  busWidth  If tft16 (enumeration in Adafruit_SPITFT.h), is a
-					  16-bit interface, else 8-bit.
-	@param  d0        Data pin 0 (MUST be a byte- or word-aligned LSB of a
-					  PORT register -- pins 1-n are extrapolated from this).
-	@param  wr        Write strobe pin # (required).
-	@param  dc        Data/Command pin # (required).
-	@param  cs        Chip select pin # (optional, pass -1 if unused and CS
-					  is tied to GND).
-	@param  rst       Reset pin # (optional, pass -1 if unused).
-	@param  rd        Read strobe pin # (optional, pass -1 if unused).
+	@brief  パラレルインターフェースを使ってAdafruit ILI9341ドライバを初期化する
+	@param  busWidth  tft16の場合は16ビットインターフェース、それ以外は8ビット
+	@param  d0        データピン0（PORTレジスタのLSBでバイトまたはワードアライン必須）
+	@param  wr        ライトストローブピン番号（必須）
+	@param  dc        データ/コマンドピン番号（必須）
+	@param  cs        チップセレクトピン番号（省略可、未使用なら-1かつCSはGNDに接続）
+	@param  rst       リセットピン番号（省略可、未使用なら-1）
+	@param  rd        リードストローブピン番号（省略可、未使用なら-1）
 */
 /**************************************************************************/
 Adafruit_ILI9341::Adafruit_ILI9341(tftBusWidth busWidth, int8_t d0, int8_t wr,
-								   int8_t dc, int8_t cs, int8_t rst, int8_t rd) : Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, busWidth, d0, wr, dc,
-																								  cs, rst, rd) {}
+								   int8_t dc, int8_t cs, int8_t rst, int8_t rd) :
+	Adafruit_SPITFT(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, busWidth, d0, wr, dc,
+					cs, rst, rd) {}
 
 // clang-format off
 static const uint8_t PROGMEM initcmd[] = {
@@ -211,8 +179,6 @@ static const uint8_t PROGMEM initcmd[] = {
   ILI9341_PIXFMT  , 1, 0x55,
   ILI9341_FRMCTR1 , 2, 0x00, 0x18,
   ILI9341_DFUNCTR , 3, 0x08, 0x82, 0x27, // Display Function Control
-  ILI9341_IFCTRL, 3, 0x01, 0x00, 0x20,
-
   0xF2, 1, 0x00,                         // 3Gamma Function Disable
   ILI9341_GAMMASET , 1, 0x01,             // Gamma curve selected
   ILI9341_GMCTRP1 , 15, 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, // Set Gamma
@@ -227,26 +193,23 @@ static const uint8_t PROGMEM initcmd[] = {
 
 /**************************************************************************/
 /*!
-	@brief   Initialize ILI9341 chip
-	Connects to the ILI9341 over SPI and sends initialization procedure commands
-	@param    freq  Desired SPI clock frequency
+	@brief   ILI9341チップを初期化する
+	         SPI経由でILI9341に接続し、初期化コマンド列を送信する
+	@param    freq  希望するSPIクロック周波数
 */
 /**************************************************************************/
-void Adafruit_ILI9341::begin(uint32_t freq)
-{
+void Adafruit_ILI9341::begin(uint32_t freq) {
 	if (!freq)
 		freq = SPI_DEFAULT_FREQ;
 	initSPI(freq);
-	if (_rst < 0)
-	{								  // If no hardware reset pin...
-		sendCommand(ILI9341_SWRESET); // Engage software reset
+	if (_rst < 0) {                    // If no hardware reset pin...
+		sendCommand(ILI9341_SWRESET);  // Engage software reset
 		delay(150);
 	}
 
 	uint8_t cmd, x, numArgs;
 	const uint8_t *addr = initcmd;
-	while ((cmd = pgm_read_byte(addr++)) > 0)
-	{
+	while ((cmd = pgm_read_byte(addr++)) > 0) {
 		x = pgm_read_byte(addr++);
 		numArgs = x & 0x7F;
 		sendCommand(cmd, addr, numArgs);
@@ -261,35 +224,33 @@ void Adafruit_ILI9341::begin(uint32_t freq)
 
 /**************************************************************************/
 /*!
-	@brief   Set origin of (0,0) and orientation of TFT display
-	@param   m  The index for rotation, from 0-3 inclusive
+	@brief   (0,0)を原点とし、TFTディスプレイの向きを設定する
+	@param   m  回転のインデックス（0～3）
 */
 /**************************************************************************/
-void Adafruit_ILI9341::setRotation(uint8_t m)
-{
-	rotation = m % 4; // can't be higher than 3
-	switch (rotation)
-	{
-	case 0:
-		m = (MADCTL_MX | MADCTL_BGR);
-		_width = ILI9341_TFTWIDTH;
-		_height = ILI9341_TFTHEIGHT;
-		break;
-	case 1:
-		m = (MADCTL_MV | MADCTL_BGR);
-		_width = ILI9341_TFTHEIGHT;
-		_height = ILI9341_TFTWIDTH;
-		break;
-	case 2:
-		m = (MADCTL_MY | MADCTL_BGR);
-		_width = ILI9341_TFTWIDTH;
-		_height = ILI9341_TFTHEIGHT;
-		break;
-	case 3:
-		m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-		_width = ILI9341_TFTHEIGHT;
-		_height = ILI9341_TFTWIDTH;
-		break;
+void Adafruit_ILI9341::setRotation(uint8_t m) {
+	rotation = m % 4;  // can't be higher than 3
+	switch (rotation) {
+		case 0:
+			m = (MADCTL_MX | MADCTL_BGR);
+			_width = ILI9341_TFTWIDTH;
+			_height = ILI9341_TFTHEIGHT;
+			break;
+		case 1:
+			m = (MADCTL_MV | MADCTL_BGR);
+			_width = ILI9341_TFTHEIGHT;
+			_height = ILI9341_TFTWIDTH;
+			break;
+		case 2:
+			m = (MADCTL_MY | MADCTL_BGR);
+			_width = ILI9341_TFTWIDTH;
+			_height = ILI9341_TFTHEIGHT;
+			break;
+		case 3:
+			m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+			_width = ILI9341_TFTHEIGHT;
+			_height = ILI9341_TFTWIDTH;
+			break;
 	}
 
 	sendCommand(ILI9341_MADCTL, &m, 1);
@@ -297,23 +258,21 @@ void Adafruit_ILI9341::setRotation(uint8_t m)
 
 /**************************************************************************/
 /*!
-	@brief   Enable/Disable display color inversion
-	@param   invert True to invert, False to have normal color
+	@brief   ディスプレイの色反転を有効/無効にする
+	@param   invert Trueで反転、Falseで通常色
 */
 /**************************************************************************/
-void Adafruit_ILI9341::invertDisplay(bool invert)
-{
+void Adafruit_ILI9341::invertDisplay(bool invert) {
 	sendCommand(invert ? ILI9341_INVON : ILI9341_INVOFF);
 }
 
 /**************************************************************************/
 /*!
-	@brief   Scroll display memory
-	@param   y How many pixels to scroll display by
+	@brief   ディスプレイメモリをスクロールする
+	@param   y スクロールするピクセル数
 */
 /**************************************************************************/
-void Adafruit_ILI9341::scrollTo(uint16_t y)
-{
+void Adafruit_ILI9341::scrollTo(uint16_t y) {
 	uint8_t data[2];
 	data[0] = y >> 8;
 	data[1] = y & 0xff;
@@ -322,16 +281,14 @@ void Adafruit_ILI9341::scrollTo(uint16_t y)
 
 /**************************************************************************/
 /*!
-	@brief   Set the height of the Top and Bottom Scroll Margins
-	@param   top The height of the Top scroll margin
-	@param   bottom The height of the Bottom scroll margin
+	@brief   上部・下部スクロールマージンの高さを設定する
+	@param   top 上部スクロールマージンの高さ
+	@param   bottom 下部スクロールマージンの高さ
  */
 /**************************************************************************/
-void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom)
-{
+void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom) {
 	// TFA+VSA+BFA must equal 320
-	if (top + bottom <= ILI9341_TFTHEIGHT)
-	{
+	if (top + bottom <= ILI9341_TFTHEIGHT) {
 		uint16_t middle = ILI9341_TFTHEIGHT - (top + bottom);
 		uint8_t data[6];
 		data[0] = top >> 8;
@@ -346,119 +303,56 @@ void Adafruit_ILI9341::setScrollMargins(uint16_t top, uint16_t bottom)
 
 /**************************************************************************/
 /*!
-	@brief   Set the "address window" - the rectangle we will write to RAM with
-   the next chunk of      SPI data writes. The ILI9341 will automatically wrap
-   the data as each row is filled
-	@param   x1  TFT memory 'x' origin
-	@param   y1  TFT memory 'y' origin
-	@param   w   Width of rectangle
-	@param   h   Height of rectangle
+	@brief   アドレスウィンドウ（次にRAMへ書き込む矩形領域）を設定する
+	         ILI9341は各行が埋まるごとに自動的にデータをラップする
+	@param   x1  TFTメモリの'x'開始座標
+	@param   y1  TFTメモリの'y'開始座標
+	@param   w   矩形領域の幅
+	@param   h   矩形領域の高さ
 */
 /**************************************************************************/
 void Adafruit_ILI9341::setAddrWindow(uint16_t x1, uint16_t y1, uint16_t w,
-									 uint16_t h)
-{
+									 uint16_t h) {
 	static uint16_t old_x1 = 0xffff, old_x2 = 0xffff;
 	static uint16_t old_y1 = 0xffff, old_y2 = 0xffff;
 
 	uint16_t x2 = (x1 + w - 1), y2 = (y1 + h - 1);
-	if (x1 != old_x1 || x2 != old_x2)
-	{
-		writeCommand(ILI9341_CASET); // Column address set
+	if (x1 != old_x1 || x2 != old_x2) {
+		writeCommand(ILI9341_CASET);  // Column address set
 		SPI_WRITE16(x1);
 		SPI_WRITE16(x2);
 		old_x1 = x1;
 		old_x2 = x2;
 	}
-	if (y1 != old_y1 || y2 != old_y2)
-	{
-		writeCommand(ILI9341_PASET); // Row address set
+	if (y1 != old_y1 || y2 != old_y2) {
+		writeCommand(ILI9341_PASET);  // Row address set
 		SPI_WRITE16(y1);
 		SPI_WRITE16(y2);
 		old_y1 = y1;
 		old_y2 = y2;
 	}
-	writeCommand(ILI9341_RAMWR); // Write to RAM
-}
-
-void Adafruit_ILI9341::displaySleep(bool enterSleep)
-{
-	if (enterSleep)
-	{
-		sendCommand(ILI9341_SLPIN); // Enter Sleep Mode
-		delay(5);
-	}
-	else
-	{
-		sendCommand(ILI9341_SLPOUT); // Sleep Out
-		delay(120);
-	}
-}
-
-void Adafruit_ILI9341::setGamma(ILI9341_GAMMA a_gamma)
-{
-	uint8_t gamma = (uint8_t)a_gamma;
-	sendCommand(ILI9341_GAMMASET, &gamma, 1);
-}
-/// @brief 3Dガンマの設定
-/// @param onOff trueの場合有効
-void Adafruit_ILI9341::set3DGammaEnable(bool onOff)
-{
-	uint8_t paramOnOff = onOff ? 0x03 : 0x2;
-	sendCommand(0xF2, &paramOnOff, 1);
-}
-/// @brief Positive Gamma補正の設定
-/// @details 初期設定では、0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00　になっている。
-/// @param val 設定値へのポインタ。15バイトの配列
-void Adafruit_ILI9341::setPositiveGamma(uint8_t *val)
-{
-	sendCommand(ILI9341_GMCTRP1, val, 15);
-}
-/// @brief  Negative Gammaの設定
-/// @details 初期設定では、0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F
-/// @param val 設定値へのポインタ。15バイトの配列
-void Adafruit_ILI9341::setNegativeGamma(uint8_t *val)
-{
-	sendCommand(ILI9341_GMCTRN1, val, 15);
-}
-/// @brief インタフェースの設定
-/// @param weMode メモリ書き込み制御。デフォルトは１。0：転送データ数が(EC-SC+1)*(EP-SP+1)を超えた場合、超えたデータは無視される。WEMODE=1：転送データ数が(EC-SC+1)*(EP-SP+1)を超えた場合、カラム番号とページ番号を無視する。(EC-SC+1)*(EP-SP+1)を超えると、列とページ番号はリセットされ、超えたデータは次の列とページに書き込まれる。
-/// @param EPF デフォルト0。65Kカラーモード・データ・フォーマット。データシート参照
-/// @param MDT　デフォルト0。表示データの転送方法を選択する
-/// @param endian　0…ラージエンディアン、1…リトルエンディアン。デフォルト１。
-/// @param rmMode GRAM にアクセスするインターフェースを選択。SYSTEM/VSYNCインタフェースで書き込む場合は0 、RGBインターフェースで表示データを書き込む場合は１。デフォルト０
-/// @param rimMode　RGBインターフェースを使用する場合、RGBインターフェースモードを指定する。 これらのビットは表示動作の前に設定されなければならない。これらのビットはRGBインターフェイスを通した表示動作の前に設定されるべきで、動作中に設定されるべきではありません。デフォルト０（元々システムインタフェースが０なので）
-void Adafruit_ILI9341::setIFControl(ILI9341_IFCTRL_WEMODE weMode, uint8_t EPF, uint8_t MDT, ILI9341_IFCTRL_ENDIAN endian, enum ILI9341_IFCTRL_DM dmMode, ILI9341_IFCTRL_RM rmMode, ILI9341_IFCTRL_RIM rimMode)
-{
-	uint8_t data[3];
-	data[0] = (uint8_t)weMode;
-	data[1] = ((uint8_t)EPF & 3) << 4 | (uint8_t)MDT;
-	data[2] = ((uint8_t)dmMode) << 2;
-	data[2] |= (endian == ENDIAN_LITTLE) ? 0x00100000 : 0;
-	data[2] |= (rmMode == RM_RGBIF) ? 0b00000010 : 0;
-	data[2] |= (rimMode == RIM_RBG6BIT) ? 0b00000001 : 0;
-
-	sendCommand(ILI9341_IFCTRL, data, 3);
+	writeCommand(ILI9341_RAMWR);  // Write to RAM
 }
 
 /**************************************************************************/
 /*!
-	@brief  Read 8 bits of data from ILI9341 configuration memory. NOT from RAM!
-			This is highly undocumented/supported, it's really a hack but kinda
-   works?
-	@param    commandByte  The command register to read data from
-	@param    index  The byte index into the command to read from
-	@return   Unsigned 8-bit data read from ILI9341 register
+	@brief  ILI9341の設定レジスタから8ビットデータを読み取る（RAMからではない）。
+			この機能は公式にはあまり文書化・サポートされていないが、一応動作する。
+	@param    commandByte  読み出すコマンドレジスタ
+	@param    index  コマンド内のバイトインデックス
+	@return   ILI9341レジスタから読み取った8ビットのデータ
  */
 /**************************************************************************/
-uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index)
-{
+uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index) {
+	// Indexレジスタを設定
 	uint8_t data = 0x10 + index;
-	sendCommand(0xD9, &data, 1); // Set Index Register
+	sendCommand(0xD9, &data, 1);  // Set Index Register
+	// 指定コマンドの値を読み出す
 	return Adafruit_SPITFT::readcommand8(commandByte);
 }
+
 /**
- * @brief   サイズが１倍で、背景色が無く、ILI9341を使っているときは、文字の描画にウインドウを使用して高速に処理するPP
+ * @brief   サイズが１倍で、背景色が無く、ILI9341を使っているときは、文字の描画にウインドウを使用して高速に処理する
  * @param   x   描画開始位置の左上座標
  * @param   y   描画開始位置の左上座標
  * @param   w   描画するフォントビットマップの横ドット数
@@ -474,42 +368,30 @@ uint8_t Adafruit_ILI9341::readcommand8(uint8_t commandByte, uint8_t index)
  * ここでオーバーライドしている。
  * 実測で PICO_Wを使って１万文字表示で、Adafruitオリジナルで32秒、このルーチンで15秒と改善していると思われる。
  */
-void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y)
-{
-	if (bUseWindow == true && size_x == 1 && size_y == 1 && color != bg)
-	{
-		if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0))
-			return;
+void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, const uint8_t *bmpData, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) {
+	if (bUseWindow == true &&  size_x == 1 && size_y == 1 && color != bg) {
+		if ((x >= _width) || (y >= _height) || ((x + w * size_x - 1) < 0) || ((y + h * size_y - 1) < 0)) return;
 
-		uint8_t w_bytes = (w + 8 - 1) / 8;	// 横方向のバイト数
-		uint8_t h_bytes = h;				// 縦方向のバイト数
-		uint16_t bmpIdx = 0;				// ビットマップ情報には、bmp + yy*w_bytes + xx でアクセスできるが、順番に並んでいるので最初から順に読むほうが速いのでは？
-		bool isByteMultiple = (w % 8 == 0); // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
+		uint8_t w_bytes = (w + 8 - 1) / 8;   // 横方向のバイト数
+		uint8_t h_bytes = h;                 // 縦方向のバイト数
+		uint16_t bmpIdx = 0;                 // ビットマップ情報には、bmp + yy*w_bytes + xx でアクセスできるが、順番に並んでいるので最初から順に読むほうが速いのでは？
+		bool isByteMultiple = (w % 8 == 0);  // 横幅が8の倍数かのフラグ。横１２ドットなどの場合は、８の倍数にならないので調整が必要になる
 
 		startWrite();
 		setAddrWindow(x, y, w, h);
-		for (int8_t yy = 0; yy < h_bytes; yy++)
-		{
-			for (int8_t xx = 0; xx < w_bytes; xx++)
-			{
+		for (int8_t yy = 0; yy < h_bytes; yy++) {
+			for (int8_t xx = 0; xx < w_bytes; xx++) {
 				uint8_t bitCnt;
-				if (isByteMultiple)
-				{
+				if (isByteMultiple) {
 					bitCnt = 8;
-				}
-				else
-				{
+				} else {
 					bitCnt = (xx != (w_bytes - 1)) ? 8 : (w % 8);
 				}
 				uint8_t bits = bmpData[bmpIdx];
-				for (int8_t bb = 0; bb < bitCnt; bb++)
-				{
-					if (bits & 0x80)
-					{
+				for (int8_t bb = 0; bb < bitCnt; bb++) {
+					if (bits & 0x80) {
 						pushColor(color);
-					}
-					else
-					{
+					} else {
 						pushColor(bg);
 					}
 					bits <<= 1;
@@ -517,9 +399,7 @@ void Adafruit_ILI9341::drawChar(int16_t x, int16_t y, uint8_t w, uint8_t h, cons
 				bmpIdx++;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/// 拡大フォントや背景色が透過の場合にはウインドウでの描画は使用できないので基底クラスのdrawCharを呼び出す
 		Adafruit_GFX::drawChar(x, y, w, h, bmpData, color, bg, size_x, size_y);
 	}

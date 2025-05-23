@@ -124,7 +124,14 @@ size_t Print::print(const __FlashStringHelper *ifsh) {
 	return n;
 }
 #endif
-
+/*!
+  @brief  Printableオブジェクトを出力し、改行を追加する。
+  @param  x  出力するPrintableオブジェクト
+  @return 書き込まれたバイト数
+  @details
+	まずprint(x)でオブジェクトの内容を出力し、その後println()で改行コードを追加します。
+	Printableを継承した任意のクラスで利用でき、print/printlnの一貫したインターフェースを提供します。
+*/
 size_t Print::println(const Printable &x) {
 	size_t n = print(x);
 	n += println();
@@ -132,7 +139,16 @@ size_t Print::println(const Printable &x) {
 }
 
 // Private Methods /////////////////////////////////////////////////////////////
-
+/*!
+  @brief  指定した基数で数値を文字列として出力する。
+  @param  n    出力する数値（unsigned long型）
+  @param  base 出力時の基数（2進数～36進数、通常は10進数）
+  @return 書き込まれた文字数
+  @details
+	数値nを指定した基数baseで文字列に変換し、write()で出力します。
+	基数が2未満の場合は10進数として扱います。
+	変換後の文字列は0終端され、各桁は'0'～'9'または'A'～'Z'で表現されます。
+*/
 size_t Print::printNumber(unsigned long n, uint8_t base) {
 	char buf[8 * sizeof(long) + 1];  // Assumes 8-bit chars plus zero byte.
 	char *str = &buf[sizeof(buf) - 1];
@@ -151,7 +167,16 @@ size_t Print::printNumber(unsigned long n, uint8_t base) {
 
 	return write(str);
 }
-
+/*!
+  @brief  浮動小数点数を指定した小数点以下桁数で文字列として出力する。
+  @param  number 出力する浮動小数点数
+  @param  digits 小数点以下の桁数
+  @return 書き込まれた文字数
+  @details
+	numberがNaNや無限大の場合は"nan"や"inf"、範囲外の場合は"ovf"と出力します。
+	負数の場合は符号を付けて出力し、指定された桁数で四捨五入します。
+	整数部と小数部を分けて出力し、小数点以下はdigitsで指定した桁数まで出力します。
+*/
 size_t Print::printFloat(double number, uint8_t digits) {
 	size_t n = 0;
 
@@ -193,14 +218,16 @@ size_t Print::printFloat(double number, uint8_t digits) {
 
 	return n;
 }
-/**
- * @brief printfを追加実装する
- * @param format フォーマット文字列
- * @param ... 可変引数
- * @return 書き込まれた文字数
- * @details 多くの関数（浮動小数点を表示するとか）を自力で実装しているが、なぜかprintfが無い。
- * 現状、ArduinoもRaspberry PI SDKもsprintfは実装されているので、これを使って簡単に実装しておく。
- */
+/*!
+  @brief  printf形式でフォーマットした文字列を出力する。
+  @param  format フォーマット文字列
+  @param  ...    可変引数
+  @return 書き込まれた文字数
+  @details
+	フォーマット文字列と可変引数をvsnprintfで処理し、一時バッファに書き込んだ後print()で出力します。
+	ArduinoやRaspberry Pi SDKのsprintf実装を利用しており、浮動小数点や各種書式指定子に対応します。
+	バッファサイズは1024バイトで、書式展開後の文字列がこのサイズを超える場合は切り捨てられます。
+*/
 
 size_t Print::printf(const char *format, ...) {
 	char buffer[1024];  // 出力用の一時バッファ
