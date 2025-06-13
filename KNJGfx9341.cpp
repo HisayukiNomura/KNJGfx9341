@@ -144,9 +144,15 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 
 		if (ts.touched()) {
 			touchCount++;
+			/*
 			TS_Point tPoint = ts.getPoint();                          // タッチ座標を取得
 			int16_t x = (tPoint.x - TOUCHX_MIN) * TFT_WIDTH / (TOUCHX_MAX - TOUCHX_MIN); // タッチx座標をTFT画面の座標に換算
 			int16_t y = (tPoint.y - TOUCHY_MIN) * TFT_HEIGHT / (TOUCHY_MAX - TOUCHY_MIN); // タッチy座標をTFT画面の座標に換算
+			*/
+			TS_Point tPoint = ts.getPointOnScreen(); // タッチ座標を取得（キャリブレーション済み）
+			int16_t x = tPoint.x; // タッチx座標をTFT画面の座標に換算
+			int16_t y = tPoint.y; // タッチy座標をTFT画面の座標に換算
+
 
 			// 円の連続で線を描画
 			tft.drawCircle(x, y, touchCount * 2, rand() % 0xFFFF); // タッチ座標に塗り潰し円を描画
@@ -171,6 +177,41 @@ bool waitForTouchOrTimeout(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts, int tim
 
 	
 	return false; // タイムアウトせずにループを抜けたらfalseを返す
+}
+
+void demoTouch(Adafruit_ILI9341 tft, XPT2046_Touchscreen ts)
+{
+	int touchCount = 0; // タッチ回数をカウントする変数
+	while (true) {
+		if (ts.touched()) {
+			touchCount++;
+			/*
+			TS_Point tPoint = ts.getPoint();                          // タッチ座標を取得
+			int16_t x = (tPoint.x - TOUCHX_MIN) * TFT_WIDTH / (TOUCHX_MAX - TOUCHX_MIN); // タッチx座標をTFT画面の座標に換算
+			int16_t y = (tPoint.y - TOUCHY_MIN) * TFT_HEIGHT / (TOUCHY_MAX - TOUCHY_MIN); // タッチy座標をTFT画面の座標に換算
+			*/
+			TS_Point tPoint = ts.getPointOnScreen(); // タッチ座標を取得（キャリブレーション済み）
+			int16_t x = tPoint.x;                    // タッチx座標をTFT画面の座標に換算
+			int16_t y = tPoint.y;                    // タッチy座標をTFT画面の座標に換算
+
+			// 円の連続で線を描画
+			tft.drawCircle(x, y, touchCount * 2, rand() % 0xFFFF); // タッチ座標に塗り潰し円を描画
+			if (touchCount == 300) {                                // 長くタッチしたら、押されたと判断するのだが・・・
+				int waitRelease = 0;
+				while (ts.touched()) {
+					if (waitRelease > 10000)
+						break;
+					sleep_ms(10); // CPU負荷を下げるために少し待機
+					waitRelease++;
+				}
+				break;
+			}
+		} else {
+			touchCount = 0; // タッチされていない場合はカウントをリセット
+		}
+
+		sleep_ms(10); // CPU負荷を下げるために少し待機
+	}
 }
 /// @brief ビットマップ表示のデモ
 /// @param tft 液晶クラスのインスタンス
@@ -1075,8 +1116,12 @@ int main()
 	// タッチパネル初期設定
 	ts.begin();                             // タッチパネル初期化
 	ts.setRotation(TFTROTATION.ROTATE_270); // タッチパネルの回転を設定（液晶画面と合わせる）
+	//ts.setRotation(TFTROTATION.NORMAL); // タッチパネルの回転を設定（液晶画面と合わせる）
+	ts.setCalibration(TOUCHX_MIN, TOUCHY_MIN, TOUCHX_MAX, TOUCHY_MAX);
+
 	// 液晶初期設定
 	tft.setRotation(TFTROTATION.ROTATE_270); // TFTの回転を設定（0-3）
+	//tft.setRotation(TFTROTATION.NORMAL); // TFTの回転を設定（0-3）
 	// 使用可能な場合は、ウインドウモードを使用して高速に描画する
 	tft.useWindowMode(true);
 
@@ -1090,7 +1135,7 @@ int main()
 	// tft.setFont(misaki_gothic_2nd_08x08_ALL, misaki_gothic_2nd_08x08_ALL_bitmap);  // 漢字フォントの設定
 	tft.fillScreen(STDCOLOR.BLACK);                       // 背景色
 	tft.drawRGBBitmap(0, 0, pictFuji1, tft.width(), 200); // 背景データを描画
-
+	//demoTouch(tft, ts); // タッチパネルのデモ
 	while (1) {
 		demoShape(tft, ts);  // 図形描画
 		demoBitmap(tft, ts); // 背景データを描画
