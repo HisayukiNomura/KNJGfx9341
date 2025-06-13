@@ -48,6 +48,8 @@
 #ifdef STD_SDK
 namespace ardPort {
 #endif 
+/// @brief  座標のクラス
+
 class TS_Point {
    public:
 	TS_Point(void) :
@@ -134,6 +136,7 @@ class XPT2046_Touchscreen {
 		this->maxX = maxX;
 		this->maxY = maxY;
 	}
+	
 	// protected:
 	volatile bool isrWake = true;
 
