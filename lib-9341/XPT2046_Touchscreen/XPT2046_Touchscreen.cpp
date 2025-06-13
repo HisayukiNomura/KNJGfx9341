@@ -95,6 +95,17 @@ TS_Point XPT2046_Touchscreen::getPoint()
 	return TS_Point(xraw, yraw, zraw);
 }
 
+TS_Point XPT2046_Touchscreen::getPointOnScreen()
+{
+	update();
+	TS_Point tPoint;
+	tPoint = getPoint();
+
+	uint16_t x = (tPoint.x - minX) * screenWidth / (maxX - minX);
+	uint16_t y = (tPoint.y - minY) * screenHeight / (maxY - minY);
+	return TS_Point(x, y, zraw);
+}
+
 bool XPT2046_Touchscreen::tirqTouched()
 {
 	return (isrWake);
