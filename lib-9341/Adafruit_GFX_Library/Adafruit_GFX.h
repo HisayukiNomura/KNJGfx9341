@@ -203,6 +203,8 @@ namespace ardPort {
 		void setFont(const GFXfont* f = NULL);
 		// 漢字フォントを使用する場合はこっちが呼び出される
 		void setFont(const KanjiData* a_pKanjiData, const uint8_t* a_pBmpData);
+		void printlocf(uint16_t x, uint16_t y, const char* format, ...);
+		
 
 		/**********************************************************************/
 		/*!
