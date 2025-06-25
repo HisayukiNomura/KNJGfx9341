@@ -256,8 +256,20 @@ namespace ardPort {
 			if (c) *c = textcolor;
 			if (bg) *bg = textbgcolor;
 		}
+		void pushTextColor()
+		{
+			_textColorStack.push_back({textcolor, textbgcolor});
+		}
+		void popTextColor()
+		{
+			if (!_textColorStack.empty()) {
+				TextColorState state = _textColorStack.back();
+				textcolor = state.textcolor;
+				textbgcolor = state.textbgcolor;
+				_textColorStack.pop_back();
+			}
+		}
 
-		
 		/**********************************************************************/
 		/*!
 		@brief  Set whether text that is too long for the screen width should
@@ -376,17 +388,7 @@ namespace ardPort {
 		};
 		std::vector<TextColorState> _textColorStack;
 
-		void pushTextColor() {
-			_textColorStack.push_back({textcolor, textbgcolor});
-		}
-		void popTextColor() {
-			if (!_textColorStack.empty()) {
-				TextColorState state = _textColorStack.back();
-				textcolor = state.textcolor;
-				textbgcolor = state.textbgcolor;
-				_textColorStack.pop_back();
-			}
-		}
+
 	};
 
 	/**************************************************************************/
