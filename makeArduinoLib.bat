@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 echo -----ddd
 echo This script will create a zip file for the Arduino library.
 echo The created ZIP file can be used in Arduino IDE via Sketch ^> Include Library ^> Add .ZIP Library.
@@ -27,6 +27,14 @@ xcopy /e /i /h /y  lib-9341\* KNJGfx9341_ARD\ >> outlog.txt 2>&1
 cd KNJGfx9341_ARD
 for /r %%d in (*.cpp) do move "%%d" . >> ..\outlog.txt 2>&1
 for /r %%d in (*.c) do move "%%d" . >> ..\outlog.txt 2>&1
+
+pushd  Adafruit_GFX_Library\Fonts
+
+echo "---------- Editing ASCII font files --------" >> outlog.txt 2>&1
+echo Get-ChildItem *.h ^| ForEach-Object { (Get-Content $_.FullName) -replace '#include ^<Adafruit_GFX.h^>', '#include "../Adafruit_GFX.h"' ^| Set-Content $_.FullName } > pswork1.ps1
+powershell -ExecutionPolicy Bypass -File pswork1.ps1 >> ..\outlog.txt 2>&1
+del pswork1.ps1
+popd
 cd Examples
 
 echo  "---------- processing Example ino ----------" >> outlog.txt 2>&1
@@ -42,10 +50,12 @@ for /R %%F in (*.htxt) do (
 endlocal
 cd ../..
 
+
+
 echo  "---------- making zip archive and copy it to USERPROFILE% ----------" >> outlog.txt 2>&1
-7z a KNJGfx9341_ARD.zip KNJGfx9341_ARD -xr!*.bak  >> outlog.txt 2>&1
+7z a KNJGfx9341_ARD_ONLY.zip KNJGfx9341_ARD -xr!*.bak  >> outlog.txt 2>&1
 rmdir /q /s KNJGfx9341_ARD  >> outlog.txt 2>&1
-copy  KNJGfx9341_ARD.zip %USERPROFILE%  >> outlog.txt 2>&1
+rem copy  KNJGfx9341_ARD.zip %USERPROFILE%  >> outlog.txt 2>&1
 rem del KNJGfx9341_ARD.zip  >> outlog.txt 2>&1
-echo successfully created %USERPROFILE%\KNJGfx9341_ARD.zip
+echo successfully created KNJGfx9341_ARD_ONLY.zip
 echo   *If an error occurs, the execution log was saved in outlog.txt.
