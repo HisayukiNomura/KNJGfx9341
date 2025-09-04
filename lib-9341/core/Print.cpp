@@ -246,3 +246,11 @@ size_t Print::printf(const char *format, ...) {
 
 	return (size_t)(written >= 0 ? written : 0);
 }
+size_t Print::vprintf(const char *format, va_list args) {
+	char buffer[1024];
+	int written = vsnprintf(buffer, sizeof(buffer), format, args);
+	print(buffer);
+	return (size_t)(written >= 0 ? written : 0);
+}
+
+

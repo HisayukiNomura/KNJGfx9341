@@ -48,6 +48,8 @@
 #ifdef STD_SDK
 namespace ardPort {
 #endif 
+/// @brief  座標のクラス
+
 class TS_Point {
    public:
 	TS_Point(void) :
@@ -64,24 +66,77 @@ class TS_Point {
 };
 
 class XPT2046_Touchscreen {
-   public:
-   XPT2046_Touchscreen() {}
-	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255) :
-		csPin(cspin),
-		tirqPin(tirq) {}
-	bool begin(SPIClass &wspi = SPI);
+	public:
+	  uint16_t minX;			// キャリブレーションの値
+	  uint16_t minY;            // キャリブレーションの値
+	  uint16_t maxX;            // キャリブレーションの値
+	  uint16_t maxY;            // キャリブレーションの値
+
+	  int16_t screenWidth;
+	  int16_t screenHeight;
+
+	public:
+	  XPT2046_Touchscreen() {
+
+	  }
+	  constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq = 255) :
+		  csPin(cspin),
+		  tirqPin(tirq),
+		  minX(432),
+		  minY(374),
+		  maxX(3773),
+		  maxY(3638),
+		  screenWidth(240),
+		  screenHeight(320) {}
+	  bool begin(SPIClass& wspi = SPI);
 #if defined(_FLEXIO_SPI_H_)
 	bool begin(FlexIOSPI &wflexspi);
 #endif
 	void constructObject(uint8_t cspin, uint8_t tirq = 255);
 
-	TS_Point getPoint();
+	TS_Point getPoint();				// なまのXYZを返す
+	TS_Point getPointOnScreen();		// 補正されたXYZを返す（Zは生の値）
 	bool tirqTouched();
 	bool touched();
 	void readData(uint16_t *x, uint16_t *y, uint8_t *z);
 	bool bufferEmpty();
 	uint8_t bufferSize() { return 1; }
-	void setRotation(uint8_t n) { rotation = n % 4; }
+	void setRotation(uint8_t n)  {
+		 rotation = n % 4; 
+	}
+	/// @brief キャリブレーション値を指定する。getPointOnScreenを使う場合は必須。画面の横縦は320x240でsetRotationの値に依存する。
+	/// @param minX
+	/// @param minY
+	/// @param maxX
+	/// @param maxY
+	void setCalibration(uint16_t minX, uint16_t minY, uint16_t maxX, uint16_t maxY) {
+		if (rotation == 0 || rotation == 2) {
+			screenWidth = 240;
+			screenHeight = 320;
+		} else {
+			screenWidth = 320;
+			screenHeight = 240;
+		}
+		this->minX = minX;
+		this->minY = minY;
+		this->maxX = maxX;
+		this->maxY = maxY;
+	}
+	/// @brief キャリブレーション値を指定する。getPointOnScreenを使う場合は必須。画面の横縦を明示的に指定する。
+	/// @param minX
+	/// @param minY
+	/// @param maxX
+	/// @param maxY
+	void setCalibration(uint16_t width, uint16_t height , uint16_t minX, uint16_t minY, uint16_t maxX, uint16_t maxY)
+	{
+		screenWidth = width;
+		screenHeight = height;
+		this->minX = minX;
+		this->minY = minY;
+		this->maxX = maxX;
+		this->maxY = maxY;
+	}
+	
 	// protected:
 	volatile bool isrWake = true;
 

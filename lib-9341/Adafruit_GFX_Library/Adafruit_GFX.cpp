@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "Adafruit_GFX_Library/Adafruit_GFX.h"
 #include "glcdfont.c"
 #include "Kanji/KanjiHelper.h"
+#include <cstdarg>
 #ifdef MICROPY_BUILD_TYPE
 extern "C" {
 	#include "py/runtime.h" // MicroPython のランタイム機能
@@ -301,14 +302,12 @@ void Adafruit_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 */
 void Adafruit_GFX::startWrite() {}
 
-
 /*!
   @brief   ピクセルを描画します。startWriteを定義した場合はサブクラスでオーバーライドしてください。
   @param   x     x座標
   @param   y     y座標
   @param   color 描画色（16ビットRGB565）
 */
-
 
 void Adafruit_GFX::writePixel(int16_t x, int16_t y, uint16_t color)
 {
@@ -558,7 +557,6 @@ void Adafruit_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
 	}
 }
 
-
 /*!
   @brief   円を塗りつぶします。
   @param   x0   中心x座標
@@ -648,7 +646,6 @@ void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
 	writeFastVLine(x + w - 1, y, h, color);
 	endWrite();
 }
-
 
 /*!
   @brief   角丸矩形（枠のみ）を描画します。
@@ -1056,7 +1053,6 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 	}
 	endWrite();
 }
-
 
 /*!
   @brief   1ビットマスク付き8ビットグレースケール画像を描画します（RAM格納）。
@@ -1841,6 +1837,17 @@ void Adafruit_GFX::getTextBounds(const __FlashStringHelper* str, int16_t x,
 		*y1 = miny;
 		*h = maxy - miny + 1;
 	}
+}
+
+void Adafruit_GFX::printlocf(uint16_t x, uint16_t y, const char* format, ...)
+{
+	setCursor(x, y);
+	va_list args;
+	va_start(args, format);
+	char buffer[64];
+	Print::vprintf(format, args);
+	va_end(args);
+
 }
 #pragma endregion
 
@@ -2971,9 +2978,9 @@ void GFXcanvas16::unUseTransparentColor()
   @param  src  コピー元のGFXcanvas16インスタンス
   @return コピーに成功した場合は自身のポインタ、サイズ不一致時はNULL
   @details
-    キャンバスサイズ（幅・高さ）が一致している場合のみ、srcのバッファ内容を
-    このインスタンスのバッファにmemcpyでコピーします。
-    サイズが異なる場合は何もせずNULLを返します。
+	キャンバスサイズ（幅・高さ）が一致している場合のみ、srcのバッファ内容を
+	このインスタンスのバッファにmemcpyでコピーします。
+	サイズが異なる場合は何もせずNULLを返します。
 */
 GFXcanvas16* GFXcanvas16::deepCopy(const GFXcanvas16* src)
 {

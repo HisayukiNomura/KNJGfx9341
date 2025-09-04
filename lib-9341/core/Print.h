@@ -245,6 +245,7 @@ namespace ardPort::core {
 		}
 
 		size_t printf(const char *format, ...);
+		size_t vprintf(const char *format, va_list args);
 		virtual void flush() { /* Empty implementation for backward compatibility */ }
 	};
 

@@ -6,7 +6,7 @@
 #include "Kanji/Fonts/JF-Dot-Shinonome12_12x12_SCHOOL.inc"		// 東雲12x12、教育漢字
 #include "Kanji/Fonts/JF-Dot-Shinonome14_14x14_SCHOOL.inc"		// 東雲12x12、教育漢字
 #include "Kanji/Fonts/JF-Dot-Shinonome16_16x16_SCHOOL.inc"		// 東雲12x12、教育漢字
-#include "Kanji/Fonts/ipaexg_24x24_SCHOOL.inc"								// IPA24x24、教育漢字
+#include "Kanji/Fonts/ipag_24x24_SCHOOL.inc"								// IPA24x24、教育漢字
 
 using namespace ardPort;
 
@@ -66,7 +66,7 @@ void loop() {
 	cursorY += 18;
 
 	tft.setCursor(0,cursorY);
-  tft.setFont(ipaexg_24x24_SCHOOL, ipaexg_24x24_SCHOOL_bitmap); 
+  tft.setFont(ipag_24x24_SCHOOL, ipag_24x24_SCHOOL_bitmap); 
 	tft.print("こんにちは!");
 
 	sleep_ms(10000);

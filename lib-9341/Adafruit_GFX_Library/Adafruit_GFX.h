@@ -1,6 +1,7 @@
 #ifndef _ADAFRUIT_GFX_H
 #define _ADAFRUIT_GFX_H
 #include "misc/defines.h"
+#include <vector>
 
 #ifdef STD_SDK
 	// #include "../core/Arduino.h"
@@ -203,6 +204,8 @@ namespace ardPort {
 		void setFont(const GFXfont* f = NULL);
 		// 漢字フォントを使用する場合はこっちが呼び出される
 		void setFont(const KanjiData* a_pKanjiData, const uint8_t* a_pBmpData);
+		void printlocf(uint16_t x, uint16_t y, const char* format, ...);
+		
 
 		/**********************************************************************/
 		/*!
@@ -247,6 +250,24 @@ namespace ardPort {
 		{
 			textcolor = c;
 			textbgcolor = bg;
+		}
+		void getTextColor(uint16_t* c, uint16_t* bg)
+		{
+			if (c) *c = textcolor;
+			if (bg) *bg = textbgcolor;
+		}
+		void pushTextColor()
+		{
+			_textColorStack.push_back({textcolor, textbgcolor});
+		}
+		void popTextColor()
+		{
+			if (!_textColorStack.empty()) {
+				TextColorState state = _textColorStack.back();
+				textcolor = state.textcolor;
+				textbgcolor = state.textbgcolor;
+				_textColorStack.pop_back();
+			}
 		}
 
 		/**********************************************************************/
@@ -359,6 +380,15 @@ namespace ardPort {
 		bool wrap;            ///< If set, 'wrap' text at right edge of display
 		bool _cp437;          ///< If set, use correct CP437 charset (default is off)
 		GFXfont* gfxFont;     ///< Pointer to special font
+
+		// テキスト色の一時保存用スタック
+		struct TextColorState {
+			uint16_t textcolor;
+			uint16_t textbgcolor;
+		};
+		std::vector<TextColorState> _textColorStack;
+
+
 	};
 
 	/**************************************************************************/
