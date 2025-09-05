@@ -33,6 +33,8 @@ echo "---------- Editing ASCII font files --------" >> outlog.txt 2>&1
 echo $replacements = @{ > pswork.ps1
 echo     '#include "defines.h"'          = '#include "misc/defines.h"' >> pswork.ps1
 echo     '#include "Adafruit_ILI9341.h"' = '#include "Adafruit_ILI9341/Adafruit_ILI9341.h"' >> pswork.ps1
+echo     '#include "_freertos.h"'     = '#include "core/_freertos.h"' >> pswork.ps1
+echo     '#include "stdlib_noniso.h"'        = '#include "core/stdlib_noniso.h"' >> pswork.ps1
 echo } >> pswork.ps1
 echo $Regexreplacements = @{ >> pswork.ps1
 echo     '^\s*#pragma region' = '// #pragma region ' >> pswork.ps1
@@ -52,11 +54,8 @@ echo     } >> pswork.ps1
 echo     $content ^| Set-Content $_.FullName -Encoding UTF8 >> pswork.ps1
 echo } >> pswork.ps1
 
-
-pause
 powershell -ExecutionPolicy Bypass -File pswork.ps1 >> ..\outlog.txt 2>&1
 del pswork.ps1
-
 
 pushd  Adafruit_GFX_Library\Fonts
 echo Get-ChildItem *.h ^| ForEach-Object { (Get-Content $_.FullName) -replace '#include ^<Adafruit_GFX.h^>', '#include "../Adafruit_GFX.h"' ^| Set-Content $_.FullName } > pswork1.ps1
@@ -77,7 +76,6 @@ for /R %%F in (*.htxt) do (
 )
 endlocal
 cd ../..
-
 
 
 echo  "---------- making zip archive and copy it to USERPROFILE% ----------" >> outlog.txt 2>&1
